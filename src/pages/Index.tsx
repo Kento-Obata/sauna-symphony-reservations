@@ -20,7 +20,7 @@ const Index = () => {
             <div className="text-center space-y-4">
               <div>
                 <p className="text-sauna-stone/90">
-                  〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4
+                  〒811-2127<br />福岡県糟屋郡宇美町障子岳6-8-4
                 </p>
                 <a 
                   href="https://maps.google.com/maps?q=8Q5GHG7V%2BJ5" 
