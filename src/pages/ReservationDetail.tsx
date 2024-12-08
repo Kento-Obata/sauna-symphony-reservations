@@ -17,6 +17,10 @@ const ReservationDetail = () => {
   const { data: reservation, isLoading, error } = useQuery({
     queryKey: ["reservation", code],
     queryFn: async () => {
+      if (!code) {
+        throw new Error("予約コードが必要です");
+      }
+
       const { data, error } = await supabase
         .from("reservations")
         .select("*")
@@ -53,17 +57,6 @@ const ReservationDetail = () => {
       toast.error("予約のキャンセルに失敗しました。もう一度お試しください。");
     }
   };
-
-  if (!code) {
-    return (
-      <div className="container mx-auto p-4">
-        <div className="text-center space-y-4">
-          <p className="text-sauna-stone">予約コードが見つかりません。</p>
-          <Button onClick={() => navigate("/")}>トップページへ戻る</Button>
-        </div>
-      </div>
-    );
-  }
 
   if (isLoading) {
     return (
