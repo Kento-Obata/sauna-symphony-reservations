@@ -54,7 +54,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("予約情報を受信:", reservation);
 
     const notifications = [];
-    const GOOGLE_MAPS_URL = "https://goo.gl/maps/YQX8Z9Z9Z9Z9Z9Z9A";
+    const GOOGLE_MAPS_URL = "https://maps.google.com/maps?q=8Q5GHG7V%2BJ5";
 
     if (reservation.email) {
       try {
@@ -79,7 +79,8 @@ const handler = async (req: Request): Promise<Response> => {
                 <li>水風呂温度: ${reservation.waterTemperature}°C</li>
               </ul>
               <p>住所: 〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4</p>
-              <p>Google Maps: <a href="https://goo.gl/maps/YQX8Z9Z9Z9Z9Z9Z9A">こちらから確認できます</a></p>
+              <p>Plus Code: 8Q5GHG7V+J5</p>
+              <p>Google Maps: <a href="${GOOGLE_MAPS_URL}">こちらから確認できます</a></p>
               <p>ご来店を心よりお待ちしております。</p>
             `,
           }),
@@ -108,7 +109,7 @@ const handler = async (req: Request): Promise<Response> => {
         TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]
       }\n人数: ${reservation.guestCount}名\n水風呂温度: ${
         reservation.waterTemperature
-      }°C\n\n住所: 〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4\nGoogle Maps: https://goo.gl/maps/YQX8Z9Z9Z9Z9Z9Z9A\n\nご来店を心よりお待ちしております。`);
+      }°C\n\n住所: 〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4\nPlus Code: 8Q5GHG7V+J5\nGoogle Maps: ${GOOGLE_MAPS_URL}\n\nご来店を心よりお待ちしております。`);
 
       console.log("SMSを送信:", formattedPhone);
       console.log("SMS内容:", formData.toString());
