@@ -78,12 +78,12 @@ export const AdminReservationDetailsDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>予約詳細</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-[120px_1fr] gap-4 items-center">
             <ReservationDateSelect
               date={date}
               onDateChange={handleDateChange}

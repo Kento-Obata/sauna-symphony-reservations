@@ -52,19 +52,21 @@ export const ReservationDateSelect = ({
 
   return (
     <>
-      <div className="text-muted-foreground">予約日:</div>
-      <div>
+      <div className="text-muted-foreground col-span-2">予約日:</div>
+      <div className="col-span-2">
         {isEditing ? (
-          <Calendar
-            mode="single"
-            selected={new Date(date)}
-            onSelect={(date) => date && onDateChange(date)}
-            disabled={isDateDisabled}
-            className="rounded-md border"
-            components={{
-              DayContent: ({ date }) => getDayContent(date)
-            }}
-          />
+          <div className="w-full flex justify-center">
+            <Calendar
+              mode="single"
+              selected={new Date(date)}
+              onSelect={(date) => date && onDateChange(date)}
+              disabled={isDateDisabled}
+              className="rounded-md border bg-background"
+              components={{
+                DayContent: ({ date }) => getDayContent(date)
+              }}
+            />
+          </div>
         ) : (
           format(new Date(date), "yyyy年MM月dd日(E)", {
             locale: ja,
