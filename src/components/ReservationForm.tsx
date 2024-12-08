@@ -17,6 +17,7 @@ import { ReservationStatus } from "@/components/ReservationStatus";
 import { TimeSlot, ReservationFormData } from "@/types/reservation";
 import { AlertOctagon } from "lucide-react";
 import { ReservationConfirmDialog } from "./ReservationConfirmDialog";
+import { useReservations } from "@/hooks/useReservations"; // Add this import
 
 const ReservationForm = () => {
   const [date, setDate] = useState<Date | undefined>(undefined);
