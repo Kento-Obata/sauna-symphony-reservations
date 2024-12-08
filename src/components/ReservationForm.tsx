@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { TimeSlot, ReservationFormData } from "@/types/reservation";
 import { ReservationConfirmDialog } from "./ReservationConfirmDialog";
 import { useReservations } from "@/hooks/useReservations";
@@ -35,7 +35,10 @@ const ReservationForm = () => {
       evening: 0
     };
 
-    if (!reservations) return defaultSlotReservations;
+    if (!reservations || !selectedDate || !isValid(selectedDate)) {
+      console.log("Invalid date or no reservations:", { selectedDate, reservations });
+      return defaultSlotReservations;
+    }
 
     const dateString = format(selectedDate, 'yyyy-MM-dd');
     
@@ -62,8 +65,13 @@ const ReservationForm = () => {
 
   const handleConfirmReservation = async (paymentMethod: "cash" | "online") => {
     try {
+      if (!date || !isValid(date)) {
+        toast.error("無効な日付です。");
+        return;
+      }
+
       const reservationData: ReservationFormData = {
-        date: format(date!, "yyyy-MM-dd"),
+        date: format(date, "yyyy-MM-dd"),
         time_slot: timeSlot as TimeSlot,
         guest_name: name,
         guest_count: parseInt(people),
