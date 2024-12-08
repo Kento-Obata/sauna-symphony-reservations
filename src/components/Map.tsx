@@ -1,3 +1,5 @@
+import React from 'react';
+
 const Map = () => {
   return (
     <div className="w-full max-w-2xl mx-auto mt-8">
@@ -7,7 +9,6 @@ const Map = () => {
         height="300"
         style={{ border: 0 }}
         loading="lazy"
-        fetchpriority="low"
         referrerPolicy="no-referrer-when-downgrade"
         className="rounded-lg shadow-lg"
       ></iframe>
