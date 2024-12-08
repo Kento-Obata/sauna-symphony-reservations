@@ -1,20 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 export const Header = () => {
   const [backgroundImage] = useState<string>('https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=80');
 
-  // Add scroll effect on component mount
-  useEffect(() => {
-    const reservationSection = document.getElementById('reservation-section');
-    if (reservationSection) {
-      const yOffset = -80; // Offset to account for any fixed headers
-      const y = reservationSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
-      window.scrollTo({ top: y, behavior: 'smooth' });
-    }
-  }, []);
-
   return (
-    <header className="relative h-screen flex items-center justify-center overflow-hidden">
+    <header className="relative h-[60vh] flex items-center justify-center overflow-hidden">
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-1000"
         style={{

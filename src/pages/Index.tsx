@@ -3,9 +3,9 @@ import ReservationForm from "@/components/ReservationForm";
 
 const Index = () => {
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-screen">
       <Header />
-      <div id="reservation-section">
+      <div id="reservation-section" className="mt-[-10vh]">
         <ReservationForm />
       </div>
       
