@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/table";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+import { ReservationStatus } from "@/components/ReservationStatus";
 
 const Index = () => {
   const [date, setDate] = useState<Date | undefined>(undefined);
@@ -106,6 +107,7 @@ const Index = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>状況</TableHead>
                     <TableHead>日付</TableHead>
                     <TableHead>時間帯</TableHead>
                     <TableHead>予約人数</TableHead>
@@ -115,6 +117,9 @@ const Index = () => {
                 <TableBody>
                   {reservations?.map((reservation) => (
                     <TableRow key={reservation.id}>
+                      <TableCell>
+                        <ReservationStatus guestCount={reservation.guest_count} />
+                      </TableCell>
                       <TableCell>
                         {format(new Date(reservation.date), 'yyyy年MM月dd日', { locale: ja })}
                       </TableCell>
