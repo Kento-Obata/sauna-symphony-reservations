@@ -15,8 +15,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ReservationStatus } from "@/components/ReservationStatus";
 import { TimeSlot, ReservationFormData } from "@/types/reservation";
-import { useReservations } from "@/hooks/useReservations";
-import { CheckSquare, AlertOctagon, XSquare } from "lucide-react";
+import { AlertOctagon } from "lucide-react";
+import { ReservationConfirmDialog } from "./ReservationConfirmDialog";
 
 const ReservationForm = () => {
   const [date, setDate] = useState<Date | undefined>(undefined);
@@ -26,6 +26,7 @@ const ReservationForm = () => {
   const [phone, setPhone] = useState("");
   const [people, setPeople] = useState("");
   const [temperature, setTemperature] = useState("");
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: reservations, isLoading, error } = useReservations();
@@ -54,9 +55,13 @@ const ReservationForm = () => {
       return;
     }
 
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirmReservation = async (paymentMethod: "cash" | "online") => {
     try {
       const reservationData: ReservationFormData = {
-        date: format(date, "yyyy-MM-dd"),
+        date: format(date!, "yyyy-MM-dd"),
         time_slot: timeSlot as TimeSlot,
         guest_name: name,
         guest_count: parseInt(people),
@@ -64,6 +69,12 @@ const ReservationForm = () => {
         phone: phone,
         water_temperature: parseInt(temperature),
       };
+
+      if (paymentMethod === "online") {
+        // Here you would integrate with your payment provider
+        window.location.href = "https://your-payment-link.com";
+        return;
+      }
 
       const { error } = await supabase
         .from("reservations")
@@ -80,6 +91,7 @@ const ReservationForm = () => {
       setPhone("");
       setPeople("");
       setTemperature("");
+      setShowConfirmDialog(false);
       
       queryClient.invalidateQueries({ queryKey: ["reservations"] });
     } catch (error) {
@@ -117,6 +129,16 @@ const ReservationForm = () => {
   }
 
   const timeSlotReservations = date ? getTimeSlotReservations(date) : {};
+
+  const currentReservation: ReservationFormData | null = date && timeSlot ? {
+    date: format(date, "yyyy-MM-dd"),
+    time_slot: timeSlot as TimeSlot,
+    guest_name: name,
+    guest_count: parseInt(people) || 0,
+    email: email || null,
+    phone: phone,
+    water_temperature: parseInt(temperature) || 0,
+  } : null;
 
   return (
     <div className="glass-card p-8 animate-fade-in">
@@ -240,6 +262,16 @@ const ReservationForm = () => {
           </Button>
         </div>
       </form>
+
+      {currentReservation && (
+        <ReservationConfirmDialog
+          isOpen={showConfirmDialog}
+          onClose={() => setShowConfirmDialog(false)}
+          onConfirm={handleConfirmReservation}
+          reservation={currentReservation}
+          onEdit={() => setShowConfirmDialog(false)}
+        />
+      )}
     </div>
   );
 };
