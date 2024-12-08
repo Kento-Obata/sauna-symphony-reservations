@@ -159,14 +159,12 @@ const ReservationForm = () => {
       </h2>
       
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid md:grid-cols-2 gap-8">
-          <div className="flex justify-center">
-            <ReservationCalendar
-              date={date}
-              setDate={setDate}
-              reservations={reservations}
-            />
-          </div>
+        <div className="grid md:grid-cols-2 gap-8 items-start">
+          <ReservationCalendar
+            date={date}
+            setDate={setDate}
+            reservations={reservations}
+          />
           
           <ReservationDetails
             timeSlot={timeSlot}
