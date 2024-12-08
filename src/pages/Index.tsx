@@ -37,7 +37,7 @@ const Index = () => {
               <div>
                 <h3 className="font-semibold mb-2">電車でお越しの場合</h3>
                 <p className="text-sauna-stone/90">
-                  JR香椎線 宇美駅から徒歩15分
+                  JR香椎線 宇美駅からバスで20分
                 </p>
               </div>
             </div>
