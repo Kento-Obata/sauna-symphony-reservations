@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Home, Edit2, XCircle } from "lucide-react";
+import { Home, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import {
@@ -87,12 +87,6 @@ const ReservationDetail = () => {
     );
   }
 
-  const handleModify = () => {
-    // Store the current reservation data in sessionStorage
-    sessionStorage.setItem('modifyReservation', JSON.stringify(reservation));
-    navigate('/');
-  };
-
   return (
     <div className="container mx-auto p-4">
       <div className="glass-card p-6 max-w-2xl mx-auto relative">
@@ -147,15 +141,6 @@ const ReservationDetail = () => {
 
           {reservation.status !== 'cancelled' && (
             <div className="flex justify-end gap-4 mt-6">
-              <Button
-                variant="outline"
-                onClick={handleModify}
-                className="flex items-center gap-2"
-              >
-                <Edit2 className="h-4 w-4" />
-                予約を変更
-              </Button>
-
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
