@@ -82,11 +82,6 @@ export const useReservationForm = () => {
         water_temperature: parseInt(temperature),
       };
 
-      if (paymentMethod === "online") {
-        window.location.href = "https://square.link/u/w4KjWD66";
-        return;
-      }
-
       // Check for existing reservations
       const { data: existingReservations } = await supabase
         .from("reservations")
@@ -99,6 +94,14 @@ export const useReservationForm = () => {
         return;
       }
 
+      if (paymentMethod === "online") {
+        // Store reservation data in localStorage before redirect
+        localStorage.setItem('pendingReservation', JSON.stringify(reservationData));
+        window.location.href = "https://square.link/u/w4KjWD66";
+        return;
+      }
+
+      // For cash payment, directly insert the reservation
       const { error } = await supabase
         .from("reservations")
         .insert(reservationData);
