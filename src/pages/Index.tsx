@@ -5,7 +5,7 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       <Header />
-      <div id="reservation-section" className="mt-[-10vh]">
+      <div id="reservation-section" className="mt-[-5vh] md:mt-[-10vh]">
         <ReservationForm />
       </div>
       
