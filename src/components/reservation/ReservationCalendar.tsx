@@ -38,11 +38,13 @@ export const ReservationCalendar = ({
   };
 
   const handlePreviousWeek = () => {
-    setDate(subWeeks(currentDate, 1));
+    const newDate = subWeeks(currentDate, 1);
+    setDate(newDate);
   };
 
   const handleNextWeek = () => {
-    setDate(addWeeks(currentDate, 1));
+    const newDate = addWeeks(currentDate, 1);
+    setDate(newDate);
   };
 
   return (
