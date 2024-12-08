@@ -12,8 +12,10 @@ export interface ReservationFormData {
   water_temperature: number;
 }
 
-// Add the Reservation type export
+// Add reservation_code to the Reservation type
 export interface Reservation extends ReservationFormData {
   id: string;
   created_at: string;
+  reservation_code: string | null;
+  status: string;
 }
