@@ -153,18 +153,20 @@ const ReservationForm = () => {
   } : null;
 
   return (
-    <div className="glass-card p-8 animate-fade-in">
+    <div className="glass-card p-4 sm:p-8 animate-fade-in w-full max-w-4xl mx-auto">
       <h2 className="text-3xl font-bold mb-8 text-center text-gradient">
         ご予約
       </h2>
       
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid md:grid-cols-2 gap-8 items-start">
-          <ReservationCalendar
-            date={date}
-            setDate={setDate}
-            reservations={reservations}
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="w-full flex justify-center md:justify-start">
+            <ReservationCalendar
+              date={date}
+              setDate={setDate}
+              reservations={reservations}
+            />
+          </div>
           
           <ReservationDetails
             timeSlot={timeSlot}
@@ -180,6 +182,7 @@ const ReservationForm = () => {
             temperature={temperature}
             setTemperature={setTemperature}
             date={date}
+            setDate={setDate}
             timeSlotReservations={timeSlotReservations}
           />
         </div>

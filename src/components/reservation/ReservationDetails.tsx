@@ -8,10 +8,11 @@ import {
 } from "@/components/ui/select";
 import { TimeSlot } from "@/types/reservation";
 import { TimeSlotSelect } from "@/components/TimeSlotSelect";
-import { format, addMonths, startOfMonth, getDaysInMonth } from "date-fns";
+import { format, addMonths, getDaysInMonth } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ReservationDetailsProps {
   timeSlot: TimeSlot | "";
@@ -27,7 +28,7 @@ interface ReservationDetailsProps {
   temperature: string;
   setTemperature: (value: string) => void;
   date: Date | undefined;
-  setDate?: (date: Date | undefined) => void;
+  setDate: (date: Date | undefined) => void;
   timeSlotReservations: Record<TimeSlot, number>;
 }
 
@@ -48,18 +49,19 @@ export const ReservationDetails = ({
   setDate,
   timeSlotReservations,
 }: ReservationDetailsProps) => {
+  const isMobile = useIsMobile();
   const today = new Date();
   const months = Array.from({ length: 12 }, (_, i) => addMonths(today, i));
 
   const handleMonthSelect = (monthStr: string) => {
     const selectedMonth = new Date(monthStr);
-    setDate?.(selectedMonth);
+    setDate(selectedMonth);
   };
 
   const handleDateSelect = (day: number) => {
     if (!date) return;
     const newDate = new Date(date.getFullYear(), date.getMonth(), day);
-    setDate?.(newDate);
+    setDate(newDate);
   };
 
   const getDaysArray = (selectedDate: Date) => {
@@ -69,7 +71,7 @@ export const ReservationDetails = ({
 
   return (
     <div className="space-y-4">
-      {setDate && (
+      {isMobile && (
         <div className="space-y-4">
           <div>
             <label className="block text-sm mb-2">月を選択 *</label>
