@@ -17,8 +17,8 @@ const Header = () => {
         <div className="flex flex-col items-start space-y-8">
           {/* Brand and Location */}
           <div className="space-y-3">
-            <h1 className="text-6xl font-bold text-gradient">Sauna U</h1>
-            <p className="text-xl text-sauna-stone/90 font-medium tracking-wide">
+            <h1 className="text-6xl font-light text-gradient">Sauna U</h1>
+            <p className="text-xl text-sauna-stone/90 font-light tracking-wide">
               福岡から車で30分
             </p>
           </div>
@@ -26,14 +26,14 @@ const Header = () => {
           {/* Main Features */}
           <div className="glass-card p-8 space-y-6 w-full max-w-2xl hover-lift">
             <div className="space-y-4">
-              <h2 className="text-2xl font-semibold text-white">
+              <h2 className="text-2xl font-light text-white">
                 1日3組限定、完全貸切プライベートサウナ
               </h2>
               <div className="space-y-2">
-                <p className="text-lg text-sauna-stone/90">
+                <p className="text-lg text-sauna-stone/90 font-light">
                   予約前に最低5℃まで水温を選ぶだけ
                 </p>
-                <p className="text-lg text-sauna-stone/90">
+                <p className="text-lg text-sauna-stone/90 font-light">
                   詳細非公開、五感を刺激する究極のサウナ体験を
                 </p>
               </div>
