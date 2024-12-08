@@ -9,11 +9,11 @@ import { ModifyReservationDialog } from "@/components/reservation/ModifyReservat
 import { toast } from "sonner";
 
 const ReservationDetail = () => {
-  const { code } = useParams<{ code: string }>();
+  const { code } = useParams();
   const navigate = useNavigate();
   const [showModifyDialog, setShowModifyDialog] = useState(false);
 
-  console.log("Reservation code from URL:", code);
+  console.log("Accessing reservation with code:", code);
 
   const { data: reservation, isLoading, error } = useQuery({
     queryKey: ["reservation", code],
@@ -107,6 +107,19 @@ const ReservationDetail = () => {
     }
   };
 
+  const getTimeSlotText = (timeSlot: string) => {
+    switch (timeSlot) {
+      case "morning":
+        return "午前 10:00-12:30";
+      case "afternoon":
+        return "午後 13:30-16:00";
+      case "evening":
+        return "夕方 17:00-19:30";
+      default:
+        return "";
+    }
+  };
+
   return (
     <div className="container mx-auto p-4">
       <div className="glass-card p-8 max-w-2xl mx-auto space-y-6">
@@ -135,11 +148,7 @@ const ReservationDetail = () => {
 
             <div>
               <h2 className="text-sm text-sauna-stone/60">時間帯</h2>
-              <p className="text-lg">
-                {reservation.time_slot === "morning" && "午前 10:00-12:30"}
-                {reservation.time_slot === "afternoon" && "午後 13:30-16:00"}
-                {reservation.time_slot === "evening" && "夕方 17:00-19:30"}
-              </p>
+              <p className="text-lg">{getTimeSlotText(reservation.time_slot)}</p>
             </div>
 
             <div>
