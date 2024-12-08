@@ -2,6 +2,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { isBefore, format } from "date-fns";
 import { ReservationStatus } from "@/components/ReservationStatus";
 import { Reservation } from "@/types/reservation";
+import { cn } from "@/lib/utils";
 
 interface ReservationCalendarProps {
   date: Date | undefined;
@@ -44,26 +45,26 @@ export const ReservationCalendar = ({
       components={{
         DayContent: ({ date }) => getDayContent(date)
       }}
-      styles={{
-        head_cell: "h-14 sm:h-16",
-        cell: "h-14 sm:h-16 p-0 relative [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-        day: "h-14 sm:h-16 w-full p-0 font-normal aria-selected:opacity-100",
-        day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-        day_today: "bg-accent text-accent-foreground",
-        day_outside: "day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
-        day_disabled: "text-muted-foreground opacity-50",
-        day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
-        day_hidden: "invisible",
-        nav: "space-x-1 flex items-center",
-        nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
-        nav_button_previous: "absolute left-1",
-        nav_button_next: "absolute right-1",
-        table: "w-full border-collapse space-y-1",
-        head_row: "flex",
-        row: "flex w-full mt-2",
-        head: "text-muted-foreground font-normal text-[0.8rem]",
-        caption: "relative pt-1 items-center",
-        caption_label: "text-sm font-medium",
+      classNames={{
+        head_cell: cn("h-14 sm:h-16"),
+        cell: cn("h-14 sm:h-16 p-0 relative [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20"),
+        day: cn("h-14 sm:h-16 w-full p-0 font-normal aria-selected:opacity-100"),
+        day_selected: cn("bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground"),
+        day_today: cn("bg-accent text-accent-foreground"),
+        day_outside: cn("day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30"),
+        day_disabled: cn("text-muted-foreground opacity-50"),
+        day_range_middle: cn("aria-selected:bg-accent aria-selected:text-accent-foreground"),
+        day_hidden: cn("invisible"),
+        nav: cn("space-x-1 flex items-center"),
+        nav_button: cn("h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"),
+        nav_button_previous: cn("absolute left-1"),
+        nav_button_next: cn("absolute right-1"),
+        table: cn("w-full border-collapse space-y-1"),
+        head_row: cn("flex"),
+        row: cn("flex w-full mt-2"),
+        head: cn("text-muted-foreground font-normal text-[0.8rem]"),
+        caption: cn("relative pt-1 items-center"),
+        caption_label: cn("text-sm font-medium"),
       }}
     />
   );
