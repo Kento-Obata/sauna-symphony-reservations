@@ -29,19 +29,20 @@ const ReservationForm = () => {
 
   const { data: reservations, isLoading, error } = useReservations();
 
-  const getUnavailableTimeSlots = (selectedDate: Date) => {
-    if (!reservations) return [];
+  const getTimeSlotReservations = (selectedDate: Date) => {
+    if (!reservations) return {};
 
     const dateString = format(selectedDate, 'yyyy-MM-dd');
     
-    // Create a Set of time slots that have any reservations
-    const unavailableSlots = new Set(
-      reservations
-        .filter(r => r.date === dateString)
-        .map(r => r.time_slot)
-    );
+    // Count reservations per time slot
+    const slotReservations = reservations
+      .filter(r => r.date === dateString)
+      .reduce((acc, r) => {
+        acc[r.time_slot] = (acc[r.time_slot] || 0) + 1;
+        return acc;
+      }, {} as Record<TimeSlot, number>);
 
-    return Array.from(unavailableSlots);
+    return slotReservations;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -94,13 +95,13 @@ const ReservationForm = () => {
       (r) => r.date === dateString
     );
 
-    const totalGuests = dateReservations.reduce((sum, r) => sum + r.guest_count, 0);
+    const reservationCount = dateReservations.length;
     
     return (
       <div className="w-full h-full flex flex-col items-center justify-start pt-1 gap-1">
         <span>{day.getDate()}</span>
         <div className="text-xs">
-          <ReservationStatus guestCount={totalGuests} />
+          <ReservationStatus reservationCount={reservationCount} />
         </div>
       </div>
     );
@@ -114,7 +115,7 @@ const ReservationForm = () => {
     return <div>予約情報の読み込みに失敗しました。</div>;
   }
 
-  const unavailableTimeSlots = date ? getUnavailableTimeSlots(date) : [];
+  const timeSlotReservations = date ? getTimeSlotReservations(date) : {};
 
   return (
     <div className="glass-card p-8 animate-fade-in">
@@ -147,24 +148,24 @@ const ReservationForm = () => {
                   <SelectValue placeholder="時間帯を選択" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem 
-                    value="morning" 
-                    disabled={unavailableTimeSlots.includes('morning')}
-                  >
-                    10:00-12:30
-                  </SelectItem>
-                  <SelectItem 
-                    value="afternoon" 
-                    disabled={unavailableTimeSlots.includes('afternoon')}
-                  >
-                    13:30-16:00
-                  </SelectItem>
-                  <SelectItem 
-                    value="evening" 
-                    disabled={unavailableTimeSlots.includes('evening')}
-                  >
-                    17:00-19:30
-                  </SelectItem>
+                  {[
+                    { value: 'morning', label: '10:00-12:30' },
+                    { value: 'afternoon', label: '13:30-16:00' },
+                    { value: 'evening', label: '17:00-19:30' }
+                  ].map(({ value, label }) => (
+                    <SelectItem 
+                      key={value} 
+                      value={value}
+                      disabled={timeSlotReservations[value as TimeSlot] >= 1}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <span>{label}</span>
+                        {timeSlotReservations[value as TimeSlot] > 0 && (
+                          <span className="text-yellow-500 text-sm">予約あり</span>
+                        )}
+                      </div>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
