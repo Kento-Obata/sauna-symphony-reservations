@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { ja } from "date-fns/locale";
 import { format } from "date-fns";
-import TimeSlotSelect from "./TimeSlotSelect";
-import ReservationConfirmDialog from "./ReservationConfirmDialog";
-import ReservationStatus from "./ReservationStatus";
+import { TimeSlotSelect } from "./TimeSlotSelect";
+import { ReservationConfirmDialog } from "./ReservationConfirmDialog";
+import { ReservationStatus } from "./ReservationStatus";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "./ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { TimeSlot } from "@/types/reservation";
 
 const formSchema = z.object({
   guestName: z.string().min(1, "お名前を入力してください"),
@@ -32,7 +33,7 @@ const formSchema = z.object({
 
 const ReservationForm = () => {
   const [date, setDate] = useState<Date>();
-  const [timeSlot, setTimeSlot] = useState<string>();
+  const [timeSlot, setTimeSlot] = useState<TimeSlot>();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const { toast } = useToast();
 
@@ -190,12 +191,9 @@ const ReservationForm = () => {
       </div>
 
       <ReservationConfirmDialog
-        open={showConfirmDialog}
-        onOpenChange={setShowConfirmDialog}
-        date={date}
-        timeSlot={timeSlot}
-        formData={form.getValues()}
-        onConfirm={async () => {
+        isOpen={showConfirmDialog}
+        onClose={() => setShowConfirmDialog(false)}
+        onConfirm={async (paymentMethod) => {
           const values = form.getValues();
           if (!date || !timeSlot) return;
 
@@ -221,6 +219,7 @@ const ReservationForm = () => {
             form.reset();
             setDate(undefined);
             setTimeSlot(undefined);
+            setShowConfirmDialog(false);
           } catch (error) {
             console.error("Error creating reservation:", error);
             toast({
@@ -230,6 +229,16 @@ const ReservationForm = () => {
             });
           }
         }}
+        reservation={{
+          date: date ? format(date, "yyyy-MM-dd") : "",
+          time_slot: timeSlot || "morning",
+          guest_name: form.getValues("guestName"),
+          guest_count: form.getValues("guestCount"),
+          email: form.getValues("email"),
+          phone: form.getValues("phone"),
+          water_temperature: form.getValues("waterTemperature"),
+        }}
+        onEdit={() => setShowConfirmDialog(false)}
       />
     </div>
   );
