@@ -80,35 +80,48 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Send SMS
+    // Send SMS using Twilio
     try {
+      // Format the phone number to E.164 format if it's not already
+      let phoneNumber = reservation.phone;
+      if (!phoneNumber.startsWith('+')) {
+        // Assuming Japanese phone number if no country code
+        phoneNumber = '+81' + phoneNumber.replace(/^0/, '');
+      }
+
       const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
-      const twilioAuth = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
+      const formData = new URLSearchParams();
+      formData.append('To', phoneNumber);
+      formData.append('From', TWILIO_PHONE_NUMBER);
+      formData.append('Body', `Your sauna reservation is confirmed!\nDate: ${reservation.date}\nTime: ${
+        TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]
+      }\nGuests: ${reservation.guestCount}\nWater temp: ${
+        reservation.waterTemperature
+      }°C`);
+
+      console.log("Sending SMS to:", phoneNumber);
+      console.log("SMS content:", formData.toString());
 
       const smsRes = await fetch(twilioUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
-          Authorization: `Basic ${twilioAuth}`,
+          Authorization: `Basic ${btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)}`,
         },
-        body: new URLSearchParams({
-          To: reservation.phone,
-          From: TWILIO_PHONE_NUMBER,
-          Body: `Your sauna reservation is confirmed!\nDate: ${reservation.date}\nTime: ${
-            TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]
-          }\nGuests: ${reservation.guestCount}\nWater temp: ${
-            reservation.waterTemperature
-          }°C`,
-        }),
+        body: formData,
       });
 
+      const smsResponseText = await smsRes.text();
+      console.log("Twilio API response:", smsResponseText);
+
       if (!smsRes.ok) {
-        throw new Error(`SMS sending failed: ${await smsRes.text()}`);
+        throw new Error(`SMS sending failed: ${smsResponseText}`);
       }
       console.log("SMS sent successfully");
       notifications.push("sms");
     } catch (error) {
       console.error("Error sending SMS:", error);
+      throw error; // Re-throw to handle in the outer catch block
     }
 
     return new Response(
