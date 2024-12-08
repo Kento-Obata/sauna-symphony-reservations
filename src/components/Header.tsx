@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Mountain, Waves, Wind } from 'lucide-react';
 
 const Header = () => {
   const [backgroundImage] = useState<string>('https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9');
@@ -18,12 +19,18 @@ const Header = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           {/* Left Column */}
           <div className="text-left space-y-6 animate-fade-up">
-            <h1 className="text-8xl font-bold mb-6 text-gradient">U</h1>
-            <p className="text-xl text-sauna-stone">
-              福岡、宇美町。五感で味わう究極のサウナ
+            <div className="flex items-center gap-4 mb-2">
+              <h1 className="text-8xl font-bold text-gradient">U</h1>
+              <Mountain className="w-8 h-8 text-sauna-copper opacity-80" />
+            </div>
+            <p className="text-xl text-sauna-stone/90 font-medium tracking-wide">
+              福岡、宇美町の秘境にて
             </p>
             <div className="glass-card p-6 space-y-4 hover-lift">
-              <h2 className="text-lg font-medium text-sauna-copper">水風呂温度</h2>
+              <div className="flex items-center gap-2">
+                <Waves className="w-5 h-5 text-sauna-copper" />
+                <h2 className="text-lg font-medium text-sauna-copper">水温</h2>
+              </div>
               <p className="text-3xl font-bold text-white">
                 5℃ 〜 17℃
               </p>
@@ -36,15 +43,18 @@ const Header = () => {
           {/* Right Column */}
           <div className="space-y-8 animate-fade-up" style={{ animationDelay: '0.2s' }}>
             <div className="glass-card p-6 hover-lift">
-              <h2 className="text-lg font-medium text-sauna-copper mb-4">三軍山のそよ風</h2>
+              <div className="flex items-center gap-2 mb-4">
+                <Wind className="w-5 h-5 text-sauna-copper" />
+                <h2 className="text-lg font-medium text-sauna-copper">三軍山のそよ風</h2>
+              </div>
               <p className="text-sauna-stone/80 leading-relaxed">
-                標高365メートルの三軍山から吹き降ろす清々しい風が、
-                サウナ後の心地よさを一層際立たせます。
+                標高365メートルの三軍山から吹き降ろす
+                清々しい風が、心地よさを際立たせる。
               </p>
             </div>
             <div className="glass-card p-6 hover-lift">
-              <p className="text-lg text-sauna-stone/80">
-                あなただけの究極のととのい体験を。
+              <p className="text-lg text-sauna-stone/90 font-medium">
+                究極のととのい体験、ここにあり。
               </p>
             </div>
           </div>
