@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const Header = () => {
+export const Header = () => {
   // 最適化された画像URLを使用（幅1200px）
   const [backgroundImage] = useState<string>('https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=80');
 
@@ -57,5 +57,3 @@ const Header = () => {
     </header>
   );
 };
-
-export default Header;
