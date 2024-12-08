@@ -40,19 +40,19 @@ export const TimeSlotSelect = ({
 }: TimeSlotSelectProps) => {
   return (
     <div>
-      <label className="block text-sm mb-2">Time</label>
+      <label className="block text-sm mb-2">時間帯</label>
       <Select 
         onValueChange={(value: TimeSlot) => onValueChange(value)} 
         value={value}
       >
         <SelectTrigger>
-          <SelectValue placeholder="Select time" />
+          <SelectValue placeholder="時間帯を選択" />
         </SelectTrigger>
         <SelectContent>
           {[
-            { value: 'morning', label: '10:00-12:30' },
-            { value: 'afternoon', label: '13:30-16:00' },
-            { value: 'evening', label: '17:00-19:30' }
+            { value: 'morning', label: '午前 10:00-12:30' },
+            { value: 'afternoon', label: '午後 13:30-16:00' },
+            { value: 'evening', label: '夕方 17:00-19:30' }
           ].map(({ value, label }) => {
             const isDisabled = selectedDate ? (
               timeSlotReservations[value as TimeSlot] >= 1 ||
