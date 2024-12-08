@@ -7,7 +7,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Calendar } from "@/components/ui/calendar";
 
 interface AdminReservationDialogProps {
   open: boolean;
@@ -104,15 +103,6 @@ export const AdminReservationDialog = ({
         </DialogHeader>
 
         <div className="space-y-6">
-          <div className="flex justify-center">
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={setDate}
-              className="rounded-md border"
-            />
-          </div>
-
           <ReservationDetails
             timeSlot={timeSlot}
             setTimeSlot={setTimeSlot}
