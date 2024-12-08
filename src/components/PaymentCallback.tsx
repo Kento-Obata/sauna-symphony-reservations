@@ -19,11 +19,17 @@ export const PaymentCallback = () => {
       try {
         const reservationData = JSON.parse(pendingReservationStr);
 
-        const { error } = await supabase
+        const { data: newReservation, error } = await supabase
           .from("reservations")
-          .insert(reservationData);
+          .insert(reservationData)
+          .select()
+          .single();
 
         if (error) throw error;
+
+        if (!newReservation?.reservation_code) {
+          throw new Error("予約コードが生成されませんでした。");
+        }
 
         const notificationResponse = await supabase.functions.invoke(
           "send-reservation-notification",
@@ -36,6 +42,7 @@ export const PaymentCallback = () => {
               email: reservationData.email,
               phone: reservationData.phone,
               waterTemperature: reservationData.water_temperature,
+              reservationCode: newReservation.reservation_code,
             },
           }
         );
@@ -47,7 +54,7 @@ export const PaymentCallback = () => {
 
         toast.success("予約が完了しました！");
         localStorage.removeItem('pendingReservation');
-        navigate('/');
+        navigate(`/reservation/${newReservation.reservation_code}`);
       } catch (error) {
         console.error("予約の登録に失敗しました:", error);
         toast.error("予約の登録に失敗しました。もう一度お試しください。");

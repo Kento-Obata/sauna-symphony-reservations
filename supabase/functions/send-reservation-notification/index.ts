@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { format } from "https://deno.land/std@0.190.0/datetime/mod.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
@@ -20,6 +19,7 @@ interface ReservationNotification {
   email: string | null;
   phone: string;
   waterTemperature: number;
+  reservationCode: string;
 }
 
 const TIME_SLOTS = {
@@ -55,6 +55,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const notifications = [];
     const GOOGLE_MAPS_URL = "https://maps.google.com/maps?q=8Q5GHG7V%2BJ5";
+    const RESERVATION_URL = `https://your-domain.com/reservation/${reservation.reservationCode}`;
 
     if (reservation.email) {
       try {
@@ -73,11 +74,14 @@ const handler = async (req: Request): Promise<Response> => {
               <p>${reservation.guestName}様</p>
               <p>サウナのご予約ありがとうございます。以下の内容で承りました：</p>
               <ul>
+                <li>予約コード: ${reservation.reservationCode}</li>
                 <li>日付: ${reservation.date}</li>
                 <li>時間: ${TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]}</li>
                 <li>人数: ${reservation.guestCount}名</li>
                 <li>水風呂温度: ${reservation.waterTemperature}°C</li>
               </ul>
+              <p>予約の詳細は以下のURLからご確認いただけます：</p>
+              <p><a href="${RESERVATION_URL}">${RESERVATION_URL}</a></p>
               <p>住所: 〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4</p>
               <p>Plus Code: 8Q5GHG7V+J5</p>
               <p>Google Maps: <a href="${GOOGLE_MAPS_URL}">こちらから確認できます</a></p>
@@ -105,11 +109,11 @@ const handler = async (req: Request): Promise<Response> => {
       const formData = new URLSearchParams();
       formData.append('To', formattedPhone);
       formData.append('From', TWILIO_PHONE_NUMBER);
-      formData.append('Body', `サウナのご予約ありがとうございます。\n日付: ${reservation.date}\n時間: ${
+      formData.append('Body', `サウナのご予約ありがとうございます。\n\n予約コード: ${reservation.reservationCode}\n\n日付: ${reservation.date}\n時間: ${
         TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]
       }\n人数: ${reservation.guestCount}名\n水風呂温度: ${
         reservation.waterTemperature
-      }°C\n\n住所: 〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4\nPlus Code: 8Q5GHG7V+J5\nGoogle Maps: ${GOOGLE_MAPS_URL}\n\nご来店を心よりお待ちしております。`);
+      }°C\n\n予約の詳細はこちら：\n${RESERVATION_URL}\n\n住所: 〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4\nPlus Code: 8Q5GHG7V+J5\nGoogle Maps: ${GOOGLE_MAPS_URL}\n\nご来店を心よりお待ちしております。`);
 
       console.log("SMSを送信:", formattedPhone);
       console.log("SMS内容:", formData.toString());

@@ -15,6 +15,7 @@ import { ReservationFormData } from "@/types/reservation";
 import { format } from "date-fns";
 import { useState } from "react";
 import { Progress } from "@/components/ui/progress";
+import { Link } from "react-router-dom";
 
 interface ReservationConfirmDialogProps {
   isOpen: boolean;
@@ -63,10 +64,18 @@ export function ReservationConfirmDialog({
               </AlertDialogDescription>
             </AlertDialogHeader>
             <div className="py-4">
-              <p className="text-center text-muted-foreground">
+              <p className="text-center text-muted-foreground mb-4">
                 予約内容の確認メールをお送りしました。
                 {selectedPaymentMethod === "cash" && "当日は現金でのお支払いをお願いいたします。"}
               </p>
+              <div className="text-center">
+                <Link 
+                  to={`/reservation/${reservationCode}`}
+                  className="text-primary hover:underline"
+                >
+                  予約詳細を確認する
+                </Link>
+              </div>
             </div>
             <AlertDialogFooter>
               <AlertDialogAction onClick={onClose}>
