@@ -6,11 +6,13 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
+    console.log('Generating image with OpenAI...')
     const response = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
       headers: {
@@ -26,12 +28,21 @@ serve(async (req) => {
       })
     })
 
+    if (!response.ok) {
+      const error = await response.json()
+      console.error('OpenAI API error:', error)
+      throw new Error('Failed to generate image')
+    }
+
     const data = await response.json()
+    console.log('Image generated successfully')
+    
     return new Response(
       JSON.stringify(data),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
+    console.error('Error in generate-sauna-image function:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
