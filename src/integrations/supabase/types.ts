@@ -43,6 +43,7 @@ export type Database = {
           id: string
           phone: string
           reservation_code: string | null
+          status: string
           time_slot: Database["public"]["Enums"]["time_slot"]
           water_temperature: number
         }
@@ -55,6 +56,7 @@ export type Database = {
           id?: string
           phone: string
           reservation_code?: string | null
+          status?: string
           time_slot: Database["public"]["Enums"]["time_slot"]
           water_temperature: number
         }
@@ -67,6 +69,7 @@ export type Database = {
           id?: string
           phone?: string
           reservation_code?: string | null
+          status?: string
           time_slot?: Database["public"]["Enums"]["time_slot"]
           water_temperature?: number
         }

@@ -1,10 +1,22 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Home } from "lucide-react";
+import { Home, Edit2, XCircle } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const TIME_SLOTS = {
   morning: "10:00-12:30",
@@ -15,6 +27,7 @@ const TIME_SLOTS = {
 const ReservationDetail = () => {
   const { reservationCode } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data: reservation, isLoading, error } = useQuery({
     queryKey: ["reservation", reservationCode],
@@ -27,6 +40,24 @@ const ReservationDetail = () => {
 
       if (error) throw error;
       return data;
+    },
+  });
+
+  const cancelReservation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("reservations")
+        .update({ status: "cancelled" })
+        .eq("reservation_code", reservationCode);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reservation", reservationCode] });
+      toast.success("予約をキャンセルしました");
+    },
+    onError: () => {
+      toast.error("予約のキャンセルに失敗しました");
     },
   });
 
@@ -55,6 +86,12 @@ const ReservationDetail = () => {
       </div>
     );
   }
+
+  const handleModify = () => {
+    // Store the current reservation data in sessionStorage
+    sessionStorage.setItem('modifyReservation', JSON.stringify(reservation));
+    navigate('/');
+  };
 
   return (
     <div className="container mx-auto p-4">
@@ -101,7 +138,54 @@ const ReservationDetail = () => {
             
             <div className="text-sauna-stone">水風呂温度:</div>
             <div>{reservation.water_temperature}°C</div>
+
+            <div className="text-sauna-stone">ステータス:</div>
+            <div className={reservation.status === 'cancelled' ? 'text-red-500' : 'text-green-500'}>
+              {reservation.status === 'cancelled' ? 'キャンセル済み' : '予約確定'}
+            </div>
           </div>
+
+          {reservation.status !== 'cancelled' && (
+            <div className="flex justify-end gap-4 mt-6">
+              <Button
+                variant="outline"
+                onClick={handleModify}
+                className="flex items-center gap-2"
+              >
+                <Edit2 className="h-4 w-4" />
+                予約を変更
+              </Button>
+
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="destructive"
+                    className="flex items-center gap-2"
+                  >
+                    <XCircle className="h-4 w-4" />
+                    予約をキャンセル
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>予約をキャンセルしますか？</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      この操作は取り消すことができません。予約をキャンセルしてもよろしいですか？
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>戻る</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => cancelReservation.mutate()}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      キャンセルする
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          )}
         </div>
       </div>
     </div>
