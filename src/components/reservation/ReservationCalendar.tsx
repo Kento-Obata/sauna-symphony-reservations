@@ -1,12 +1,12 @@
-import { Calendar } from "@/components/ui/calendar";
-import { isBefore, format } from "date-fns";
-import { ReservationStatus } from "@/components/ReservationStatus";
-import { Reservation } from "@/types/reservation";
+import { format, isValid } from "date-fns";
+import { ja } from "date-fns/locale";
+import { MonthSelector } from "./MonthSelector";
+import { DaySelector } from "./DaySelector";
 
 interface ReservationCalendarProps {
   date: Date | undefined;
   setDate: (date: Date | undefined) => void;
-  reservations: Reservation[] | undefined;
+  reservations?: any[];
 }
 
 export const ReservationCalendar = ({
@@ -14,36 +14,40 @@ export const ReservationCalendar = ({
   setDate,
   reservations,
 }: ReservationCalendarProps) => {
-  const getDayContent = (day: Date) => {
-    if (!reservations || isBefore(day, new Date())) return null;
+  const handleMonthSelect = (monthStr: string) => {
+    try {
+      const selectedMonth = new Date(monthStr);
+      if (!isValid(selectedMonth)) {
+        console.error("Invalid month selected:", monthStr);
+        return;
+      }
+      setDate(selectedMonth);
+    } catch (error) {
+      console.error("Error selecting month:", error);
+    }
+  };
 
-    const dateString = format(day, 'yyyy-MM-dd');
-    const dateReservations = reservations.filter(
-      (r) => r.date === dateString
-    );
-
-    const reservationCount = dateReservations.length;
-    
-    return (
-      <div className="w-full h-full flex flex-col items-center justify-start pt-0.5 border-b-[1px] border-sauna-stone/50">
-        <span>{day.getDate()}</span>
-        <div className="text-xs translate-y-[-2px]">
-          <ReservationStatus reservationCount={reservationCount} />
-        </div>
-      </div>
-    );
+  const handleDateSelect = (day: number) => {
+    if (!date || !isValid(date)) {
+      console.error("Invalid date for day selection:", date);
+      return;
+    }
+    try {
+      const newDate = new Date(date.getFullYear(), date.getMonth(), day);
+      if (!isValid(newDate)) {
+        console.error("Invalid date created:", newDate);
+        return;
+      }
+      setDate(newDate);
+    } catch (error) {
+      console.error("Error selecting date:", error);
+    }
   };
 
   return (
-    <Calendar
-      mode="single"
-      selected={date}
-      onSelect={setDate}
-      disabled={(date) => isBefore(date, new Date())}
-      className="rounded-md border"
-      components={{
-        DayContent: ({ date }) => getDayContent(date)
-      }}
-    />
+    <div className="space-y-4 w-full">
+      <MonthSelector date={date} onMonthSelect={handleMonthSelect} />
+      {date && <DaySelector date={date} onDaySelect={handleDateSelect} />}
+    </div>
   );
 };
