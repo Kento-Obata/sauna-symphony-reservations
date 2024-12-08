@@ -11,12 +11,17 @@ const Admin = () => {
   const { data: reservations } = useReservations();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
+  const handleNewReservation = () => {
+    setSelectedDate(new Date());
+    setShowNewReservationDialog(true);
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">予約管理</h1>
         <Button 
-          onClick={() => setShowNewReservationDialog(true)}
+          onClick={handleNewReservation}
           className="flex items-center gap-2"
         >
           <PlusCircle className="h-4 w-4" />
