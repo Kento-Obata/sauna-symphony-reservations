@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
+import { ReservationCalendar } from "@/components/reservation/ReservationCalendar";
+import { useReservations } from "@/hooks/useReservations";
 
 interface AdminReservationDialogProps {
   open: boolean;
@@ -34,6 +36,8 @@ export const AdminReservationDialog = ({
     afternoon: 0,
     evening: 0,
   });
+
+  const { data: reservations } = useReservations();
 
   useEffect(() => {
     if (date) {
@@ -135,6 +139,15 @@ export const AdminReservationDialog = ({
         </DialogHeader>
 
         <div className="space-y-6">
+          <div className="space-y-4">
+            <label className="block text-sm mb-2">日付を選択 *</label>
+            <ReservationCalendar
+              date={date}
+              setDate={setDate}
+              reservations={reservations}
+            />
+          </div>
+
           <ReservationDetails
             timeSlot={timeSlot}
             setTimeSlot={setTimeSlot}
