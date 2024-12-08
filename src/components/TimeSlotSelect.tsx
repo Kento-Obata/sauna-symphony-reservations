@@ -31,7 +31,7 @@ export const isTimeSlotDisabled = (slot: TimeSlot, selectedDate: Date) => {
   return isBefore(slotTime, twoHoursFromNow);
 };
 
-const MAX_RESERVATIONS = 3;
+const MAX_RESERVATIONS = 1;
 
 export const TimeSlotSelect = ({
   value,
@@ -56,8 +56,8 @@ export const TimeSlotSelect = ({
             { value: 'evening', label: '夕方 17:00-19:30' }
           ].map(({ value, label }) => {
             const isDisabled = selectedDate ? (
-              timeSlotReservations[value as TimeSlot] >= MAX_RESERVATIONS ||
-              isTimeSlotDisabled(value as TimeSlot, selectedDate)
+              isTimeSlotDisabled(value as TimeSlot, selectedDate) ||
+              timeSlotReservations[value as TimeSlot] >= MAX_RESERVATIONS
             ) : false;
 
             return (
