@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { format, isValid } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 
 export const useReservationForm = () => {
   const [date, setDate] = useState<Date | undefined>(undefined);
@@ -17,6 +18,7 @@ export const useReservationForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reservationCode, setReservationCode] = useState<string>();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const resetForm = () => {
     setDate(undefined);
@@ -143,6 +145,11 @@ export const useReservationForm = () => {
         console.error("通知の送信に失敗しました:", notificationResponse.error);
         toast.error("予約は完了しましたが、通知の送信に失敗しました。");
       }
+
+      // Navigate to completion page with reservation code
+      navigate('/reservation/complete', { 
+        state: { reservationCode: newReservation.reservation_code }
+      });
 
       toast.success("予約を受け付けました");
       queryClient.invalidateQueries({ queryKey: ["reservations"] });
