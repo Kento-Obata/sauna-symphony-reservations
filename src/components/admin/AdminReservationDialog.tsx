@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
@@ -23,13 +23,20 @@ export const AdminReservationDialog = ({
   defaultTimeSlot,
 }: AdminReservationDialogProps) => {
   const queryClient = useQueryClient();
-  const [date, setDate] = useState<Date | undefined>(defaultDate || undefined);
+  const [date, setDate] = useState<Date | undefined>(undefined);
   const [timeSlot, setTimeSlot] = useState<TimeSlot | "">(defaultTimeSlot || "");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [people, setPeople] = useState("");
   const [temperature, setTemperature] = useState("");
+
+  // Update date when defaultDate changes or dialog opens
+  useEffect(() => {
+    if (open && defaultDate) {
+      setDate(defaultDate);
+    }
+  }, [defaultDate, open]);
 
   const handleSubmit = async () => {
     if (!date || !timeSlot || !name || !phone || !people || !temperature) {
