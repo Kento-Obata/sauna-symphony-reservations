@@ -1,5 +1,8 @@
-import { AdminCalendar } from "@/components/admin/AdminCalendar";
-import { AdminUpcomingReservations } from "@/components/admin/AdminUpcomingReservations";
+import { format } from "date-fns";
+import { ja } from "date-fns/locale";  // Add this import
+import { TIME_SLOTS } from "@/components/TimeSlotSelect";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, LogOut } from "lucide-react";
 import { AdminReservationDialog } from "@/components/admin/AdminReservationDialog";
@@ -9,10 +12,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { AdminSearchBar } from "@/components/admin/AdminSearchBar";
-import { format } from "date-fns";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { TIME_SLOTS } from "@/components/TimeSlotSelect";
+import { AdminCalendar } from "@/components/admin/AdminCalendar";
+import { AdminUpcomingReservations } from "@/components/admin/AdminUpcomingReservations";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { XCircle } from "lucide-react";
 
@@ -147,7 +148,7 @@ const Admin = () => {
                     <TableRow key={reservation.id}>
                       <TableCell>
                         {format(new Date(reservation.date), "M月d日(E)", {
-                          locale: ja,
+                          locale: ja,  // Ensure 'ja' is used here
                         })}
                       </TableCell>
                       <TableCell>
