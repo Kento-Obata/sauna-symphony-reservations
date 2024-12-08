@@ -5,7 +5,9 @@ const Index = () => {
   return (
     <div className="min-h-screen pb-20">
       <Header />
-      <ReservationForm />
+      <div id="reservation-section">
+        <ReservationForm />
+      </div>
       
       <section className="max-w-4xl mx-auto px-4 py-20">
         <div className="mt-20 glass-card p-8">
@@ -35,7 +37,7 @@ const Index = () => {
               </div>
               
               <div>
-                <h3 className="font-semibold mb-2">電車でお越しの場合</h3>
+                <h3 className="font-semibold mb-2">電話でお越しの場合</h3>
                 <p className="text-sauna-stone/90">
                   JR香椎線 宇美駅からバスで20分
                 </p>

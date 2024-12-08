@@ -1,8 +1,17 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export const Header = () => {
-  // 最適化された画像URLを使用（幅1200px）
   const [backgroundImage] = useState<string>('https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=80');
+
+  // Add scroll effect on component mount
+  useEffect(() => {
+    const reservationSection = document.getElementById('reservation-section');
+    if (reservationSection) {
+      const yOffset = -80; // Offset to account for any fixed headers
+      const y = reservationSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
+  }, []);
 
   return (
     <header className="relative h-screen flex items-center justify-center overflow-hidden">
@@ -10,18 +19,18 @@ export const Header = () => {
         className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-1000"
         style={{
           backgroundImage: `url('${backgroundImage}')`,
-          willChange: 'transform', // パフォーマンス最適化
+          willChange: 'transform',
         }}
       />
       <div 
         className="absolute inset-0 bg-gradient-to-b from-sauna-charcoal/90 to-sauna-charcoal/70 backdrop-blur-sm z-0"
         style={{
-          willChange: 'opacity', // パフォーマンス最適化
+          willChange: 'opacity',
         }}
       />
       
-      <div className="relative z-10 w-full max-w-4xl mx-auto px-4">
-        <div className="flex flex-col items-start space-y-8">
+      <div className="relative z-10 w-full mx-auto md:px-4">
+        <div className="flex flex-col items-start space-y-8 px-4 md:px-0">
           {/* Brand and Location */}
           <div className="space-y-2">
             <h1 className="text-5xl font-light text-gradient">Sauna U</h1>
