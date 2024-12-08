@@ -16,6 +16,7 @@ import { format } from "date-fns";
 import { ReservationStatus } from "@/components/ReservationStatus";
 import { TimeSlot, ReservationFormData } from "@/types/reservation";
 import { useReservations } from "@/hooks/useReservations";
+import { CheckSquare, AlertOctagon, XSquare } from "lucide-react";
 
 const ReservationForm = () => {
   const [date, setDate] = useState<Date | undefined>(undefined);
@@ -120,7 +121,7 @@ const ReservationForm = () => {
   return (
     <div className="glass-card p-8 animate-fade-in">
       <h2 className="text-3xl font-bold mb-8 text-center text-gradient">
-        ご予約
+        Reservation
       </h2>
       
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -139,13 +140,13 @@ const ReservationForm = () => {
           
           <div className="space-y-4">
             <div>
-              <label className="block text-sm mb-2">時間帯</label>
+              <label className="block text-sm mb-2">Time</label>
               <Select 
                 onValueChange={(value: TimeSlot) => setTimeSlot(value)} 
                 value={timeSlot}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="時間帯を選択" />
+                  <SelectValue placeholder="Select time" />
                 </SelectTrigger>
                 <SelectContent>
                   {[
@@ -161,7 +162,7 @@ const ReservationForm = () => {
                       <div className="flex items-center justify-between w-full">
                         <span>{label}</span>
                         {timeSlotReservations[value as TimeSlot] > 0 && (
-                          <span className="text-yellow-500 text-sm">予約あり</span>
+                          <AlertOctagon className="h-4 w-4 text-yellow-500" />
                         )}
                       </div>
                     </SelectItem>
@@ -171,7 +172,7 @@ const ReservationForm = () => {
             </div>
 
             <div>
-              <label className="block text-sm mb-2">お名前 *</label>
+              <label className="block text-sm mb-2">Name *</label>
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -180,7 +181,7 @@ const ReservationForm = () => {
             </div>
 
             <div>
-              <label className="block text-sm mb-2">メールアドレス</label>
+              <label className="block text-sm mb-2">Email</label>
               <Input
                 type="email"
                 value={email}
@@ -189,7 +190,7 @@ const ReservationForm = () => {
             </div>
 
             <div>
-              <label className="block text-sm mb-2">電話番号 *</label>
+              <label className="block text-sm mb-2">Phone *</label>
               <Input
                 type="tel"
                 value={phone}
@@ -199,15 +200,15 @@ const ReservationForm = () => {
             </div>
 
             <div>
-              <label className="block text-sm mb-2">人数 *</label>
+              <label className="block text-sm mb-2">Number of guests *</label>
               <Select onValueChange={setPeople} value={people}>
                 <SelectTrigger>
-                  <SelectValue placeholder="人数を選択" />
+                  <SelectValue placeholder="Select number" />
                 </SelectTrigger>
                 <SelectContent>
                   {[1, 2, 3, 4, 5, 6].map((num) => (
                     <SelectItem key={num} value={num.toString()}>
-                      {num}名
+                      {num}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -215,28 +216,27 @@ const ReservationForm = () => {
             </div>
 
             <div>
-              <label className="block text-sm mb-2">水風呂の温度 *</label>
+              <label className="block text-sm mb-2">Water temperature *</label>
               <Select onValueChange={setTemperature} value={temperature}>
                 <SelectTrigger>
-                  <SelectValue placeholder="温度を選択" />
+                  <SelectValue placeholder="Select temperature" />
                 </SelectTrigger>
                 <SelectContent>
                   {Array.from({ length: 16 }, (_, i) => i + 2).map((temp) => (
                     <SelectItem key={temp} value={temp.toString()}>
-                      {temp}℃
+                      {temp}°C
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-
           </div>
         </div>
 
         <div className="text-center mt-8">
-          <p className="mb-4 text-sauna-stone">料金: 40,000円（税込）</p>
+          <p className="mb-4 text-sauna-stone">Price: ¥40,000 (tax included)</p>
           <Button type="submit" className="w-full md:w-auto hover-lift">
-            予約する
+            Book
           </Button>
         </div>
       </form>
