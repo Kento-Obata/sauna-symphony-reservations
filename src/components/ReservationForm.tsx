@@ -131,7 +131,10 @@ const ReservationForm = () => {
           <div className="space-y-4">
             <div>
               <label className="block text-sm mb-2">時間帯</label>
-              <Select onValueChange={setTimeSlot} value={timeSlot}>
+              <Select 
+                onValueChange={(value: TimeSlot) => setTimeSlot(value)} 
+                value={timeSlot}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="時間帯を選択" />
                 </SelectTrigger>
