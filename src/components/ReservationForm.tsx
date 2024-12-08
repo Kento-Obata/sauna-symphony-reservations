@@ -14,10 +14,11 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ReservationStatus } from "@/components/ReservationStatus";
+import { TimeSlot, ReservationFormData } from "@/types/reservation";
 
 const ReservationForm = () => {
   const [date, setDate] = useState<Date | undefined>(undefined);
-  const [timeSlot, setTimeSlot] = useState<string>("");
+  const [timeSlot, setTimeSlot] = useState<TimeSlot | "">("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -48,15 +49,19 @@ const ReservationForm = () => {
     }
 
     try {
-      const { error } = await supabase.from("reservations").insert({
+      const reservationData: ReservationFormData = {
         date: format(date, "yyyy-MM-dd"),
-        time_slot: timeSlot,
+        time_slot: timeSlot as TimeSlot,
         guest_name: name,
         guest_count: parseInt(people),
         email: email || null,
         phone: phone,
         water_temperature: parseInt(temperature),
-      });
+      };
+
+      const { error } = await supabase
+        .from("reservations")
+        .insert(reservationData);
 
       if (error) throw error;
 
