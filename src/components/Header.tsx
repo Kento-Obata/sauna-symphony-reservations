@@ -37,12 +37,10 @@ export const Header = () => {
               </h2>
               <div className="space-y-3">
                 <p className="text-xs text-sauna-stone/90 font-light">
-                  予約前に最低5℃まで
-                  水温を選ぶだけ
+                  予約前に最低5℃まで水温を選ぶだけ
                 </p>
                 <p className="text-xs text-sauna-stone/90 font-light">
-                  詳細非公開、
-                  五感を刺激する究極のサウナ体験を
+                  詳細非公開 五感を刺激する究極のサウナ体験を
                 </p>
               </div>
             </div>
