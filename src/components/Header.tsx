@@ -1,7 +1,8 @@
 import { useState } from 'react';
 
 const Header = () => {
-  const [backgroundImage] = useState<string>('https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9');
+  // 最適化された画像URLを使用（幅1200px）
+  const [backgroundImage] = useState<string>('https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=80');
 
   return (
     <header className="relative h-screen flex items-center justify-center overflow-hidden">
@@ -9,9 +10,15 @@ const Header = () => {
         className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-1000"
         style={{
           backgroundImage: `url('${backgroundImage}')`,
+          willChange: 'transform', // パフォーマンス最適化
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-sauna-charcoal/90 to-sauna-charcoal/70 backdrop-blur-sm z-0" />
+      <div 
+        className="absolute inset-0 bg-gradient-to-b from-sauna-charcoal/90 to-sauna-charcoal/70 backdrop-blur-sm z-0"
+        style={{
+          willChange: 'opacity', // パフォーマンス最適化
+        }}
+      />
       
       <div className="relative z-10 w-full max-w-4xl mx-auto px-4">
         <div className="flex flex-col items-start space-y-8">

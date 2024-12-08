@@ -6,8 +6,8 @@ const Map = () => {
         width="100%"
         height="300"
         style={{ border: 0 }}
-        allowFullScreen
         loading="lazy"
+        fetchpriority="low"
         referrerPolicy="no-referrer-when-downgrade"
         className="rounded-lg shadow-lg"
       ></iframe>
