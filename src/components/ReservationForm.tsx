@@ -33,23 +33,15 @@ const ReservationForm = () => {
     if (!reservations) return [];
 
     const dateString = format(selectedDate, 'yyyy-MM-dd');
-    const MAX_GUESTS = 6;
     
-    const timeSlotCounts: Record<TimeSlot, number> = {
-      morning: 0,
-      afternoon: 0,
-      evening: 0
-    };
+    // Create a Set of time slots that have any reservations
+    const unavailableSlots = new Set(
+      reservations
+        .filter(r => r.date === dateString)
+        .map(r => r.time_slot)
+    );
 
-    reservations
-      .filter(r => r.date === dateString)
-      .forEach(r => {
-        timeSlotCounts[r.time_slot] += r.guest_count;
-      });
-
-    return Object.entries(timeSlotCounts)
-      .filter(([_, count]) => count >= MAX_GUESTS)
-      .map(([slot]) => slot as TimeSlot);
+    return Array.from(unavailableSlots);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -236,6 +228,7 @@ const ReservationForm = () => {
                 </SelectContent>
               </Select>
             </div>
+
           </div>
         </div>
 
