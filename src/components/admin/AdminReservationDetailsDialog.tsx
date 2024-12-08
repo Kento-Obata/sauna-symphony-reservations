@@ -63,7 +63,30 @@ export const AdminReservationDetailsDialog = ({
 
       if (error) throw error;
 
-      toast.success("予約情報を更新しました");
+      // Send update notification
+      const notificationResponse = await supabase.functions.invoke(
+        "send-update-notification",
+        {
+          body: {
+            date: date,
+            timeSlot: timeSlot,
+            guestName: guestName,
+            guestCount: parseInt(guestCount),
+            email: email || null,
+            phone: phone,
+            waterTemperature: parseInt(waterTemperature),
+            reservationCode: reservation.reservation_code,
+          },
+        }
+      );
+
+      if (notificationResponse.error) {
+        console.error("通知の送信に失敗しました:", notificationResponse.error);
+        toast.error("予約は更新されましたが、通知の送信に失敗しました");
+      } else {
+        toast.success("予約情報を更新しました");
+      }
+
       queryClient.invalidateQueries({ queryKey: ["reservations"] });
       setIsEditing(false);
     } catch (error) {
