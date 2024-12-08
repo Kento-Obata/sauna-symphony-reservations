@@ -26,8 +26,8 @@ export const ReservationCalendar = ({
     
     return (
       <div className="w-full h-full flex flex-col items-center justify-start pt-0.5 border-b-[1px] border-sauna-stone/50">
-        <span className="mb-1">{day.getDate()}</span>
-        <div className="text-xs pb-1 mt-0.5 translate-y-[2px]">
+        <span>{day.getDate()}</span>
+        <div className="text-xs translate-y-[-2px]">
           <ReservationStatus reservationCount={reservationCount} />
         </div>
       </div>
