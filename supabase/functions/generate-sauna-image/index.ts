@@ -6,18 +6,33 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  console.log('Function called with method:', req.method);
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    console.log('Handling CORS preflight request');
+    return new Response(null, { 
+      headers: corsHeaders,
+      status: 200
+    });
   }
 
   try {
-    console.log('Generating image with OpenAI...')
+    console.log('Starting image generation process...');
+    
+    // Verify OpenAI API key exists
+    const openAiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openAiKey) {
+      console.error('OpenAI API key not found');
+      throw new Error('OpenAI API key not configured');
+    }
+
+    console.log('Making request to OpenAI API...');
     const response = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`
+        'Authorization': `Bearer ${openAiKey}`
       },
       body: JSON.stringify({
         model: "dall-e-3",
@@ -26,26 +41,41 @@ serve(async (req) => {
         size: "1792x1024",
         quality: "hd"
       })
-    })
+    });
 
     if (!response.ok) {
-      const error = await response.json()
-      console.error('OpenAI API error:', error)
-      throw new Error('Failed to generate image')
+      const error = await response.json();
+      console.error('OpenAI API error:', error);
+      throw new Error(`OpenAI API error: ${error.error?.message || 'Unknown error'}`);
     }
 
-    const data = await response.json()
-    console.log('Image generated successfully')
+    const data = await response.json();
+    console.log('Successfully generated image');
     
     return new Response(
       JSON.stringify(data),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        },
+        status: 200
+      }
+    );
   } catch (error) {
-    console.error('Error in generate-sauna-image function:', error)
+    console.error('Error in generate-sauna-image function:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    )
+      JSON.stringify({ 
+        error: error.message,
+        details: 'An error occurred while generating the image'
+      }),
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        }, 
+        status: 500 
+      }
+    );
   }
-})
+});
