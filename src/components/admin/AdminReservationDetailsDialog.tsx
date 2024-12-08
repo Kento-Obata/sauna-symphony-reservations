@@ -58,7 +58,6 @@ export const AdminReservationDetailsDialog = ({
           water_temperature: parseInt(waterTemperature),
           time_slot: timeSlot,
           date: date,
-          reservation_code: reservation.reservation_code, // 予約コードを明示的に含める
         })
         .eq("id", reservation.id);
 
