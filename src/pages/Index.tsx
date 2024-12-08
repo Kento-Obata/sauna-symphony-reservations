@@ -1,5 +1,6 @@
 import { Header } from "@/components/Header";
 import ReservationForm from "@/components/ReservationForm";
+import Map from "@/components/Map";
 
 const Index = () => {
   return (
@@ -12,7 +13,7 @@ const Index = () => {
       <section className="max-w-4xl mx-auto px-4 py-20">
         <div className="mt-20 glass-card p-8">
           <h2 className="text-3xl font-bold mb-8 text-center text-gradient">
-            アクセス
+            Access
           </h2>
           
           <div className="space-y-6">
