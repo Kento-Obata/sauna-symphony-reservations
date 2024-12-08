@@ -1,8 +1,6 @@
 import { format } from "date-fns";
-import { ja } from "date-fns/locale";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Reservation, TimeSlot } from "@/types/reservation";
-import { TIME_SLOTS } from "@/components/TimeSlotSelect";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { ReservationDateSelect } from "./reservation-details/ReservationDateSelect";
+import { ReservationTimeSelect } from "./reservation-details/ReservationTimeSelect";
 
 interface AdminReservationDetailsDialogProps {
   open: boolean;
@@ -29,6 +29,7 @@ export const AdminReservationDetailsDialog = ({
   const [email, setEmail] = useState("");
   const [waterTemperature, setWaterTemperature] = useState("");
   const [timeSlot, setTimeSlot] = useState<TimeSlot>("morning");
+  const [date, setDate] = useState("");
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
@@ -39,6 +40,7 @@ export const AdminReservationDetailsDialog = ({
       setEmail(reservation.email || "");
       setWaterTemperature(reservation.water_temperature.toString());
       setTimeSlot(reservation.time_slot);
+      setDate(reservation.date);
     }
   }, [reservation]);
 
@@ -55,6 +57,7 @@ export const AdminReservationDetailsDialog = ({
           email: email || null,
           water_temperature: parseInt(waterTemperature),
           time_slot: timeSlot,
+          date: date,
         })
         .eq("id", reservation.id);
 
@@ -69,6 +72,10 @@ export const AdminReservationDetailsDialog = ({
     }
   };
 
+  const handleDateChange = (newDate: Date) => {
+    setDate(format(newDate, "yyyy-MM-dd"));
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -77,37 +84,17 @@ export const AdminReservationDetailsDialog = ({
         </DialogHeader>
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <div className="text-muted-foreground">予約日:</div>
-            <div>
-              {format(new Date(reservation.date), "yyyy年MM月dd日(E)", {
-                locale: ja,
-              })}
-            </div>
+            <ReservationDateSelect
+              date={date}
+              onDateChange={handleDateChange}
+              isEditing={isEditing}
+            />
 
-            <div className="text-muted-foreground">時間帯:</div>
-            <div>
-              {isEditing ? (
-                <Select 
-                  value={timeSlot} 
-                  onValueChange={(value: TimeSlot) => setTimeSlot(value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(TIME_SLOTS).map(([key, slot]) => (
-                      <SelectItem key={key} value={key as TimeSlot}>
-                        {slot.start}-{slot.end}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                `${TIME_SLOTS[reservation.time_slot].start}-${
-                  TIME_SLOTS[reservation.time_slot].end
-                }`
-              )}
-            </div>
+            <ReservationTimeSelect
+              timeSlot={timeSlot}
+              onTimeSlotChange={setTimeSlot}
+              isEditing={isEditing}
+            />
 
             <div className="text-muted-foreground">お名前:</div>
             <div>
