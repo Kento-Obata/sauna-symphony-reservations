@@ -24,7 +24,7 @@ interface AdminReservationDialogProps {
 }
 
 export const AdminReservationDialog = ({ 
-  selectedDate, 
+  selectedDate,
   timeSlotReservations,
   initialTimeSlot,
   trigger
@@ -88,10 +88,10 @@ export const AdminReservationDialog = ({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="timeSlot">時間帯</Label>
             <TimeSlotSelect
               value={timeSlot}
-              onChange={setTimeSlot}
+              onValueChange={setTimeSlot}
+              selectedDate={selectedDate}
               timeSlotReservations={timeSlotReservations}
             />
           </div>
