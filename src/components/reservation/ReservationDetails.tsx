@@ -56,12 +56,14 @@ export const ReservationDetails = ({
   const handleMonthSelect = (monthStr: string) => {
     const selectedMonth = new Date(monthStr);
     setDate(selectedMonth);
+    setTimeSlot(""); // Reset time slot when month changes
   };
 
   const handleDateSelect = (day: number) => {
     if (!date) return;
     const newDate = new Date(date.getFullYear(), date.getMonth(), day);
     setDate(newDate);
+    setTimeSlot(""); // Reset time slot when date changes
   };
 
   const getDaysArray = (selectedDate: Date) => {
