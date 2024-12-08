@@ -60,13 +60,18 @@ export const TimeSlotSelect = ({
               timeSlotReservations[value as TimeSlot] >= MAX_RESERVATIONS
             ) : false;
 
+            const reservationCount = timeSlotReservations[value as TimeSlot];
+            const statusLabel = reservationCount > 0 
+              ? `(予約済み: ${reservationCount}件)`
+              : '';
+
             return (
               <SelectItem 
                 key={value} 
                 value={value}
                 disabled={isDisabled}
               >
-                {label}
+                {label} {statusLabel}
               </SelectItem>
             );
           })}

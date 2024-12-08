@@ -29,6 +29,38 @@ export const AdminReservationDialog = ({
   const [phone, setPhone] = useState("");
   const [people, setPeople] = useState("");
   const [temperature, setTemperature] = useState("");
+  const [timeSlotReservations, setTimeSlotReservations] = useState<Record<TimeSlot, number>>({
+    morning: 0,
+    afternoon: 0,
+    evening: 0,
+  });
+
+  useEffect(() => {
+    if (date) {
+      const fetchReservations = async () => {
+        const { data: reservations } = await supabase
+          .from("reservations")
+          .select("*")
+          .eq("date", format(date, "yyyy-MM-dd"));
+
+        if (reservations) {
+          const counts: Record<TimeSlot, number> = {
+            morning: 0,
+            afternoon: 0,
+            evening: 0,
+          };
+
+          reservations.forEach((reservation) => {
+            counts[reservation.time_slot as TimeSlot]++;
+          });
+
+          setTimeSlotReservations(counts);
+        }
+      };
+
+      fetchReservations();
+    }
+  }, [date]);
 
   // Update date when defaultDate changes
   useEffect(() => {
@@ -118,11 +150,7 @@ export const AdminReservationDialog = ({
             setTemperature={setTemperature}
             date={date}
             setDate={setDate}
-            timeSlotReservations={{
-              morning: 0,
-              afternoon: 0,
-              evening: 0,
-            }}
+            timeSlotReservations={timeSlotReservations}
           />
 
           <div className="flex justify-end gap-2">
