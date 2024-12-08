@@ -137,7 +137,9 @@ const ReservationDetail = () => {
             <div>
               <h2 className="text-sm text-sauna-stone/60">時間帯</h2>
               <p className="text-lg">
-                {TIME_SLOTS[reservation.time_slot]}
+                {reservation.time_slot === "morning" && "午前 10:00-12:30"}
+                {reservation.time_slot === "afternoon" && "午後 13:30-16:00"}
+                {reservation.time_slot === "evening" && "夕方 17:00-19:30"}
               </p>
             </div>
 
