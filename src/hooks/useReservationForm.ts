@@ -71,7 +71,7 @@ export const useReservationForm = () => {
     setShowConfirmDialog(true);
   };
 
-  const handleConfirmReservation = async (paymentMethod: "cash" | "online") => {
+  const handleConfirmReservation = async () => {
     try {
       setIsSubmitting(true);
 
@@ -103,14 +103,7 @@ export const useReservationForm = () => {
         return;
       }
 
-      if (paymentMethod === "online") {
-        // Store reservation data in localStorage before redirect
-        localStorage.setItem('pendingReservation', JSON.stringify(reservationData));
-        window.location.href = "https://square.link/u/w4KjWD66";
-        return;
-      }
-
-      // For cash payment, directly insert the reservation
+      // Insert the reservation
       const { data: newReservation, error } = await supabase
         .from("reservations")
         .insert(reservationData)

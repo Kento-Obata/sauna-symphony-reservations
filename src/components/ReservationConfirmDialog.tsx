@@ -8,19 +8,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { ReservationFormData } from "@/types/reservation";
 import { format } from "date-fns";
-import { useState } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Link } from "react-router-dom";
 
 interface ReservationConfirmDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (paymentMethod: "cash" | "online") => void;
+  onConfirm: () => void;
   reservation: ReservationFormData;
   onEdit: () => void;
   isSubmitting?: boolean;
@@ -42,16 +38,6 @@ export function ReservationConfirmDialog({
   isSubmitting = false,
   reservationCode,
 }: ReservationConfirmDialogProps) {
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<"cash" | "online">("cash");
-
-  const handlePaymentMethodSelect = (method: "cash" | "online") => {
-    setSelectedPaymentMethod(method);
-  };
-
-  const handleConfirm = () => {
-    onConfirm(selectedPaymentMethod);
-  };
-
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
       <AlertDialogContent className="sm:max-w-[500px]">
@@ -66,7 +52,7 @@ export function ReservationConfirmDialog({
             <div className="py-4">
               <p className="text-center text-muted-foreground mb-4">
                 予約内容の確認メールをお送りしました。
-                {selectedPaymentMethod === "cash" && "当日は現金でのお支払いをお願いいたします。"}
+                当日は現金でのお支払いをお願いいたします。
               </p>
               <div className="text-center">
                 <Link 
@@ -88,7 +74,7 @@ export function ReservationConfirmDialog({
             <AlertDialogHeader>
               <AlertDialogTitle>予約内容の確認</AlertDialogTitle>
               <AlertDialogDescription>
-                予約内容とお支払い方法をご確認ください。
+                予約内容をご確認ください。
               </AlertDialogDescription>
             </AlertDialogHeader>
             
@@ -123,21 +109,10 @@ export function ReservationConfirmDialog({
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <h4 className="font-medium">お支払い方法</h4>
-                <RadioGroup 
-                  value={selectedPaymentMethod} 
-                  onValueChange={(value: "cash" | "online") => handlePaymentMethodSelect(value)}
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="cash" id="cash" />
-                    <Label htmlFor="cash">現地でのお支払い (¥40,000)</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="online" id="online" />
-                    <Label htmlFor="online">オンライン決済 (¥40,000)</Label>
-                  </div>
-                </RadioGroup>
+              <div className="text-center">
+                <p className="text-muted-foreground">
+                  料金: ¥40,000 (税込) - 当日現金でのお支払いとなります。
+                </p>
               </div>
             </div>
 
@@ -155,7 +130,7 @@ export function ReservationConfirmDialog({
                     内容を修正
                   </Button>
                   <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleConfirm}>
+                  <AlertDialogAction onClick={onConfirm}>
                     予約を確定
                   </AlertDialogAction>
                 </>
