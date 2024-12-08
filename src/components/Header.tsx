@@ -17,7 +17,7 @@ const Header = () => {
         <div className="flex flex-col items-start space-y-8">
           {/* Brand and Location */}
           <div className="space-y-3">
-            <h1 className="text-8xl font-bold text-gradient">Sauna U</h1>
+            <h1 className="text-6xl font-bold text-gradient">Sauna U</h1>
             <p className="text-xl text-sauna-stone/90 font-medium tracking-wide">
               福岡から車で30分
             </p>
