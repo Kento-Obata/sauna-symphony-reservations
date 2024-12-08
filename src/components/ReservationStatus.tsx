@@ -10,7 +10,7 @@ export const ReservationStatus = ({ guestCount }: ReservationStatusProps) => {
   const getStatusIcon = () => {
     if (guestCount === 0) {
       return {
-        icon: <Circle className="h-4 w-4 text-green-500" />,
+        icon: <Circle className="h-4 w-4 text-green-500 fill-none" />,
         label: "予約可能",
       };
     } else if (guestCount >= 6) {
