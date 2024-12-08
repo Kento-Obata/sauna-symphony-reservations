@@ -5,5 +5,7 @@ enabled = true
 url = "https://knjbxqiyngztylnzxzln.supabase.co"
 
 [functions]
+[functions.generate-sauna-image]
+verify_jwt = false
 [functions.send-reservation-notification]
 verify_jwt = false
