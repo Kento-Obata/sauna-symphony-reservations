@@ -6,7 +6,7 @@ import { PaymentCallback } from "./components/PaymentCallback";
 import ReservationComplete from "./pages/ReservationComplete";
 import ReservationDetail from "./pages/ReservationDetail";
 import { Toaster } from "./components/ui/sonner";
-import Access from "./pages/Access";
+import Index from "./pages/Index";
 import "./App.css";
 
 const queryClient = new QueryClient();
@@ -16,7 +16,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <Router>
         <Routes>
-          <Route path="/" element={<Access />} />
+          <Route path="/" element={<Index />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/payment/callback" element={<PaymentCallback />} />
