@@ -12,14 +12,6 @@ import {
 import { toast } from "@/components/ui/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { ReservationStatus } from "@/components/ReservationStatus";
@@ -34,7 +26,7 @@ const Index = () => {
   const [temperature, setTemperature] = useState("");
 
   // Fetch reservations
-  const { data: reservations, isLoading } = useQuery({
+  const { data: reservations } = useQuery({
     queryKey: ["reservations"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -78,6 +70,23 @@ const Index = () => {
     }
   };
 
+  // カレンダーの日付に予約状況を表示するための関数
+  const getDayContent = (day: Date) => {
+    if (!reservations) return null;
+
+    const dateReservations = reservations.filter(
+      (r) => format(new Date(r.date), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd')
+    );
+
+    const totalGuests = dateReservations.reduce((sum, r) => sum + r.guest_count, 0);
+    
+    return totalGuests > 0 ? (
+      <div className="absolute bottom-0 right-0">
+        <ReservationStatus guestCount={totalGuests} />
+      </div>
+    ) : null;
+  };
+
   return (
     <div className="min-h-screen pb-20">
       <header className="relative h-screen flex items-center justify-center overflow-hidden">
@@ -95,45 +104,6 @@ const Index = () => {
       </header>
 
       <section className="max-w-4xl mx-auto px-4 py-20">
-        <div className="glass-card p-8 animate-fade-in mb-12">
-          <h2 className="text-3xl font-bold mb-8 text-center text-gradient">
-            予約状況
-          </h2>
-          
-          {isLoading ? (
-            <p className="text-center">読み込み中...</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>状況</TableHead>
-                    <TableHead>日付</TableHead>
-                    <TableHead>時間帯</TableHead>
-                    <TableHead>予約人数</TableHead>
-                    <TableHead>水風呂温度</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {reservations?.map((reservation) => (
-                    <TableRow key={reservation.id}>
-                      <TableCell>
-                        <ReservationStatus guestCount={reservation.guest_count} />
-                      </TableCell>
-                      <TableCell>
-                        {format(new Date(reservation.date), 'yyyy年MM月dd日', { locale: ja })}
-                      </TableCell>
-                      <TableCell>{getTimeSlotLabel(reservation.time_slot)}</TableCell>
-                      <TableCell>{reservation.guest_count}名</TableCell>
-                      <TableCell>{reservation.water_temperature}℃</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </div>
-
         <div className="glass-card p-8 animate-fade-in">
           <h2 className="text-3xl font-bold mb-8 text-center text-gradient">
             ご予約
@@ -147,6 +117,14 @@ const Index = () => {
                   selected={date}
                   onSelect={setDate}
                   className="rounded-md border"
+                  components={{
+                    DayContent: ({ date }) => (
+                      <div className="relative w-full h-full">
+                        <span>{date.getDate()}</span>
+                        {getDayContent(date)}
+                      </div>
+                    ),
+                  }}
                 />
               </div>
               
