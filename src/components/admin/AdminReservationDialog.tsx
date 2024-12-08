@@ -35,7 +35,7 @@ export const AdminReservationDialog = ({
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [guestCount, setGuestCount] = useState(1);
-  const [waterTemperature, setWaterTemperature] = useState(40);
+  const [waterTemperature, setWaterTemperature] = useState(2);  // Changed from 40 to 2
   const queryClient = useQueryClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -73,7 +73,7 @@ export const AdminReservationDialog = ({
     setEmail("");
     setPhone("");
     setGuestCount(1);
-    setWaterTemperature(40);
+    setWaterTemperature(2);  // Reset to 2 as well
   };
 
   return (
@@ -145,8 +145,8 @@ export const AdminReservationDialog = ({
             <Input
               id="waterTemperature"
               type="number"
-              min={35}
-              max={45}
+              min={2}  // Updated min value
+              max={17}  // Updated max value to match previous constraint
               value={waterTemperature}
               onChange={(e) => setWaterTemperature(parseInt(e.target.value))}
               required
