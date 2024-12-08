@@ -1,7 +1,23 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Search } from 'lucide-react';
+import { toast } from 'sonner';
 
 export const Header = () => {
   const [backgroundImage] = useState<string>('https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=80');
+  const [reservationCode, setReservationCode] = useState('');
+  const navigate = useNavigate();
+
+  const handleReservationLookup = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reservationCode.trim()) {
+      toast.error('予約コードを入力してください');
+      return;
+    }
+    navigate(`/reservation/${reservationCode.trim().toUpperCase()}`);
+  };
 
   return (
     <header className="relative h-[60vh] flex items-center justify-center overflow-hidden">
@@ -18,6 +34,22 @@ export const Header = () => {
           willChange: 'opacity',
         }}
       />
+      
+      {/* Reservation Lookup Form */}
+      <div className="absolute top-4 right-4 z-20">
+        <form onSubmit={handleReservationLookup} className="flex gap-2">
+          <Input
+            type="text"
+            placeholder="予約コードを入力"
+            value={reservationCode}
+            onChange={(e) => setReservationCode(e.target.value)}
+            className="w-40 bg-sauna-charcoal/50 border-sauna-stone/30 text-white placeholder:text-sauna-stone/50"
+          />
+          <Button type="submit" variant="secondary" size="icon">
+            <Search className="h-4 w-4" />
+          </Button>
+        </form>
+      </div>
       
       <div className="relative z-10 w-full mx-auto text-center pt-8">
         <div className="flex flex-col items-center space-y-4 px-4 md:px-0">
