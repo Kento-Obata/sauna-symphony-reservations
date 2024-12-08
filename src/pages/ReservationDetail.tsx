@@ -8,12 +8,11 @@ import { toast } from "sonner";
 import { ReservationDetailsCard } from "@/components/reservation/ReservationDetailsCard";
 
 const ReservationDetail = () => {
-  const params = useParams<{ code: string }>();
-  const code = params.code;
+  const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
   const [showModifyDialog, setShowModifyDialog] = useState(false);
 
-  console.log("Accessing reservation with code:", code);
+  console.log("Current reservation code:", code);
 
   const { data: reservation, isLoading, error } = useQuery({
     queryKey: ["reservation", code],
