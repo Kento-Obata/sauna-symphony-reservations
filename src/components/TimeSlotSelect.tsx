@@ -60,22 +60,13 @@ export const TimeSlotSelect = ({
               isTimeSlotDisabled(value as TimeSlot, selectedDate)
             ) : false;
 
-            const remainingSlots = MAX_RESERVATIONS - (timeSlotReservations[value as TimeSlot] || 0);
-
             return (
               <SelectItem 
                 key={value} 
                 value={value}
                 disabled={isDisabled}
               >
-                <div className="flex items-center justify-between w-full">
-                  <span>{label}</span>
-                  {!isDisabled && remainingSlots < MAX_RESERVATIONS && (
-                    <span className="text-green-500 text-sm font-medium">
-                      残り{remainingSlots}枠
-                    </span>
-                  )}
-                </div>
+                {label}
               </SelectItem>
             );
           })}
