@@ -87,6 +87,32 @@ const ReservationForm = () => {
 
       if (error) throw error;
 
+      // Send notifications
+      const notificationResponse = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-reservation-notification`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            date: reservationData.date,
+            timeSlot: reservationData.time_slot,
+            guestName: reservationData.guest_name,
+            guestCount: reservationData.guest_count,
+            email: reservationData.email,
+            phone: reservationData.phone,
+            waterTemperature: reservationData.water_temperature,
+          }),
+        }
+      );
+
+      if (!notificationResponse.ok) {
+        console.error("Failed to send notifications");
+        toast.error("予約は完了しましたが、通知の送信に失敗しました。");
+      }
+
       toast.success("予約を受け付けました");
       
       setDate(undefined);
