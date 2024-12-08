@@ -83,7 +83,7 @@ export const useReservationForm = () => {
       };
 
       if (paymentMethod === "online") {
-        window.location.href = "https://your-payment-link.com";
+        window.location.href = "https://square.link/u/w4KjWD66";
         return;
       }
 
