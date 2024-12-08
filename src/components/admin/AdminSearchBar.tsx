@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -13,6 +13,8 @@ import { ja } from "date-fns/locale";
 interface AdminSearchBarProps {
   nameQuery: string;
   setNameQuery: (query: string) => void;
+  phoneQuery: string;
+  setPhoneQuery: (query: string) => void;
   dateQuery: Date | undefined;
   setDateQuery: (date: Date | undefined) => void;
   onClearFilters: () => void;
@@ -21,6 +23,8 @@ interface AdminSearchBarProps {
 export const AdminSearchBar = ({
   nameQuery,
   setNameQuery,
+  phoneQuery,
+  setPhoneQuery,
   dateQuery,
   setDateQuery,
   onClearFilters,
@@ -32,6 +36,14 @@ export const AdminSearchBar = ({
           placeholder="お客様名で検索"
           value={nameQuery}
           onChange={(e) => setNameQuery(e.target.value)}
+          className="w-full"
+        />
+      </div>
+      <div className="flex-1">
+        <Input
+          placeholder="電話番号で検索"
+          value={phoneQuery}
+          onChange={(e) => setPhoneQuery(e.target.value)}
           className="w-full"
         />
       </div>
@@ -57,7 +69,7 @@ export const AdminSearchBar = ({
           />
         </PopoverContent>
       </Popover>
-      {(nameQuery || dateQuery) && (
+      {(nameQuery || phoneQuery || dateQuery) && (
         <Button
           variant="ghost"
           size="icon"
