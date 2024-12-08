@@ -92,6 +92,7 @@ export const AdminReservationDialog = ({
             temperature={temperature}
             setTemperature={setTemperature}
             date={date}
+            setDate={setDate}
             timeSlotReservations={{
               morning: 0,
               afternoon: 0,

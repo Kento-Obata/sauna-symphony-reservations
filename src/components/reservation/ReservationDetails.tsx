@@ -8,6 +8,16 @@ import {
 } from "@/components/ui/select";
 import { TimeSlot } from "@/types/reservation";
 import { TimeSlotSelect } from "@/components/TimeSlotSelect";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { ja } from "date-fns/locale";
+import { CalendarIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface ReservationDetailsProps {
   timeSlot: TimeSlot | "";
@@ -23,6 +33,7 @@ interface ReservationDetailsProps {
   temperature: string;
   setTemperature: (value: string) => void;
   date: Date | undefined;
+  setDate?: (date: Date | undefined) => void;
   timeSlotReservations: Record<TimeSlot, number>;
 }
 
@@ -40,10 +51,41 @@ export const ReservationDetails = ({
   temperature,
   setTemperature,
   date,
+  setDate,
   timeSlotReservations,
 }: ReservationDetailsProps) => {
   return (
     <div className="space-y-4">
+      {setDate && (
+        <div>
+          <label className="block text-sm mb-2">予約日 *</label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full justify-start text-left font-normal"
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {date ? (
+                  format(date, "yyyy年MM月dd日 (E)", { locale: ja })
+                ) : (
+                  <span>日付を選択</span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={date}
+                onSelect={setDate}
+                initialFocus
+                locale={ja}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+      )}
+
       <TimeSlotSelect
         value={timeSlot}
         onValueChange={setTimeSlot}
