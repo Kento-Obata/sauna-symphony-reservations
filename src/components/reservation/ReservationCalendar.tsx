@@ -16,9 +16,9 @@ interface ReservationCalendarProps {
 }
 
 const TIME_SLOT_LABELS = {
-  morning: `10:00-12:30`,
-  afternoon: `13:30-16:00`,
-  evening: `17:00-19:30`,
+  morning: "10:00-12:30",
+  afternoon: "13:30-16:00",
+  evening: "17:00-19:30",
 } as const;
 
 export const ReservationCalendar = ({
@@ -109,6 +109,7 @@ export const ReservationCalendar = ({
                 <TableCell className="font-medium">{timeRange}</TableCell>
                 {daysInWeek.map((day) => {
                   const slotReservations = getReservationsForSlot(day, slot as keyof typeof TIME_SLOTS);
+                  const reservationCount = slotReservations.length;
                   return (
                     <TableCell key={day.toString()} className="text-center">
                       {isAdmin ? (
@@ -118,12 +119,19 @@ export const ReservationCalendar = ({
                           initialTimeSlot={slot as TimeSlot}
                           trigger={
                             <button className="w-full h-full min-h-[40px] hover:bg-gray-50 rounded-md transition-colors">
-                              <ReservationStatus reservationCount={slotReservations.length} />
+                              <ReservationStatus reservationCount={reservationCount} />
                             </button>
                           }
                         />
                       ) : (
-                        <ReservationStatus reservationCount={slotReservations.length} />
+                        <div className="flex items-center justify-center space-x-2">
+                          <ReservationStatus reservationCount={reservationCount} />
+                          <span className="text-sm text-gray-600">
+                            {reservationCount === 0 ? "予約可能" :
+                             reservationCount < 3 ? "残りわずか" :
+                             "予約不可"}
+                          </span>
+                        </div>
                       )}
                     </TableCell>
                   );
