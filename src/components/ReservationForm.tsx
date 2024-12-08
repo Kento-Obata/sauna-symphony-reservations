@@ -133,7 +133,11 @@ const ReservationForm = () => {
     return <div>予約情報の読み込みに失敗しました。</div>;
   }
 
-  const timeSlotReservations = date ? getTimeSlotReservations(date) : {};
+  const timeSlotReservations = date ? getTimeSlotReservations(date) : {
+    morning: 0,
+    afternoon: 0,
+    evening: 0
+  };
 
   const currentReservation: ReservationFormData | null = date && timeSlot ? {
     date: format(date, "yyyy-MM-dd"),
