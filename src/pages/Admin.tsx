@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { format } from "date-fns"; // Add this import
+import { ja } from "date-fns/locale"; // Make sure this import is present
 import { useReservations } from "@/hooks/useReservations";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
