@@ -12,12 +12,18 @@ import {
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
+import { format, isBefore, addHours, setHours, setMinutes } from "date-fns";
 import { ReservationStatus } from "@/components/ReservationStatus";
 import { TimeSlot, ReservationFormData } from "@/types/reservation";
 import { AlertOctagon } from "lucide-react";
 import { ReservationConfirmDialog } from "./ReservationConfirmDialog";
-import { useReservations } from "@/hooks/useReservations"; // Add this import
+import { useReservations } from "@/hooks/useReservations";
+
+const TIME_SLOTS = {
+  morning: { start: '10:00', end: '12:30' },
+  afternoon: { start: '13:30', end: '16:00' },
+  evening: { start: '17:00', end: '19:30' }
+} as const;
 
 const ReservationForm = () => {
   const [date, setDate] = useState<Date | undefined>(undefined);
@@ -37,7 +43,6 @@ const ReservationForm = () => {
 
     const dateString = format(selectedDate, 'yyyy-MM-dd');
     
-    // Count reservations per time slot
     const slotReservations = reservations
       .filter(r => r.date === dateString)
       .reduce((acc, r) => {
@@ -72,7 +77,6 @@ const ReservationForm = () => {
       };
 
       if (paymentMethod === "online") {
-        // Here you would integrate with your payment provider
         window.location.href = "https://your-payment-link.com";
         return;
       }
@@ -99,6 +103,16 @@ const ReservationForm = () => {
       console.error("Error inserting reservation:", error);
       toast.error("予約の登録に失敗しました。もう一度お試しください。");
     }
+  };
+
+  const isTimeSlotDisabled = (slot: TimeSlot, selectedDate: Date) => {
+    const now = new Date();
+    const twoHoursFromNow = addHours(now, 2);
+    
+    const [startHour, startMinute] = TIME_SLOTS[slot].start.split(':').map(Number);
+    const slotTime = setMinutes(setHours(selectedDate, startHour), startMinute);
+    
+    return isBefore(slotTime, twoHoursFromNow);
   };
 
   const getDayContent = (day: Date) => {
@@ -154,6 +168,7 @@ const ReservationForm = () => {
               mode="single"
               selected={date}
               onSelect={setDate}
+              disabled={(date) => isBefore(date, new Date())}
               className="rounded-md border"
               components={{
                 DayContent: ({ date }) => getDayContent(date)
@@ -180,7 +195,10 @@ const ReservationForm = () => {
                     <SelectItem 
                       key={value} 
                       value={value}
-                      disabled={timeSlotReservations[value as TimeSlot] >= 1}
+                      disabled={
+                        timeSlotReservations[value as TimeSlot] >= 1 ||
+                        (date && isTimeSlotDisabled(value as TimeSlot, date))
+                      }
                     >
                       <div className="flex items-center justify-between w-full">
                         <span>{label}</span>
