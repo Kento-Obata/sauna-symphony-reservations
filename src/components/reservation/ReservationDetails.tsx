@@ -8,11 +8,10 @@ import {
 } from "@/components/ui/select";
 import { TimeSlot } from "@/types/reservation";
 import { TimeSlotSelect } from "@/components/TimeSlotSelect";
-import { format, addMonths, getDaysInMonth } from "date-fns";
-import { ja } from "date-fns/locale";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { MonthSelector } from "./MonthSelector";
+import { DaySelector } from "./DaySelector";
+import { isValid } from "date-fns";
 
 interface ReservationDetailsProps {
   timeSlot: TimeSlot | "";
@@ -50,84 +49,45 @@ export const ReservationDetails = ({
   timeSlotReservations,
 }: ReservationDetailsProps) => {
   const isMobile = useIsMobile();
-  const today = new Date();
-  const months = Array.from({ length: 12 }, (_, i) => addMonths(today, i));
 
   const handleMonthSelect = (monthStr: string) => {
-    const selectedMonth = new Date(monthStr);
-    setDate(selectedMonth);
-    setTimeSlot(""); // Reset time slot when month changes
+    try {
+      const selectedMonth = new Date(monthStr);
+      if (!isValid(selectedMonth)) {
+        console.error("Invalid month selected:", monthStr);
+        return;
+      }
+      setDate(selectedMonth);
+      setTimeSlot(""); // Reset time slot when month changes
+    } catch (error) {
+      console.error("Error selecting month:", error);
+    }
   };
 
   const handleDateSelect = (day: number) => {
-    if (!date) return;
-    const newDate = new Date(date.getFullYear(), date.getMonth(), day);
-    setDate(newDate);
-    setTimeSlot(""); // Reset time slot when date changes
-  };
-
-  const getDaysArray = (selectedDate: Date) => {
-    const daysInMonth = getDaysInMonth(selectedDate);
-    return Array.from({ length: daysInMonth }, (_, i) => i + 1);
+    if (!date || !isValid(date)) {
+      console.error("Invalid date for day selection:", date);
+      return;
+    }
+    try {
+      const newDate = new Date(date.getFullYear(), date.getMonth(), day);
+      if (!isValid(newDate)) {
+        console.error("Invalid date created:", newDate);
+        return;
+      }
+      setDate(newDate);
+      setTimeSlot(""); // Reset time slot when date changes
+    } catch (error) {
+      console.error("Error selecting date:", error);
+    }
   };
 
   return (
     <div className="space-y-4">
       {isMobile && (
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm mb-2">月を選択 *</label>
-            <Select
-              value={date ? format(date, "yyyy-MM") : undefined}
-              onValueChange={handleMonthSelect}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="月を選択" />
-              </SelectTrigger>
-              <SelectContent>
-                {months.map((month) => (
-                  <SelectItem
-                    key={format(month, "yyyy-MM")}
-                    value={format(month, "yyyy-MM")}
-                  >
-                    {format(month, "yyyy年MM月", { locale: ja })}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {date && (
-            <div>
-              <label className="block text-sm mb-2">日付を選択 *</label>
-              <ScrollArea className="h-[200px] border rounded-md p-2">
-                <div className="grid grid-cols-4 gap-2">
-                  {getDaysArray(date).map((day) => {
-                    const dayDate = new Date(
-                      date.getFullYear(),
-                      date.getMonth(),
-                      day
-                    );
-                    const isSelected =
-                      date &&
-                      day === date.getDate() &&
-                      date.getMonth() === dayDate.getMonth();
-
-                    return (
-                      <Button
-                        key={day}
-                        variant={isSelected ? "default" : "outline"}
-                        className="w-full"
-                        onClick={() => handleDateSelect(day)}
-                      >
-                        {day}日
-                      </Button>
-                    );
-                  })}
-                </div>
-              </ScrollArea>
-            </div>
-          )}
+          <MonthSelector date={date} onMonthSelect={handleMonthSelect} />
+          {date && <DaySelector date={date} onDaySelect={handleDateSelect} />}
         </div>
       )}
 
