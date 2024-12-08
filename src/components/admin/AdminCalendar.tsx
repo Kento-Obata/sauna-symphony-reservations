@@ -14,6 +14,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { TIME_SLOTS } from "@/components/TimeSlotSelect";
 import { Reservation } from "@/types/reservation";
 import { AdminReservationDialog } from "./AdminReservationDialog";
+import { AdminReservationDetailsDialog } from "./AdminReservationDetailsDialog";
 
 interface AdminCalendarProps {
   reservations?: Reservation[];
@@ -28,6 +29,8 @@ export const AdminCalendar = ({
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
   const [showReservationDialog, setShowReservationDialog] = useState(false);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
 
   const start = startOfWeek(currentDate, { weekStartsOn: 1 });
   const end = endOfWeek(currentDate, { weekStartsOn: 1 });
@@ -43,9 +46,15 @@ export const AdminCalendar = ({
   };
 
   const handleCellClick = (date: Date, timeSlot: string) => {
-    setSelectedDate(date);
-    setSelectedTimeSlot(timeSlot);
-    setShowReservationDialog(true);
+    const slotReservations = getReservationsForDateAndSlot(date, timeSlot);
+    if (slotReservations.length === 1) {
+      setSelectedReservation(slotReservations[0]);
+      setShowDetailsDialog(true);
+    } else {
+      setSelectedDate(date);
+      setSelectedTimeSlot(timeSlot);
+      setShowReservationDialog(true);
+    }
     if (onDateSelect) {
       onDateSelect(date);
     }
@@ -136,6 +145,12 @@ export const AdminCalendar = ({
         onOpenChange={setShowReservationDialog}
         defaultDate={selectedDate}
         defaultTimeSlot={selectedTimeSlot as any}
+      />
+
+      <AdminReservationDetailsDialog
+        open={showDetailsDialog}
+        onOpenChange={setShowDetailsDialog}
+        reservation={selectedReservation}
       />
     </div>
   );

@@ -16,50 +16,41 @@ export const AdminUpcomingReservations = ({
   reservations = [],
   onStatusChange,
 }: AdminUpcomingReservationsProps) => {
-  const sortedReservations = [...reservations].sort((a, b) => {
-    const dateComparison = a.date.localeCompare(b.date);
-    if (dateComparison !== 0) return dateComparison;
-    
-    const timeSlotOrder = { morning: 0, afternoon: 1, evening: 2 };
-    return timeSlotOrder[a.time_slot] - timeSlotOrder[b.time_slot];
-  });
+  const nextReservation = reservations[0];
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>次回の予約</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {sortedReservations.slice(0, 5).map((reservation) => (
-          <div
-            key={reservation.id}
-            className="border-b last:border-b-0 pb-4 last:pb-0"
-          >
+      <CardContent>
+        {nextReservation ? (
+          <div>
             <div className="flex justify-between items-start mb-2">
               <div>
                 <div className="font-medium">
-                  {format(new Date(reservation.date), "M月d日(E)", {
+                  {format(new Date(nextReservation.date), "M月d日(E)", {
                     locale: ja,
                   })}
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  {TIME_SLOTS[reservation.time_slot].start}-
-                  {TIME_SLOTS[reservation.time_slot].end}
+                  {TIME_SLOTS[nextReservation.time_slot].start}-
+                  {TIME_SLOTS[nextReservation.time_slot].end}
                 </div>
               </div>
               <div className="text-right">
-                <div className="font-medium">{reservation.guest_name}様</div>
+                <div className="font-medium">{nextReservation.guest_name}様</div>
                 <div className="text-sm text-muted-foreground">
-                  {reservation.guest_count}名
+                  {nextReservation.guest_count}名
                 </div>
               </div>
             </div>
             <div className="text-sm text-muted-foreground">
-              <div>水風呂: {reservation.water_temperature}°C</div>
-              <div>TEL: {reservation.phone}</div>
-              {reservation.email && <div>Email: {reservation.email}</div>}
+              <div>水風呂: {nextReservation.water_temperature}°C</div>
+              <div>TEL: {nextReservation.phone}</div>
+              {nextReservation.email && <div>Email: {nextReservation.email}</div>}
             </div>
-            {reservation.status !== "cancelled" && onStatusChange && (
+            {nextReservation.status !== "cancelled" && onStatusChange && (
               <div className="mt-2 flex justify-end">
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
@@ -82,7 +73,7 @@ export const AdminUpcomingReservations = ({
                     <AlertDialogFooter>
                       <AlertDialogCancel>いいえ</AlertDialogCancel>
                       <AlertDialogAction
-                        onClick={() => onStatusChange(reservation.id, "cancelled")}
+                        onClick={() => onStatusChange(nextReservation.id, "cancelled")}
                       >
                         はい
                       </AlertDialogAction>
@@ -92,9 +83,7 @@ export const AdminUpcomingReservations = ({
               </div>
             )}
           </div>
-        ))}
-
-        {sortedReservations.length === 0 && (
+        ) : (
           <div className="text-center text-muted-foreground py-4">
             予約はありません
           </div>
