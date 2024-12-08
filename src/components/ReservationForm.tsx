@@ -29,6 +29,29 @@ const ReservationForm = () => {
 
   const { data: reservations, isLoading, error } = useReservations();
 
+  const getUnavailableTimeSlots = (selectedDate: Date) => {
+    if (!reservations) return [];
+
+    const dateString = format(selectedDate, 'yyyy-MM-dd');
+    const MAX_GUESTS = 6;
+    
+    const timeSlotCounts: Record<TimeSlot, number> = {
+      morning: 0,
+      afternoon: 0,
+      evening: 0
+    };
+
+    reservations
+      .filter(r => r.date === dateString)
+      .forEach(r => {
+        timeSlotCounts[r.time_slot] += r.guest_count;
+      });
+
+    return Object.entries(timeSlotCounts)
+      .filter(([_, count]) => count >= MAX_GUESTS)
+      .map(([slot]) => slot as TimeSlot);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -99,6 +122,8 @@ const ReservationForm = () => {
     return <div>予約情報の読み込みに失敗しました。</div>;
   }
 
+  const unavailableTimeSlots = date ? getUnavailableTimeSlots(date) : [];
+
   return (
     <div className="glass-card p-8 animate-fade-in">
       <h2 className="text-3xl font-bold mb-8 text-center text-gradient">
@@ -130,9 +155,24 @@ const ReservationForm = () => {
                   <SelectValue placeholder="時間帯を選択" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="morning">10:00-12:30</SelectItem>
-                  <SelectItem value="afternoon">13:30-16:00</SelectItem>
-                  <SelectItem value="evening">17:00-19:30</SelectItem>
+                  <SelectItem 
+                    value="morning" 
+                    disabled={unavailableTimeSlots.includes('morning')}
+                  >
+                    10:00-12:30
+                  </SelectItem>
+                  <SelectItem 
+                    value="afternoon" 
+                    disabled={unavailableTimeSlots.includes('afternoon')}
+                  >
+                    13:30-16:00
+                  </SelectItem>
+                  <SelectItem 
+                    value="evening" 
+                    disabled={unavailableTimeSlots.includes('evening')}
+                  >
+                    17:00-19:30
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
