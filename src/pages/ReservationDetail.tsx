@@ -1,7 +1,9 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Home } from "lucide-react";
 import { format } from "date-fns";
 
 const TIME_SLOTS = {
@@ -12,6 +14,7 @@ const TIME_SLOTS = {
 
 const ReservationDetail = () => {
   const { reservationCode } = useParams();
+  const navigate = useNavigate();
 
   const { data: reservation, isLoading, error } = useQuery({
     queryKey: ["reservation", reservationCode],
@@ -55,7 +58,16 @@ const ReservationDetail = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <div className="glass-card p-6 max-w-2xl mx-auto">
+      <div className="glass-card p-6 max-w-2xl mx-auto relative">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="absolute top-4 right-4"
+          onClick={() => navigate('/')}
+        >
+          <Home className="h-6 w-6 text-sauna-stone" />
+        </Button>
+
         <h1 className="text-3xl font-bold mb-6 text-center text-gradient">
           予約詳細
         </h1>
