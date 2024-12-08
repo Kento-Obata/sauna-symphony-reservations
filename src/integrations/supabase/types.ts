@@ -9,7 +9,42 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      reservations: {
+        Row: {
+          created_at: string
+          date: string
+          email: string | null
+          guest_count: number
+          guest_name: string
+          id: string
+          phone: string
+          time_slot: Database["public"]["Enums"]["time_slot"]
+          water_temperature: number
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          email?: string | null
+          guest_count: number
+          guest_name: string
+          id?: string
+          phone: string
+          time_slot: Database["public"]["Enums"]["time_slot"]
+          water_temperature: number
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          email?: string | null
+          guest_count?: number
+          guest_name?: string
+          id?: string
+          phone?: string
+          time_slot?: Database["public"]["Enums"]["time_slot"]
+          water_temperature?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +53,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      time_slot: "morning" | "afternoon" | "evening"
     }
     CompositeTypes: {
       [_ in never]: never
