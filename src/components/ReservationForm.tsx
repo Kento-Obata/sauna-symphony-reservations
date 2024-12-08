@@ -27,6 +27,8 @@ const ReservationForm = () => {
     setShowConfirmDialog,
     handleSubmit,
     handleConfirmReservation,
+    isSubmitting,
+    reservationCode,
   } = useReservationForm();
 
   const { data: reservations, isLoading, error } = useReservations();
@@ -134,6 +136,8 @@ const ReservationForm = () => {
           onConfirm={handleConfirmReservation}
           reservation={currentReservation}
           onEdit={() => setShowConfirmDialog(false)}
+          isSubmitting={isSubmitting}
+          reservationCode={reservationCode}
         />
       )}
     </div>

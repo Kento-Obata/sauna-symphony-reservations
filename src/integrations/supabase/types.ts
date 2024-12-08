@@ -42,6 +42,7 @@ export type Database = {
           guest_name: string
           id: string
           phone: string
+          reservation_code: string | null
           time_slot: Database["public"]["Enums"]["time_slot"]
           water_temperature: number
         }
@@ -53,6 +54,7 @@ export type Database = {
           guest_name: string
           id?: string
           phone: string
+          reservation_code?: string | null
           time_slot: Database["public"]["Enums"]["time_slot"]
           water_temperature: number
         }
@@ -64,6 +66,7 @@ export type Database = {
           guest_name?: string
           id?: string
           phone?: string
+          reservation_code?: string | null
           time_slot?: Database["public"]["Enums"]["time_slot"]
           water_temperature?: number
         }
@@ -77,6 +80,10 @@ export type Database = {
       ensure_admin_role: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      generate_reservation_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
     }
     Enums: {

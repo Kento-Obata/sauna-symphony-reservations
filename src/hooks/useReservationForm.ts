@@ -14,6 +14,8 @@ export const useReservationForm = () => {
   const [people, setPeople] = useState("");
   const [temperature, setTemperature] = useState("");
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [reservationCode, setReservationCode] = useState<string>();
   const queryClient = useQueryClient();
 
   const resetForm = () => {
@@ -25,6 +27,8 @@ export const useReservationForm = () => {
     setPeople("");
     setTemperature("");
     setShowConfirmDialog(false);
+    setIsSubmitting(false);
+    setReservationCode(undefined);
   };
 
   const validateForm = () => {
@@ -67,6 +71,8 @@ export const useReservationForm = () => {
 
   const handleConfirmReservation = async (paymentMethod: "cash" | "online") => {
     try {
+      setIsSubmitting(true);
+
       if (!date || !isValid(date)) {
         toast.error("無効な日付です。");
         return;
@@ -91,6 +97,7 @@ export const useReservationForm = () => {
 
       if (existingReservations && existingReservations.length > 0) {
         toast.error("申し訳ありませんが、この時間帯はすでに予約が入っています。");
+        setIsSubmitting(false);
         return;
       }
 
@@ -102,11 +109,19 @@ export const useReservationForm = () => {
       }
 
       // For cash payment, directly insert the reservation
-      const { error } = await supabase
+      const { data: newReservation, error } = await supabase
         .from("reservations")
-        .insert(reservationData);
+        .insert(reservationData)
+        .select()
+        .single();
 
       if (error) throw error;
+
+      if (!newReservation?.reservation_code) {
+        throw new Error("予約コードが生成されませんでした。");
+      }
+
+      setReservationCode(newReservation.reservation_code);
 
       const notificationResponse = await supabase.functions.invoke(
         "send-reservation-notification",
@@ -119,6 +134,7 @@ export const useReservationForm = () => {
             email: reservationData.email,
             phone: reservationData.phone,
             waterTemperature: reservationData.water_temperature,
+            reservationCode: newReservation.reservation_code,
           },
         }
       );
@@ -129,11 +145,12 @@ export const useReservationForm = () => {
       }
 
       toast.success("予約を受け付けました");
-      resetForm();
       queryClient.invalidateQueries({ queryKey: ["reservations"] });
     } catch (error) {
       console.error("予約の登録に失敗しました:", error);
       toast.error("予約の登録に失敗しました。もう一度お試しください。");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -156,5 +173,7 @@ export const useReservationForm = () => {
     setShowConfirmDialog,
     handleSubmit,
     handleConfirmReservation,
+    isSubmitting,
+    reservationCode,
   };
 };
