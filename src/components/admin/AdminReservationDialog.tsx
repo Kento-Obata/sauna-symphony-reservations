@@ -31,7 +31,6 @@ export const AdminReservationDialog = ({
   const [people, setPeople] = useState("");
   const [temperature, setTemperature] = useState("");
 
-  // Update date when defaultDate changes or dialog opens
   useEffect(() => {
     if (open && defaultDate) {
       setDate(defaultDate);
@@ -79,7 +78,7 @@ export const AdminReservationDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto" style={{ position: 'relative' }}>
         <DialogHeader>
           <DialogTitle>新規予約登録</DialogTitle>
         </DialogHeader>
