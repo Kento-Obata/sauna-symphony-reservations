@@ -92,7 +92,7 @@ const ReservationForm = () => {
       
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid md:grid-cols-2 gap-8">
-          <div>
+          <div className="flex justify-center">
             <Calendar
               mode="single"
               selected={date}
