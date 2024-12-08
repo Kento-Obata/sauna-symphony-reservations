@@ -188,8 +188,8 @@ const ReservationDetail = () => {
 
       {reservation && (
         <AdminReservationDetailsDialog
-          isOpen={showEditDialog}
-          onClose={() => setShowEditDialog(false)}
+          open={showEditDialog}
+          onOpenChange={setShowEditDialog}
           reservation={reservation}
         />
       )}
