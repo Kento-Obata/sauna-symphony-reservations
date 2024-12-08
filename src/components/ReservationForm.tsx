@@ -1,25 +1,33 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { format, isValid } from "date-fns";
 import { TimeSlot, ReservationFormData } from "@/types/reservation";
+import { format, isValid } from "date-fns";
 import { ReservationConfirmDialog } from "./ReservationConfirmDialog";
 import { useReservations } from "@/hooks/useReservations";
 import { ReservationCalendar } from "./reservation/ReservationCalendar";
 import { ReservationDetails } from "./reservation/ReservationDetails";
+import { useReservationForm } from "@/hooks/useReservationForm";
 
 const ReservationForm = () => {
-  const [date, setDate] = useState<Date | undefined>(undefined);
-  const [timeSlot, setTimeSlot] = useState<TimeSlot | "">("");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [people, setPeople] = useState("");
-  const [temperature, setTemperature] = useState("");
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const queryClient = useQueryClient();
+  const {
+    date,
+    setDate,
+    timeSlot,
+    setTimeSlot,
+    name,
+    setName,
+    email,
+    setEmail,
+    phone,
+    setPhone,
+    people,
+    setPeople,
+    temperature,
+    setTemperature,
+    showConfirmDialog,
+    setShowConfirmDialog,
+    handleSubmit,
+    handleConfirmReservation,
+  } = useReservationForm();
 
   const { data: reservations, isLoading, error } = useReservations();
 
@@ -50,95 +58,6 @@ const ReservationForm = () => {
       }, { ...defaultSlotReservations });
 
     return slotReservations;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!date || !timeSlot || !name || !phone || !people || !temperature) {
-      toast.error("必須項目をすべて入力してください。");
-      return;
-    }
-
-    setShowConfirmDialog(true);
-  };
-
-  const handleConfirmReservation = async (paymentMethod: "cash" | "online") => {
-    try {
-      if (!date || !isValid(date)) {
-        toast.error("無効な日付です。");
-        return;
-      }
-
-      const reservationData: ReservationFormData = {
-        date: format(date, "yyyy-MM-dd"),
-        time_slot: timeSlot as TimeSlot,
-        guest_name: name,
-        guest_count: parseInt(people),
-        email: email || null,
-        phone: phone,
-        water_temperature: parseInt(temperature),
-      };
-
-      if (paymentMethod === "online") {
-        window.location.href = "https://your-payment-link.com";
-        return;
-      }
-
-      // Check for existing reservations
-      const { data: existingReservations } = await supabase
-        .from("reservations")
-        .select("*")
-        .eq("date", reservationData.date)
-        .eq("time_slot", reservationData.time_slot);
-
-      if (existingReservations && existingReservations.length > 0) {
-        toast.error("申し訳ありませんが、この時間帯はすでに予約が入っています。");
-        return;
-      }
-
-      const { error } = await supabase
-        .from("reservations")
-        .insert(reservationData);
-
-      if (error) throw error;
-
-      const notificationResponse = await supabase.functions.invoke(
-        "send-reservation-notification",
-        {
-          body: {
-            date: reservationData.date,
-            timeSlot: reservationData.time_slot,
-            guestName: reservationData.guest_name,
-            guestCount: reservationData.guest_count,
-            email: reservationData.email,
-            phone: reservationData.phone,
-            waterTemperature: reservationData.water_temperature,
-          },
-        }
-      );
-
-      if (notificationResponse.error) {
-        console.error("通知の送信に失敗しました:", notificationResponse.error);
-        toast.error("予約は完了しましたが、通知の送信に失敗しました。");
-      }
-
-      toast.success("予約を受け付けました");
-      
-      setDate(undefined);
-      setTimeSlot("");
-      setName("");
-      setEmail("");
-      setPhone("");
-      setPeople("");
-      setTemperature("");
-      setShowConfirmDialog(false);
-      
-      queryClient.invalidateQueries({ queryKey: ["reservations"] });
-    } catch (error) {
-      console.error("予約の登録に失敗しました:", error);
-      toast.error("予約の登録に失敗しました。もう一度お試しください。");
-    }
   };
 
   if (isLoading) {
