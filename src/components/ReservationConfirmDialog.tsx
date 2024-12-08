@@ -12,7 +12,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ReservationFormData } from "@/types/reservation";
-import { format, isValid, parseISO } from "date-fns";
+import { format } from "date-fns";
 
 interface ReservationConfirmDialogProps {
   isOpen: boolean;
@@ -39,12 +39,6 @@ export function ReservationConfirmDialog({
     onConfirm(method);
   };
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "";
-    const date = parseISO(dateString);
-    return isValid(date) ? format(date, "yyyy/MM/dd") : "";
-  };
-
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
       <AlertDialogContent className="sm:max-w-[500px]">
@@ -60,7 +54,7 @@ export function ReservationConfirmDialog({
             <h4 className="font-medium">予約詳細</h4>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div className="text-muted-foreground">日付:</div>
-              <div>{formatDate(reservation.date)}</div>
+              <div>{format(new Date(reservation.date), "yyyy/MM/dd")}</div>
               
               <div className="text-muted-foreground">時間:</div>
               <div>{TIME_SLOTS[reservation.time_slot]}</div>

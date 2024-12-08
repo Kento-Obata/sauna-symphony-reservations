@@ -9,30 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      profiles: {
-        Row: {
-          avatar_url: string | null
-          created_at: string
-          id: string
-          role: string | null
-          username: string | null
-        }
-        Insert: {
-          avatar_url?: string | null
-          created_at?: string
-          id: string
-          role?: string | null
-          username?: string | null
-        }
-        Update: {
-          avatar_url?: string | null
-          created_at?: string
-          id?: string
-          role?: string | null
-          username?: string | null
-        }
-        Relationships: []
-      }
       reservations: {
         Row: {
           created_at: string

@@ -57,17 +57,3 @@
 .text-gradient {
   @apply bg-clip-text text-transparent bg-gradient-to-r from-sauna-copper via-sauna-copper to-[#D4A574];
 }
-
-/* Add styles for the reservation calendar table */
-.reservation-calendar-table {
-  @apply w-full border-collapse;
-}
-
-.reservation-calendar-table th,
-.reservation-calendar-table td {
-  @apply p-2 border border-border;
-}
-
-.reservation-calendar-table th {
-  @apply bg-secondary/50;
-}

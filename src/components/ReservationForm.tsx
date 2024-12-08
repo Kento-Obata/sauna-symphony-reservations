@@ -1,250 +1,196 @@
 import { useState } from "react";
-import { Calendar } from "@/components/ui/calendar";
-import { ja } from "date-fns/locale";
-import { format } from "date-fns";
-import { TimeSlotSelect } from "./TimeSlotSelect";
-import { ReservationConfirmDialog } from "./ReservationConfirmDialog";
-import { ReservationStatus } from "./ReservationStatus";
-import { Label } from "./ui/label";
-import { Input } from "./ui/input";
-import { Button } from "./ui/button";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { useToast } from "./ui/use-toast";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { TimeSlot } from "@/types/reservation";
-
-const formSchema = z.object({
-  guestName: z.string().min(1, "お名前を入力してください"),
-  guestCount: z.number().min(1).max(4),
-  email: z.string().email("正しいメールアドレスを入力してください"),
-  phone: z.string().min(1, "電話番号を入力してください"),
-  waterTemperature: z.number().min(2).max(17),
-});
+import { format } from "date-fns";
+import { TimeSlot, ReservationFormData } from "@/types/reservation";
+import { ReservationConfirmDialog } from "./ReservationConfirmDialog";
+import { useReservations } from "@/hooks/useReservations";
+import { ReservationCalendar } from "./reservation/ReservationCalendar";
+import { ReservationDetails } from "./reservation/ReservationDetails";
 
 const ReservationForm = () => {
-  const [date, setDate] = useState<Date>();
-  const [timeSlot, setTimeSlot] = useState<TimeSlot>();
+  const [date, setDate] = useState<Date | undefined>(undefined);
+  const [timeSlot, setTimeSlot] = useState<TimeSlot | "">("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [people, setPeople] = useState("");
+  const [temperature, setTemperature] = useState("");
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [timeSlotReservations, setTimeSlotReservations] = useState<Record<TimeSlot, number>>({
-    morning: 0,
-    afternoon: 0,
-    evening: 0
-  });
-  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      guestName: "",
-      guestCount: 1,
-      email: "",
-      phone: "",
-      waterTemperature: 10,
-    },
-  });
+  const { data: reservations, isLoading, error } = useReservations();
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!date || !timeSlot) {
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: "日時を選択してください",
-      });
+  const getTimeSlotReservations = (selectedDate: Date) => {
+    const defaultSlotReservations: Record<TimeSlot, number> = {
+      morning: 0,
+      afternoon: 0,
+      evening: 0
+    };
+
+    if (!reservations) return defaultSlotReservations;
+
+    const dateString = format(selectedDate, 'yyyy-MM-dd');
+    
+    const slotReservations = reservations
+      .filter(r => r.date === dateString)
+      .reduce((acc, r) => {
+        acc[r.time_slot] = (acc[r.time_slot] || 0) + 1;
+        return acc;
+      }, { ...defaultSlotReservations });
+
+    return slotReservations;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!date || !timeSlot || !name || !phone || !people || !temperature) {
+      toast.error("必須項目をすべて入力してください。");
       return;
     }
 
     setShowConfirmDialog(true);
   };
 
+  const handleConfirmReservation = async (paymentMethod: "cash" | "online") => {
+    try {
+      const reservationData: ReservationFormData = {
+        date: format(date!, "yyyy-MM-dd"),
+        time_slot: timeSlot as TimeSlot,
+        guest_name: name,
+        guest_count: parseInt(people),
+        email: email || null,
+        phone: phone,
+        water_temperature: parseInt(temperature),
+      };
+
+      if (paymentMethod === "online") {
+        window.location.href = "https://your-payment-link.com";
+        return;
+      }
+
+      const { error } = await supabase
+        .from("reservations")
+        .insert(reservationData);
+
+      if (error) throw error;
+
+      const notificationResponse = await supabase.functions.invoke(
+        "send-reservation-notification",
+        {
+          body: {
+            date: reservationData.date,
+            timeSlot: reservationData.time_slot,
+            guestName: reservationData.guest_name,
+            guestCount: reservationData.guest_count,
+            email: reservationData.email,
+            phone: reservationData.phone,
+            waterTemperature: reservationData.water_temperature,
+          },
+        }
+      );
+
+      if (notificationResponse.error) {
+        console.error("通知の送信に失敗しました:", notificationResponse.error);
+        toast.error("予約は完了しましたが、通知の送信に失敗しました。");
+      }
+
+      toast.success("予約を受け付けました");
+      
+      setDate(undefined);
+      setTimeSlot("");
+      setName("");
+      setEmail("");
+      setPhone("");
+      setPeople("");
+      setTemperature("");
+      setShowConfirmDialog(false);
+      
+      queryClient.invalidateQueries({ queryKey: ["reservations"] });
+    } catch (error) {
+      console.error("予約の登録に失敗しました:", error);
+      toast.error("予約の登録に失敗しました。もう一度お試しください。");
+    }
+  };
+
+  if (isLoading) {
+    return <div>予約情報を読み込んでいます...</div>;
+  }
+
+  if (error) {
+    return <div>予約情報の読み込みに失敗しました。</div>;
+  }
+
+  const timeSlotReservations = date ? getTimeSlotReservations(date) : {
+    morning: 0,
+    afternoon: 0,
+    evening: 0
+  };
+
+  const currentReservation: ReservationFormData | null = date && timeSlot ? {
+    date: format(date, "yyyy-MM-dd"),
+    time_slot: timeSlot as TimeSlot,
+    guest_name: name,
+    guest_count: parseInt(people) || 0,
+    email: email || null,
+    phone: phone,
+    water_temperature: parseInt(temperature) || 0,
+  } : null;
+
   return (
-    <div className="glass-card p-8 animate-fade-up">
+    <div className="glass-card p-8 animate-fade-in">
       <h2 className="text-3xl font-bold mb-8 text-center text-gradient">
         ご予約
       </h2>
-
-      <div className="grid md:grid-cols-2 gap-8">
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <Label>予約日</Label>
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={setDate}
-              className="rounded-md border"
-              locale={ja}
-              fromDate={new Date()}
+      
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid md:grid-cols-2 gap-8">
+          <div className="flex justify-center">
+            <ReservationCalendar
+              date={date}
+              setDate={setDate}
+              reservations={reservations}
             />
           </div>
-
-          {date && (
-            <div className="space-y-2 animate-fade-up">
-              <Label>時間帯</Label>
-              <TimeSlotSelect
-                value={timeSlot || ""}
-                onValueChange={setTimeSlot}
-                selectedDate={date}
-                timeSlotReservations={timeSlotReservations}
-              />
-            </div>
-          )}
-
-          {date && <ReservationStatus reservationCount={timeSlotReservations[timeSlot || "morning"]} />}
+          
+          <ReservationDetails
+            timeSlot={timeSlot}
+            setTimeSlot={setTimeSlot}
+            name={name}
+            setName={setName}
+            email={email}
+            setEmail={setEmail}
+            phone={phone}
+            setPhone={setPhone}
+            people={people}
+            setPeople={setPeople}
+            temperature={temperature}
+            setTemperature={setTemperature}
+            date={date}
+            timeSlotReservations={timeSlotReservations}
+          />
         </div>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="guestName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>お名前</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        <div className="text-center mt-8">
+          <p className="mb-4 text-sauna-stone">料金: ¥40,000 (税込)</p>
+          <Button type="submit" className="w-full md:w-auto hover-lift">
+            予約する
+          </Button>
+        </div>
+      </form>
 
-            <FormField
-              control={form.control}
-              name="guestCount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>人数</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min={1}
-                      max={4}
-                      {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value))}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>メールアドレス</FormLabel>
-                  <FormControl>
-                    <Input type="email" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>電話番号</FormLabel>
-                  <FormControl>
-                    <Input type="tel" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="waterTemperature"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>水温設定 (2℃ ~ 17℃)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min={2}
-                      max={17}
-                      {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value))}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={!date || !timeSlot}
-            >
-              予約内容を確認
-            </Button>
-          </form>
-        </Form>
-      </div>
-
-      <ReservationConfirmDialog
-        isOpen={showConfirmDialog}
-        onClose={() => setShowConfirmDialog(false)}
-        onConfirm={async (paymentMethod) => {
-          const values = form.getValues();
-          if (!date || !timeSlot) return;
-
-          try {
-            const { error } = await supabase.from("reservations").insert({
-              date: format(date, "yyyy-MM-dd"),
-              time_slot: timeSlot,
-              guest_name: values.guestName,
-              guest_count: values.guestCount,
-              email: values.email,
-              phone: values.phone,
-              water_temperature: values.waterTemperature,
-            });
-
-            if (error) throw error;
-
-            toast({
-              title: "予約を受け付けました",
-              description: "ご予約ありがとうございます。",
-            });
-
-            form.reset();
-            setDate(undefined);
-            setTimeSlot(undefined);
-            setShowConfirmDialog(false);
-          } catch (error) {
-            console.error("Error creating reservation:", error);
-            toast({
-              variant: "destructive",
-              title: "エラー",
-              description: "予約の作成に失敗しました。",
-            });
-          }
-        }}
-        reservation={{
-          date: date ? format(date, "yyyy-MM-dd") : "",
-          time_slot: timeSlot || "morning",
-          guest_name: form.getValues("guestName"),
-          guest_count: form.getValues("guestCount"),
-          email: form.getValues("email"),
-          phone: form.getValues("phone"),
-          water_temperature: form.getValues("waterTemperature"),
-        }}
-        onEdit={() => setShowConfirmDialog(false)}
-      />
+      {currentReservation && (
+        <ReservationConfirmDialog
+          isOpen={showConfirmDialog}
+          onClose={() => setShowConfirmDialog(false)}
+          onConfirm={handleConfirmReservation}
+          reservation={currentReservation}
+          onEdit={() => setShowConfirmDialog(false)}
+        />
+      )}
     </div>
   );
 };
