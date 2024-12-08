@@ -26,7 +26,7 @@ const ReservationForm = () => {
   const [temperature, setTemperature] = useState("");
   const queryClient = useQueryClient();
 
-  const { data: reservations } = useQuery({
+  const { data: reservations, isLoading, error } = useQuery({
     queryKey: ["reservations"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -35,9 +35,22 @@ const ReservationForm = () => {
         .order("date", { ascending: true })
         .order("time_slot", { ascending: true });
 
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error("Error fetching reservations:", error);
+        throw error;
+      }
+      
+      // Debug log to understand reservation data
+      console.log("Fetched Reservations:", data);
+      
+      return data || [];
     },
+    // Add retry and error handling
+    retry: 1,
+    onError: (error) => {
+      console.error("Reservation fetch error:", error);
+      toast.error("予約情報の取得に失敗しました");
+    }
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -102,6 +115,15 @@ const ReservationForm = () => {
     }
     return null;
   };
+
+  // Add a loading and error state handling
+  if (isLoading) {
+    return <div>予約情報を読み込んでいます...</div>;
+  }
+
+  if (error) {
+    return <div>予約情報の読み込みに失敗しました。</div>;
+  }
 
   return (
     <div className="glass-card p-8 animate-fade-in">
