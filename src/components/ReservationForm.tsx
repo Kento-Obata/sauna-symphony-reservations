@@ -9,8 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "@/components/ui/use-toast";
-import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ReservationStatus } from "@/components/ReservationStatus";
@@ -23,6 +23,7 @@ const ReservationForm = () => {
   const [phone, setPhone] = useState("");
   const [people, setPeople] = useState("");
   const [temperature, setTemperature] = useState("");
+  const queryClient = useQueryClient();
 
   const { data: reservations } = useQuery({
     queryKey: ["reservations"],
@@ -38,33 +39,43 @@ const ReservationForm = () => {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (!date || !timeSlot || !name || !phone || !people || !temperature) {
-      toast({
-        title: "入力エラー",
-        description: "必須項目をすべて入力してください。",
-        variant: "destructive",
-      });
+      toast.error("必須項目をすべて入力してください。");
       return;
     }
-    
-    toast({
-      title: "予約を受け付けました",
-      description: "確認メールをお送りいたします。",
-    });
-  };
 
-  const getTimeSlotLabel = (slot: string) => {
-    switch (slot) {
-      case "morning":
-        return "10:00-12:30";
-      case "afternoon":
-        return "13:30-16:00";
-      case "evening":
-        return "17:00-19:30";
-      default:
-        return "";
+    try {
+      const { error } = await supabase.from("reservations").insert({
+        date: format(date, "yyyy-MM-dd"),
+        time_slot: timeSlot,
+        guest_name: name,
+        guest_count: parseInt(people),
+        email: email || null,
+        phone: phone,
+        water_temperature: parseInt(temperature),
+      });
+
+      if (error) throw error;
+
+      toast.success("予約を受け付けました");
+      
+      // フォームをリセット
+      setDate(undefined);
+      setTimeSlot("");
+      setName("");
+      setEmail("");
+      setPhone("");
+      setPeople("");
+      setTemperature("");
+      
+      // キャッシュを更新
+      queryClient.invalidateQueries({ queryKey: ["reservations"] });
+    } catch (error) {
+      console.error("Error inserting reservation:", error);
+      toast.error("予約の登録に失敗しました。もう一度お試しください。");
     }
   };
 
@@ -115,7 +126,7 @@ const ReservationForm = () => {
           <div className="space-y-4">
             <div>
               <label className="block text-sm mb-2">時間帯</label>
-              <Select onValueChange={setTimeSlot}>
+              <Select onValueChange={setTimeSlot} value={timeSlot}>
                 <SelectTrigger>
                   <SelectValue placeholder="時間帯を選択" />
                 </SelectTrigger>
@@ -157,7 +168,7 @@ const ReservationForm = () => {
 
             <div>
               <label className="block text-sm mb-2">人数 *</label>
-              <Select onValueChange={setPeople}>
+              <Select onValueChange={setPeople} value={people}>
                 <SelectTrigger>
                   <SelectValue placeholder="人数を選択" />
                 </SelectTrigger>
@@ -173,7 +184,7 @@ const ReservationForm = () => {
 
             <div>
               <label className="block text-sm mb-2">水風呂の温度 *</label>
-              <Select onValueChange={setTemperature}>
+              <Select onValueChange={setTemperature} value={temperature}>
                 <SelectTrigger>
                   <SelectValue placeholder="温度を選択" />
                 </SelectTrigger>
