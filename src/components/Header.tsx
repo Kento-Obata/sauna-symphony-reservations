@@ -20,9 +20,9 @@ export const Header = () => {
       />
       
       <div className="relative z-10 w-full mx-auto text-center pt-8">
-        <div className="flex flex-col items-center space-y-6 px-4 md:px-0">
+        <div className="flex flex-col items-center space-y-4 px-4 md:px-0">
           {/* Brand and Location */}
-          <div className="space-y-2">
+          <div className="space-y-1">
             <h1 className="text-4xl font-light text-gradient">Sauna U</h1>
             <p className="text-sm text-sauna-stone/90 font-light tracking-wide">
               福岡から車で30分
@@ -30,16 +30,16 @@ export const Header = () => {
           </div>
 
           {/* Main Features */}
-          <div className="glass-card p-6 space-y-5 w-full max-w-2xl hover-lift">
-            <div className="space-y-4">
-              <h2 className="text-lg font-light text-white whitespace-normal px-2">
+          <div className="glass-card p-4 space-y-3 w-full max-w-2xl hover-lift">
+            <div className="space-y-2">
+              <h2 className="text-lg font-light text-white whitespace-normal">
                 1日3組限定<br />プライベートサウナ
               </h2>
-              <div className="space-y-3">
-                <p className="text-xs text-sauna-stone/90 font-light whitespace-nowrap px-2">
+              <div className="space-y-2">
+                <p className="text-xs text-sauna-stone/90 font-light whitespace-nowrap">
                   予約前に最低5℃の水温を選ぶだけ
                 </p>
-                <p className="text-xs text-sauna-stone/90 font-light whitespace-nowrap px-2">
+                <p className="text-xs text-sauna-stone/90 font-light whitespace-nowrap">
                   詳細非公開<br />五感を刺激する究極のサウナ体験
                 </p>
               </div>
