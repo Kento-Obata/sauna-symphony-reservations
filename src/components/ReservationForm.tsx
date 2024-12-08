@@ -10,11 +10,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ReservationStatus } from "@/components/ReservationStatus";
 import { TimeSlot, ReservationFormData } from "@/types/reservation";
+import { useReservations } from "@/hooks/useReservations";
 
 const ReservationForm = () => {
   const [date, setDate] = useState<Date | undefined>(undefined);
@@ -26,32 +27,7 @@ const ReservationForm = () => {
   const [temperature, setTemperature] = useState("");
   const queryClient = useQueryClient();
 
-  const { data: reservations, isLoading, error } = useQuery({
-    queryKey: ["reservations"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("reservations")
-        .select("*")
-        .order("date", { ascending: true })
-        .order("time_slot", { ascending: true });
-
-      if (error) {
-        console.error("Error fetching reservations:", error);
-        throw error;
-      }
-      
-      // Debug log to understand reservation data
-      console.log("Fetched Reservations:", data);
-      
-      return data || [];
-    },
-    // Add retry and error handling
-    retry: 1,
-    onError: (error) => {
-      console.error("Reservation fetch error:", error);
-      toast.error("予約情報の取得に失敗しました");
-    }
-  });
+  const { data: reservations, isLoading, error } = useReservations();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,7 +56,6 @@ const ReservationForm = () => {
 
       toast.success("予約を受け付けました");
       
-      // フォームをリセット
       setDate(undefined);
       setTimeSlot("");
       setName("");
@@ -89,7 +64,6 @@ const ReservationForm = () => {
       setPeople("");
       setTemperature("");
       
-      // キャッシュを更新
       queryClient.invalidateQueries({ queryKey: ["reservations"] });
     } catch (error) {
       console.error("Error inserting reservation:", error);
@@ -116,7 +90,6 @@ const ReservationForm = () => {
     return null;
   };
 
-  // Add a loading and error state handling
   if (isLoading) {
     return <div>予約情報を読み込んでいます...</div>;
   }
