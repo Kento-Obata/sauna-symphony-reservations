@@ -19,9 +19,6 @@ const Index = () => {
                 <p className="text-sauna-stone/90">
                   〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4
                 </p>
-                <p className="text-sauna-stone/90 mt-2">
-                  Plus Code: 8Q5GHG7V+J5
-                </p>
                 <a 
                   href="https://maps.google.com/maps?q=8Q5GHG7V%2BJ5" 
                   target="_blank" 
@@ -34,7 +31,7 @@ const Index = () => {
               
               <div className="pt-6">
                 <h3 className="font-semibold mb-2">お車でお越しの場合</h3>
-                <p className="text-sauna-stone/90">福岡市内から約30分</p>
+                <p className="text-sauna-stone/90">福岡空港から車で30分（交通状況によってはそれ以上かかることがありますので、ご注意ください）</p>
               </div>
               
               <div>
