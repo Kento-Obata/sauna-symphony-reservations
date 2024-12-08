@@ -51,12 +51,12 @@ export const AdminCalendar = ({ reservations = [] }: AdminCalendarProps) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-4">
+    <div className="bg-white dark:bg-sauna-charcoal rounded-lg shadow p-4">
       <div className="flex justify-between items-center mb-4">
         <Button variant="outline" size="icon" onClick={handlePrevWeek}>
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        <h2 className="text-lg font-semibold">
+        <h2 className="text-lg font-semibold text-black dark:text-white">
           {format(start, "yyyy年MM月dd日", { locale: ja })} -{" "}
           {format(end, "MM月dd日", { locale: ja })}
         </h2>
@@ -70,10 +70,10 @@ export const AdminCalendar = ({ reservations = [] }: AdminCalendarProps) => {
         {days.map((day) => (
           <div
             key={day.toString()}
-            className="col-span-1 text-center font-medium p-2"
+            className="col-span-1 text-center font-medium p-2 text-black dark:text-white"
           >
             {format(day, "M/d")}
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-gray-600 dark:text-gray-300">
               {format(day, "E", { locale: ja })}
             </div>
           </div>
@@ -83,7 +83,7 @@ export const AdminCalendar = ({ reservations = [] }: AdminCalendarProps) => {
           <>
             <div
               key={`time-${slot}`}
-              className="col-span-1 p-2 text-sm text-right text-muted-foreground"
+              className="col-span-1 p-2 text-sm text-right text-gray-600 dark:text-gray-300"
             >
               {time.start}
             </div>
