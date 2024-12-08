@@ -11,10 +11,17 @@ import { useQueryClient } from "@tanstack/react-query";
 interface AdminReservationDialogProps {
   selectedDate: Date;
   timeSlotReservations: Record<TimeSlot, number>;
+  initialTimeSlot?: TimeSlot;
+  trigger?: React.ReactNode;
 }
 
-export const AdminReservationDialog = ({ selectedDate, timeSlotReservations }: AdminReservationDialogProps) => {
-  const [timeSlot, setTimeSlot] = useState<TimeSlot | "">("");
+export const AdminReservationDialog = ({ 
+  selectedDate, 
+  timeSlotReservations,
+  initialTimeSlot,
+  trigger
+}: AdminReservationDialogProps) => {
+  const [timeSlot, setTimeSlot] = useState<TimeSlot | "">(initialTimeSlot || "");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -68,7 +75,7 @@ export const AdminReservationDialog = ({ selectedDate, timeSlotReservations }: A
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">新規予約を追加</Button>
+        {trigger || <Button variant="outline">新規予約を追加</Button>}
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>

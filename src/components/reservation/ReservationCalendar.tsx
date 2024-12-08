@@ -111,7 +111,20 @@ export const ReservationCalendar = ({
                   const slotReservations = getReservationsForSlot(day, slot as keyof typeof TIME_SLOTS);
                   return (
                     <TableCell key={day.toString()} className="text-center">
-                      <ReservationStatus reservationCount={slotReservations.length} />
+                      {isAdmin ? (
+                        <AdminReservationDialog
+                          selectedDate={day}
+                          timeSlotReservations={getTimeSlotReservations(day)}
+                          initialTimeSlot={slot as TimeSlot}
+                          trigger={
+                            <button className="w-full h-full min-h-[40px] hover:bg-gray-50 rounded-md transition-colors">
+                              <ReservationStatus reservationCount={slotReservations.length} />
+                            </button>
+                          }
+                        />
+                      ) : (
+                        <ReservationStatus reservationCount={slotReservations.length} />
+                      )}
                     </TableCell>
                   );
                 })}
