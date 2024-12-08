@@ -35,6 +35,11 @@ const ReservationForm = () => {
   const [date, setDate] = useState<Date>();
   const [timeSlot, setTimeSlot] = useState<TimeSlot>();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [timeSlotReservations, setTimeSlotReservations] = useState<Record<TimeSlot, number>>({
+    morning: 0,
+    afternoon: 0,
+    evening: 0
+  });
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -85,14 +90,15 @@ const ReservationForm = () => {
             <div className="space-y-2 animate-fade-up">
               <Label>時間帯</Label>
               <TimeSlotSelect
-                date={date}
-                selected={timeSlot}
-                onSelect={setTimeSlot}
+                value={timeSlot || ""}
+                onValueChange={setTimeSlot}
+                selectedDate={date}
+                timeSlotReservations={timeSlotReservations}
               />
             </div>
           )}
 
-          {date && <ReservationStatus date={date} />}
+          {date && <ReservationStatus reservationCount={timeSlotReservations[timeSlot || "morning"]} />}
         </div>
 
         <Form {...form}>
@@ -215,7 +221,6 @@ const ReservationForm = () => {
               description: "ご予約ありがとうございます。",
             });
 
-            // Reset form
             form.reset();
             setDate(undefined);
             setTimeSlot(undefined);
