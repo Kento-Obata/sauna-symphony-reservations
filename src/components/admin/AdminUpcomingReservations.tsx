@@ -3,13 +3,18 @@ import { ja } from "date-fns/locale";
 import { Reservation } from "@/types/reservation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TIME_SLOTS } from "@/components/TimeSlotSelect";
+import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { XCircle } from "lucide-react";
 
 interface AdminUpcomingReservationsProps {
   reservations?: Reservation[];
+  onStatusChange?: (id: string, status: string) => void;
 }
 
 export const AdminUpcomingReservations = ({
   reservations = [],
+  onStatusChange,
 }: AdminUpcomingReservationsProps) => {
   const sortedReservations = [...reservations].sort((a, b) => {
     const dateComparison = a.date.localeCompare(b.date);
@@ -54,6 +59,38 @@ export const AdminUpcomingReservations = ({
               <div>TEL: {reservation.phone}</div>
               {reservation.email && <div>Email: {reservation.email}</div>}
             </div>
+            {reservation.status !== "cancelled" && onStatusChange && (
+              <div className="mt-2 flex justify-end">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="flex items-center gap-2"
+                    >
+                      <XCircle className="h-4 w-4" />
+                      キャンセル
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>予約をキャンセルしますか？</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        この操作は取り消せません。
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>いいえ</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => onStatusChange(reservation.id, "cancelled")}
+                      >
+                        はい
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            )}
           </div>
         ))}
 

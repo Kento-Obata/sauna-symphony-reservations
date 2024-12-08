@@ -1,0 +1,72 @@
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Search, X } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { format } from "date-fns";
+import { ja } from "date-fns/locale";
+
+interface AdminSearchBarProps {
+  nameQuery: string;
+  setNameQuery: (query: string) => void;
+  dateQuery: Date | undefined;
+  setDateQuery: (date: Date | undefined) => void;
+  onClearFilters: () => void;
+}
+
+export const AdminSearchBar = ({
+  nameQuery,
+  setNameQuery,
+  dateQuery,
+  setDateQuery,
+  onClearFilters,
+}: AdminSearchBarProps) => {
+  return (
+    <div className="flex gap-4 items-center mb-6">
+      <div className="flex-1">
+        <Input
+          placeholder="お客様名で検索"
+          value={nameQuery}
+          onChange={(e) => setNameQuery(e.target.value)}
+          className="w-full"
+        />
+      </div>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant={dateQuery ? "default" : "outline"}
+            className="min-w-[240px] justify-start text-left font-normal"
+          >
+            {dateQuery ? (
+              format(dateQuery, "yyyy年MM月dd日", { locale: ja })
+            ) : (
+              <span>日付で検索</span>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={dateQuery}
+            onSelect={setDateQuery}
+            initialFocus
+          />
+        </PopoverContent>
+      </Popover>
+      {(nameQuery || dateQuery) && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onClearFilters}
+          className="shrink-0"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      )}
+    </div>
+  );
+};

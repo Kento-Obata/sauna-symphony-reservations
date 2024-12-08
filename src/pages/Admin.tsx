@@ -8,12 +8,16 @@ import { useReservations } from "@/hooks/useReservations";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { AdminSearchBar } from "@/components/admin/AdminSearchBar";
+import { format } from "date-fns";
 
 const Admin = () => {
   const [showNewReservationDialog, setShowNewReservationDialog] = useState(false);
   const { data: reservations } = useReservations();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const navigate = useNavigate();
+  const [nameQuery, setNameQuery] = useState("");
+  const [dateQuery, setDateQuery] = useState<Date | undefined>(undefined);
 
   const handleNewReservation = () => {
     setSelectedDate(new Date());
@@ -30,6 +34,21 @@ const Admin = () => {
       toast.error("ログアウトに失敗しました");
     }
   };
+
+  const handleClearFilters = () => {
+    setNameQuery("");
+    setDateQuery(undefined);
+  };
+
+  const filteredReservations = reservations?.filter((reservation) => {
+    const matchesName = reservation.guest_name
+      .toLowerCase()
+      .includes(nameQuery.toLowerCase());
+    const matchesDate = dateQuery
+      ? reservation.date === format(dateQuery, "yyyy-MM-dd")
+      : true;
+    return matchesName && matchesDate;
+  });
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -54,15 +73,39 @@ const Admin = () => {
         </div>
       </div>
 
+      <AdminSearchBar
+        nameQuery={nameQuery}
+        setNameQuery={setNameQuery}
+        dateQuery={dateQuery}
+        setDateQuery={setDateQuery}
+        onClearFilters={handleClearFilters}
+      />
+
       <div className="grid lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           <AdminCalendar 
-            reservations={reservations} 
+            reservations={filteredReservations} 
             onDateSelect={setSelectedDate}
           />
         </div>
         <div>
-          <AdminUpcomingReservations reservations={reservations} />
+          <AdminUpcomingReservations 
+            reservations={filteredReservations}
+            onStatusChange={async (id: string, status: string) => {
+              try {
+                const { error } = await supabase
+                  .from("reservations")
+                  .update({ status })
+                  .eq("id", id);
+
+                if (error) throw error;
+                toast.success("予約状態を更新しました");
+              } catch (error) {
+                console.error("Error updating reservation:", error);
+                toast.error("予約状態の更新に失敗しました");
+              }
+            }}
+          />
         </div>
       </div>
 
