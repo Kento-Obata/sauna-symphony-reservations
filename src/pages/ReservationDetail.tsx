@@ -14,25 +14,39 @@ const ReservationDetail = () => {
   const navigate = useNavigate();
   const [showModifyDialog, setShowModifyDialog] = useState(false);
 
+  console.log("Reservation code from params:", code);
+
   const { data: reservation, isLoading, error } = useQuery({
     queryKey: ["reservation", code],
     queryFn: async () => {
       if (!code) {
+        console.error("No reservation code provided");
         throw new Error("予約コードが必要です");
       }
 
+      console.log("Fetching reservation with code:", code);
       const { data, error } = await supabase
         .from("reservations")
         .select("*")
         .eq("reservation_code", code)
         .single();
 
-      if (error) throw error;
-      if (!data) throw new Error("予約が見つかりません");
+      console.log("Supabase response:", { data, error });
+
+      if (error) {
+        console.error("Supabase error:", error);
+        throw error;
+      }
       
+      if (!data) {
+        console.error("No reservation found for code:", code);
+        throw new Error("予約が見つかりません");
+      }
+
       return data;
     },
     enabled: !!code,
+    retry: false,
   });
 
   const handleCancel = async () => {
@@ -123,9 +137,7 @@ const ReservationDetail = () => {
             <div>
               <h2 className="text-sm text-sauna-stone/60">時間帯</h2>
               <p className="text-lg">
-                {reservation.time_slot === "morning" && "午前 10:00-12:30"}
-                {reservation.time_slot === "afternoon" && "午後 13:30-16:00"}
-                {reservation.time_slot === "evening" && "夕方 17:00-19:30"}
+                {TIME_SLOTS[reservation.time_slot]}
               </p>
             </div>
 
