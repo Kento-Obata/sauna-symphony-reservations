@@ -15,7 +15,7 @@ interface MonthSelectorProps {
 
 export const MonthSelector = ({ date, onMonthSelect }: MonthSelectorProps) => {
   const today = new Date();
-  const months = Array.from({ length: 12 }, (_, i) => {
+  const months = Array.from({ length: 3 }, (_, i) => {
     const month = addMonths(today, i);
     return isValid(month) ? month : today;
   });
