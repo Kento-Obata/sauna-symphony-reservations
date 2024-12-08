@@ -17,9 +17,13 @@ import { AdminReservationDialog } from "./AdminReservationDialog";
 
 interface AdminCalendarProps {
   reservations?: Reservation[];
+  onDateSelect?: (date: Date) => void;
 }
 
-export const AdminCalendar = ({ reservations = [] }: AdminCalendarProps) => {
+export const AdminCalendar = ({ 
+  reservations = [], 
+  onDateSelect 
+}: AdminCalendarProps) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
@@ -42,6 +46,15 @@ export const AdminCalendar = ({ reservations = [] }: AdminCalendarProps) => {
     setSelectedDate(date);
     setSelectedTimeSlot(timeSlot);
     setShowReservationDialog(true);
+    if (onDateSelect) {
+      onDateSelect(date);
+    }
+  };
+
+  const handleDayClick = (date: Date) => {
+    if (onDateSelect) {
+      onDateSelect(date);
+    }
   };
 
   const getStatusDisplay = (reservations: Reservation[]) => {
@@ -76,15 +89,16 @@ export const AdminCalendar = ({ reservations = [] }: AdminCalendarProps) => {
       <div className="grid grid-cols-8 gap-2">
         <div className="col-span-1"></div>
         {days.map((day) => (
-          <div
+          <button
             key={day.toString()}
-            className="col-span-1 text-center font-medium p-2 text-black dark:text-white"
+            onClick={() => handleDayClick(day)}
+            className="col-span-1 text-center font-medium p-2 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
           >
             {format(day, "M/d")}
             <div className="text-sm text-gray-600 dark:text-gray-300">
               {format(day, "E", { locale: ja })}
             </div>
-          </div>
+          </button>
         ))}
 
         {Object.entries(TIME_SLOTS).map(([slot, time]) => (
@@ -101,7 +115,7 @@ export const AdminCalendar = ({ reservations = [] }: AdminCalendarProps) => {
                 <button
                   key={`${day}-${slot}`}
                   onClick={() => handleCellClick(day, slot)}
-                  className={`col-span-1 p-2 border rounded hover:bg-gray-50 transition-colors
+                  className={`col-span-1 p-2 border rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors
                     ${
                       isSameDay(day, selectedDate) && selectedTimeSlot === slot
                         ? "ring-2 ring-primary"

@@ -9,6 +9,7 @@ import { useReservations } from "@/hooks/useReservations";
 const Admin = () => {
   const [showNewReservationDialog, setShowNewReservationDialog] = useState(false);
   const { data: reservations } = useReservations();
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -25,7 +26,10 @@ const Admin = () => {
 
       <div className="grid lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
-          <AdminCalendar reservations={reservations} />
+          <AdminCalendar 
+            reservations={reservations} 
+            onDateSelect={setSelectedDate}
+          />
         </div>
         <div>
           <AdminUpcomingReservations reservations={reservations} />
@@ -35,6 +39,7 @@ const Admin = () => {
       <AdminReservationDialog
         open={showNewReservationDialog}
         onOpenChange={setShowNewReservationDialog}
+        defaultDate={selectedDate}
       />
     </div>
   );
