@@ -12,18 +12,12 @@ import {
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format, isBefore, addHours, setHours, setMinutes } from "date-fns";
+import { format, isBefore } from "date-fns";
 import { ReservationStatus } from "@/components/ReservationStatus";
 import { TimeSlot, ReservationFormData } from "@/types/reservation";
-import { AlertOctagon } from "lucide-react";
 import { ReservationConfirmDialog } from "./ReservationConfirmDialog";
 import { useReservations } from "@/hooks/useReservations";
-
-const TIME_SLOTS = {
-  morning: { start: '10:00', end: '12:30' },
-  afternoon: { start: '13:30', end: '16:00' },
-  evening: { start: '17:00', end: '19:30' }
-} as const;
+import { TimeSlotSelect } from "./TimeSlotSelect";
 
 const ReservationForm = () => {
   const [date, setDate] = useState<Date | undefined>(undefined);
@@ -105,16 +99,6 @@ const ReservationForm = () => {
     }
   };
 
-  const isTimeSlotDisabled = (slot: TimeSlot, selectedDate: Date) => {
-    const now = new Date();
-    const twoHoursFromNow = addHours(now, 2);
-    
-    const [startHour, startMinute] = TIME_SLOTS[slot].start.split(':').map(Number);
-    const slotTime = setMinutes(setHours(selectedDate, startHour), startMinute);
-    
-    return isBefore(slotTime, twoHoursFromNow);
-  };
-
   const getDayContent = (day: Date) => {
     if (!reservations) return null;
 
@@ -177,40 +161,12 @@ const ReservationForm = () => {
           </div>
           
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm mb-2">Time</label>
-              <Select 
-                onValueChange={(value: TimeSlot) => setTimeSlot(value)} 
-                value={timeSlot}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select time" />
-                </SelectTrigger>
-                <SelectContent>
-                  {[
-                    { value: 'morning', label: '10:00-12:30' },
-                    { value: 'afternoon', label: '13:30-16:00' },
-                    { value: 'evening', label: '17:00-19:30' }
-                  ].map(({ value, label }) => (
-                    <SelectItem 
-                      key={value} 
-                      value={value}
-                      disabled={
-                        timeSlotReservations[value as TimeSlot] >= 1 ||
-                        (date && isTimeSlotDisabled(value as TimeSlot, date))
-                      }
-                    >
-                      <div className="flex items-center justify-between w-full">
-                        <span>{label}</span>
-                        {timeSlotReservations[value as TimeSlot] > 0 && (
-                          <AlertOctagon className="h-4 w-4 text-yellow-500" />
-                        )}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <TimeSlotSelect
+              value={timeSlot}
+              onValueChange={setTimeSlot}
+              selectedDate={date}
+              timeSlotReservations={timeSlotReservations}
+            />
 
             <div>
               <label className="block text-sm mb-2">Name *</label>
