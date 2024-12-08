@@ -6,7 +6,6 @@ import { Search } from 'lucide-react';
 import { toast } from 'sonner';
 
 export const Header = () => {
-  const [backgroundImage] = useState<string>('https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=80');
   const [reservationCode, setReservationCode] = useState('');
   const [showForm, setShowForm] = useState(false);
   const navigate = useNavigate();
@@ -22,13 +21,32 @@ export const Header = () => {
 
   return (
     <header className="relative h-[60vh] flex items-center justify-center overflow-hidden">
+      {/* 一時的に画像を使用し、後で動画に置き換えられるように準備 */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-1000"
-        style={{
-          backgroundImage: `url('${backgroundImage}')`,
-          willChange: 'transform',
-        }}
-      />
+        className="absolute inset-0 transition-opacity duration-1000"
+      >
+        {/* 動画を追加する際のプレースホルダーコメント */}
+        {/* 
+        <video
+          className="absolute inset-0 w-full h-full object-cover"
+          autoPlay
+          muted
+          loop
+          playsInline
+          poster="https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=80"
+        >
+          <source src="/path-to-your-video.mp4" type="video/mp4" />
+        </video>
+        */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `url('https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=80')`,
+            willChange: 'transform',
+          }}
+        />
+      </div>
+      
       <div 
         className="absolute inset-0 bg-gradient-to-b from-sauna-charcoal/90 to-sauna-charcoal/70 backdrop-blur-sm z-0"
         style={{
