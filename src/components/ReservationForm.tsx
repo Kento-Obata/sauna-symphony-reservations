@@ -1,23 +1,14 @@
 import { useState } from "react";
-import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format, isBefore } from "date-fns";
-import { ReservationStatus } from "@/components/ReservationStatus";
+import { format } from "date-fns";
 import { TimeSlot, ReservationFormData } from "@/types/reservation";
 import { ReservationConfirmDialog } from "./ReservationConfirmDialog";
 import { useReservations } from "@/hooks/useReservations";
-import { TimeSlotSelect } from "./TimeSlotSelect";
+import { ReservationCalendar } from "./reservation/ReservationCalendar";
+import { ReservationDetails } from "./reservation/ReservationDetails";
 
 const ReservationForm = () => {
   const [date, setDate] = useState<Date | undefined>(undefined);
@@ -88,15 +79,10 @@ const ReservationForm = () => {
       if (error) throw error;
 
       // Send notifications
-      const notificationResponse = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-reservation-notification`,
+      const notificationResponse = await supabase.functions.invoke(
+        "send-reservation-notification",
         {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify({
+          body: {
             date: reservationData.date,
             timeSlot: reservationData.time_slot,
             guestName: reservationData.guest_name,
@@ -104,12 +90,12 @@ const ReservationForm = () => {
             email: reservationData.email,
             phone: reservationData.phone,
             waterTemperature: reservationData.water_temperature,
-          }),
+          },
         }
       );
 
-      if (!notificationResponse.ok) {
-        console.error("Failed to send notifications");
+      if (notificationResponse.error) {
+        console.error("Failed to send notifications:", notificationResponse.error);
         toast.error("予約は完了しましたが、通知の送信に失敗しました。");
       }
 
@@ -129,26 +115,6 @@ const ReservationForm = () => {
       console.error("Error inserting reservation:", error);
       toast.error("予約の登録に失敗しました。もう一度お試しください。");
     }
-  };
-
-  const getDayContent = (day: Date) => {
-    if (!reservations || isBefore(day, new Date())) return null;
-
-    const dateString = format(day, 'yyyy-MM-dd');
-    const dateReservations = reservations.filter(
-      (r) => r.date === dateString
-    );
-
-    const reservationCount = dateReservations.length;
-    
-    return (
-      <div className="w-full h-full flex flex-col items-center justify-start pt-1 gap-1">
-        <span>{day.getDate()}</span>
-        <div className="text-xs">
-          <ReservationStatus reservationCount={reservationCount} />
-        </div>
-      </div>
-    );
   };
 
   if (isLoading) {
@@ -184,86 +150,29 @@ const ReservationForm = () => {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid md:grid-cols-2 gap-8">
           <div className="flex justify-center">
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={setDate}
-              disabled={(date) => isBefore(date, new Date())}
-              className="rounded-md border"
-              components={{
-                DayContent: ({ date }) => getDayContent(date)
-              }}
+            <ReservationCalendar
+              date={date}
+              setDate={setDate}
+              reservations={reservations}
             />
           </div>
           
-          <div className="space-y-4">
-            <TimeSlotSelect
-              value={timeSlot}
-              onValueChange={setTimeSlot}
-              selectedDate={date}
-              timeSlotReservations={timeSlotReservations}
-            />
-
-            <div>
-              <label className="block text-sm mb-2">Name *</label>
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm mb-2">Email</label>
-              <Input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm mb-2">Phone *</label>
-              <Input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm mb-2">Number of guests *</label>
-              <Select onValueChange={setPeople} value={people}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select number" />
-                </SelectTrigger>
-                <SelectContent>
-                  {[1, 2, 3, 4, 5, 6].map((num) => (
-                    <SelectItem key={num} value={num.toString()}>
-                      {num}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <label className="block text-sm mb-2">Water temperature *</label>
-              <Select onValueChange={setTemperature} value={temperature}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select temperature" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: 16 }, (_, i) => i + 2).map((temp) => (
-                    <SelectItem key={temp} value={temp.toString()}>
-                      {temp}°C
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <ReservationDetails
+            timeSlot={timeSlot}
+            setTimeSlot={setTimeSlot}
+            name={name}
+            setName={setName}
+            email={email}
+            setEmail={setEmail}
+            phone={phone}
+            setPhone={setPhone}
+            people={people}
+            setPeople={setPeople}
+            temperature={temperature}
+            setTemperature={setTemperature}
+            date={date}
+            timeSlotReservations={timeSlotReservations}
+          />
         </div>
 
         <div className="text-center mt-8">

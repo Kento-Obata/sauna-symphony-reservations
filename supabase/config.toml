@@ -1,1 +1,9 @@
 project_id = "knjbxqiyngztylnzxzln"
+
+[api]
+enabled = true
+url = "https://knjbxqiyngztylnzxzln.supabase.co"
+
+[functions]
+[functions.send-reservation-notification]
+verify_jwt = false
