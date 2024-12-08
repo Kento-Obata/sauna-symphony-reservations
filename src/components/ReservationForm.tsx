@@ -74,20 +74,21 @@ const ReservationForm = () => {
   const getDayContent = (day: Date) => {
     if (!reservations) return null;
 
+    const dateString = format(day, 'yyyy-MM-dd');
     const dateReservations = reservations.filter(
-      (r) => format(new Date(r.date), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd')
+      (r) => r.date === dateString
     );
 
     const totalGuests = dateReservations.reduce((sum, r) => sum + r.guest_count, 0);
     
-    if (totalGuests > 0) {
-      return (
+    return (
+      <div className="relative w-full h-full flex items-center justify-center">
+        <span>{day.getDate()}</span>
         <div className="absolute bottom-0 right-0 p-0.5">
           <ReservationStatus guestCount={totalGuests} />
         </div>
-      );
-    }
-    return null;
+      </div>
+    );
   };
 
   if (isLoading) {
@@ -113,12 +114,7 @@ const ReservationForm = () => {
               onSelect={setDate}
               className="rounded-md border"
               components={{
-                DayContent: ({ date }) => (
-                  <div className="relative w-full h-full flex items-center justify-center">
-                    <span>{date.getDate()}</span>
-                    {getDayContent(date)}
-                  </div>
-                ),
+                DayContent: ({ date }) => getDayContent(date)
               }}
             />
           </div>
