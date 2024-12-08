@@ -10,6 +10,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { format } from "date-fns";
+import { ja } from "date-fns/locale";
 
 const Index = () => {
   const [date, setDate] = useState<Date | undefined>(undefined);
@@ -19,6 +31,21 @@ const Index = () => {
   const [phone, setPhone] = useState("");
   const [people, setPeople] = useState("");
   const [temperature, setTemperature] = useState("");
+
+  // Fetch reservations
+  const { data: reservations, isLoading } = useQuery({
+    queryKey: ["reservations"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("reservations")
+        .select("*")
+        .order("date", { ascending: true })
+        .order("time_slot", { ascending: true });
+
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,6 +62,19 @@ const Index = () => {
       title: "予約を受け付けました",
       description: "確認メールをお送りいたします。",
     });
+  };
+
+  const getTimeSlotLabel = (slot: string) => {
+    switch (slot) {
+      case "morning":
+        return "10:00-12:30";
+      case "afternoon":
+        return "13:30-16:00";
+      case "evening":
+        return "17:00-19:30";
+      default:
+        return "";
+    }
   };
 
   return (
@@ -54,6 +94,41 @@ const Index = () => {
       </header>
 
       <section className="max-w-4xl mx-auto px-4 py-20">
+        <div className="glass-card p-8 animate-fade-in mb-12">
+          <h2 className="text-3xl font-bold mb-8 text-center text-gradient">
+            予約状況
+          </h2>
+          
+          {isLoading ? (
+            <p className="text-center">読み込み中...</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>日付</TableHead>
+                    <TableHead>時間帯</TableHead>
+                    <TableHead>予約人数</TableHead>
+                    <TableHead>水風呂温度</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {reservations?.map((reservation) => (
+                    <TableRow key={reservation.id}>
+                      <TableCell>
+                        {format(new Date(reservation.date), 'yyyy年MM月dd日', { locale: ja })}
+                      </TableCell>
+                      <TableCell>{getTimeSlotLabel(reservation.time_slot)}</TableCell>
+                      <TableCell>{reservation.guest_count}名</TableCell>
+                      <TableCell>{reservation.water_temperature}℃</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </div>
+
         <div className="glass-card p-8 animate-fade-in">
           <h2 className="text-3xl font-bold mb-8 text-center text-gradient">
             ご予約
