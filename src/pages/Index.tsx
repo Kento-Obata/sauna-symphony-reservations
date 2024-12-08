@@ -1,6 +1,5 @@
 import Header from "@/components/Header";
 import ReservationForm from "@/components/ReservationForm";
-import Map from "@/components/Map";
 
 const Index = () => {
   return (
@@ -15,19 +14,25 @@ const Index = () => {
           </h2>
           
           <div className="space-y-6">
-            <div className="text-center">
-              <p className="text-sauna-stone/90">
-                〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4
-              </p>
-              <p className="text-sauna-stone/90 mt-2">
-                Plus Code: 8Q5GHG7V+J5
-              </p>
-            </div>
-            
-            <Map />
-            
-            <div className="space-y-4 text-center">
+            <div className="text-center space-y-4">
               <div>
+                <p className="text-sauna-stone/90">
+                  〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4
+                </p>
+                <p className="text-sauna-stone/90 mt-2">
+                  Plus Code: 8Q5GHG7V+J5
+                </p>
+                <a 
+                  href="https://maps.google.com/maps?q=8Q5GHG7V%2BJ5" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-sauna-copper hover:underline mt-2 inline-block"
+                >
+                  Google Mapsで見る
+                </a>
+              </div>
+              
+              <div className="pt-6">
                 <h3 className="font-semibold mb-2">お車でお越しの場合</h3>
                 <p className="text-sauna-stone/90">福岡市内から約30分</p>
               </div>
