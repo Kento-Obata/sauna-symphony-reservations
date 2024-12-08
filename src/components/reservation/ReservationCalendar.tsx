@@ -1,5 +1,5 @@
 import { Calendar } from "@/components/ui/calendar";
-import { isBefore, format } from "date-fns";
+import { isBefore, isAfter, addMonths } from "date-fns";
 import { ReservationStatus } from "@/components/ReservationStatus";
 import { Reservation } from "@/types/reservation";
 
@@ -34,12 +34,18 @@ export const ReservationCalendar = ({
     );
   };
 
+  const today = new Date();
+  const threeMonthsFromNow = addMonths(today, 3);
+
   return (
     <Calendar
       mode="single"
       selected={date}
       onSelect={setDate}
-      disabled={(date) => isBefore(date, new Date())}
+      disabled={(date) => 
+        isBefore(date, today) || 
+        isAfter(date, threeMonthsFromNow)
+      }
       className="rounded-md border"
       components={{
         DayContent: ({ date }) => getDayContent(date)
