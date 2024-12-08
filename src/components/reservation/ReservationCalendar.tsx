@@ -2,6 +2,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { isBefore, format } from "date-fns";
 import { ReservationStatus } from "@/components/ReservationStatus";
 import { Reservation } from "@/types/reservation";
+import { Minus, Plus } from "lucide-react";
 
 interface ReservationCalendarProps {
   date: Date | undefined;
@@ -25,10 +26,16 @@ export const ReservationCalendar = ({
     const reservationCount = dateReservations.length;
     
     return (
-      <div className="w-full h-full flex flex-col items-center justify-start pt-1 gap-1">
-        <span>{day.getDate()}</span>
-        <div className="text-xs">
-          <ReservationStatus reservationCount={reservationCount} />
+      <div className="w-full flex flex-col items-center justify-start gap-0.5">
+        <span className="text-sm">{day.getDate()}</span>
+        <div className="text-[10px] flex items-center gap-0.5">
+          {reservationCount === 0 ? (
+            <Plus className="w-3 h-3 text-green-500" />
+          ) : reservationCount >= 3 ? (
+            <Minus className="w-3 h-3 text-red-500" />
+          ) : (
+            <span className="text-yellow-500 font-medium">{3 - reservationCount}</span>
+          )}
         </div>
       </div>
     );
