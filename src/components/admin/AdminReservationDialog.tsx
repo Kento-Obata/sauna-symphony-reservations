@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TimeSlotSelect } from "@/components/TimeSlotSelect";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog,
   DialogContent,
@@ -24,18 +25,19 @@ interface AdminReservationDialogProps {
 }
 
 export const AdminReservationDialog = ({ 
-  selectedDate,
+  selectedDate: initialDate,
   timeSlotReservations,
   initialTimeSlot,
   trigger
 }: AdminReservationDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date>(initialDate);
   const [timeSlot, setTimeSlot] = useState<TimeSlot | "">(initialTimeSlot || "");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [guestCount, setGuestCount] = useState(1);
-  const [waterTemperature, setWaterTemperature] = useState(2);  // Changed from 40 to 2
+  const [waterTemperature, setWaterTemperature] = useState(2);
   const queryClient = useQueryClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -68,12 +70,13 @@ export const AdminReservationDialog = ({
   };
 
   const resetForm = () => {
+    setSelectedDate(initialDate);
     setTimeSlot(initialTimeSlot || "");
     setName("");
     setEmail("");
     setPhone("");
     setGuestCount(1);
-    setWaterTemperature(2);  // Reset to 2 as well
+    setWaterTemperature(2);
   };
 
   return (
@@ -87,6 +90,16 @@ export const AdminReservationDialog = ({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label>予約日</Label>
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={(date) => date && setSelectedDate(date)}
+              className="rounded-md border"
+            />
+          </div>
+
           <div className="space-y-2">
             <TimeSlotSelect
               value={timeSlot}
@@ -145,8 +158,8 @@ export const AdminReservationDialog = ({
             <Input
               id="waterTemperature"
               type="number"
-              min={2}  // Updated min value
-              max={17}  // Updated max value to match previous constraint
+              min={2}
+              max={17}
               value={waterTemperature}
               onChange={(e) => setWaterTemperature(parseInt(e.target.value))}
               required
