@@ -32,8 +32,8 @@ export const Header = () => {
           {/* Main Features */}
           <div className="glass-card p-6 space-y-5 w-full max-w-2xl hover-lift">
             <div className="space-y-4">
-              <h2 className="text-lg font-light text-white whitespace-nowrap px-2">
-                1日3組限定 完全貸切プライベートサウナ
+              <h2 className="text-lg font-light text-white whitespace-normal px-2">
+                1日3組限定<br />完全貸切プライベートサウナ
               </h2>
               <div className="space-y-3">
                 <p className="text-xs text-sauna-stone/90 font-light whitespace-nowrap px-2">
