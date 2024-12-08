@@ -16,7 +16,11 @@ export const ReservationStatus = ({ reservationCount }: ReservationStatusProps) 
   };
 
   return (
-    <div className="flex items-center justify-center">
+    <div className="flex items-center justify-center" title={
+      reservationCount === 0 ? "予約可能" :
+      reservationCount < 3 ? "残りわずか" :
+      "予約不可"
+    }>
       {getStatusIcon()}
     </div>
   );
