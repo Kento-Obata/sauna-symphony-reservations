@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 export const Header = () => {
   const [backgroundImage] = useState<string>('https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=80');
   const [reservationCode, setReservationCode] = useState('');
+  const [showForm, setShowForm] = useState(false);
   const navigate = useNavigate();
 
   const handleReservationLookup = (e: React.FormEvent) => {
@@ -35,20 +36,28 @@ export const Header = () => {
         }}
       />
       
-      {/* Reservation Lookup Form */}
-      <div className="absolute top-4 right-4 z-20">
-        <form onSubmit={handleReservationLookup} className="flex gap-2">
-          <Input
-            type="text"
-            placeholder="予約コードを入力"
-            value={reservationCode}
-            onChange={(e) => setReservationCode(e.target.value)}
-            className="w-40 bg-sauna-charcoal/50 border-sauna-stone/30 text-white placeholder:text-sauna-stone/50"
-          />
-          <Button type="submit" variant="secondary" size="icon">
-            <Search className="h-4 w-4" />
-          </Button>
-        </form>
+      {/* Reservation Link and Form */}
+      <div className="absolute top-4 right-4 z-20 flex items-center gap-4">
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className="text-white hover:text-sauna-copper transition-colors text-sm"
+        >
+          予約確認
+        </button>
+        {showForm && (
+          <form onSubmit={handleReservationLookup} className="flex gap-2">
+            <Input
+              type="text"
+              placeholder="予約コードを入力"
+              value={reservationCode}
+              onChange={(e) => setReservationCode(e.target.value)}
+              className="w-40 bg-sauna-charcoal/50 border-sauna-stone/30 text-white placeholder:text-sauna-stone/50"
+            />
+            <Button type="submit" variant="secondary" size="icon">
+              <Search className="h-4 w-4" />
+            </Button>
+          </form>
+        )}
       </div>
       
       <div className="relative z-10 w-full mx-auto text-center pt-8">
