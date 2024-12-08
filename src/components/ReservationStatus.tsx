@@ -11,7 +11,7 @@ export const ReservationStatus = ({ reservationCount }: ReservationStatusProps) 
   if (remainingSlots === 0) {
     return (
       <div className="flex items-center justify-center">
-        <XCircle className="h-4 w-4 text-red-500" />
+        <XCircle className="h-3 w-3 text-red-500" />
       </div>
     );
   }
@@ -19,14 +19,14 @@ export const ReservationStatus = ({ reservationCount }: ReservationStatusProps) 
   if (remainingSlots === MAX_RESERVATIONS) {
     return (
       <div className="flex items-center justify-center">
-        <Circle className="h-4 w-4 text-green-500" />
+        <Circle className="h-3 w-3 text-green-500" />
       </div>
     );
   }
 
   return (
     <div className="flex items-center justify-center">
-      <span className="text-green-500 text-sm font-medium">
+      <span className="text-green-500 text-xs font-medium">
         {remainingSlots}
       </span>
     </div>
