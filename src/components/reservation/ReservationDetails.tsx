@@ -52,7 +52,7 @@ export const ReservationDetails = ({
       />
 
       <div>
-        <label className="block text-sm mb-2">Name *</label>
+        <label className="block text-sm mb-2">お名前 *</label>
         <Input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -61,7 +61,7 @@ export const ReservationDetails = ({
       </div>
 
       <div>
-        <label className="block text-sm mb-2">Email</label>
+        <label className="block text-sm mb-2">メールアドレス</label>
         <Input
           type="email"
           value={email}
@@ -70,7 +70,7 @@ export const ReservationDetails = ({
       </div>
 
       <div>
-        <label className="block text-sm mb-2">Phone *</label>
+        <label className="block text-sm mb-2">電話番号 *</label>
         <Input
           type="tel"
           value={phone}
@@ -80,15 +80,15 @@ export const ReservationDetails = ({
       </div>
 
       <div>
-        <label className="block text-sm mb-2">Number of guests *</label>
+        <label className="block text-sm mb-2">人数 *</label>
         <Select onValueChange={setPeople} value={people}>
           <SelectTrigger>
-            <SelectValue placeholder="Select number" />
+            <SelectValue placeholder="人数を選択" />
           </SelectTrigger>
           <SelectContent>
             {[1, 2, 3, 4, 5, 6].map((num) => (
               <SelectItem key={num} value={num.toString()}>
-                {num}
+                {num}名
               </SelectItem>
             ))}
           </SelectContent>
@@ -96,10 +96,10 @@ export const ReservationDetails = ({
       </div>
 
       <div>
-        <label className="block text-sm mb-2">Water temperature *</label>
+        <label className="block text-sm mb-2">水風呂温度 *</label>
         <Select onValueChange={setTemperature} value={temperature}>
           <SelectTrigger>
-            <SelectValue placeholder="Select temperature" />
+            <SelectValue placeholder="温度を選択" />
           </SelectTrigger>
           <SelectContent>
             {Array.from({ length: 16 }, (_, i) => i + 2).map((temp) => (

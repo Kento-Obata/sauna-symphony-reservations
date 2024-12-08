@@ -43,53 +43,53 @@ export function ReservationConfirmDialog({
     <AlertDialog open={isOpen} onOpenChange={onClose}>
       <AlertDialogContent className="sm:max-w-[500px]">
         <AlertDialogHeader>
-          <AlertDialogTitle>Confirm Reservation</AlertDialogTitle>
+          <AlertDialogTitle>予約内容の確認</AlertDialogTitle>
           <AlertDialogDescription>
-            Please review your reservation details and select a payment method.
+            予約内容とお支払い方法をご確認ください。
           </AlertDialogDescription>
         </AlertDialogHeader>
         
         <div className="space-y-6 py-4">
           <div className="space-y-2">
-            <h4 className="font-medium">Reservation Details</h4>
+            <h4 className="font-medium">予約詳細</h4>
             <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="text-muted-foreground">Date:</div>
+              <div className="text-muted-foreground">日付:</div>
               <div>{format(new Date(reservation.date), "yyyy/MM/dd")}</div>
               
-              <div className="text-muted-foreground">Time:</div>
+              <div className="text-muted-foreground">時間:</div>
               <div>{TIME_SLOTS[reservation.time_slot]}</div>
               
-              <div className="text-muted-foreground">Name:</div>
+              <div className="text-muted-foreground">お名前:</div>
               <div>{reservation.guest_name}</div>
               
-              <div className="text-muted-foreground">Number of guests:</div>
-              <div>{reservation.guest_count}</div>
+              <div className="text-muted-foreground">人数:</div>
+              <div>{reservation.guest_count}名</div>
               
-              <div className="text-muted-foreground">Phone:</div>
+              <div className="text-muted-foreground">電話番号:</div>
               <div>{reservation.phone}</div>
               
               {reservation.email && (
                 <>
-                  <div className="text-muted-foreground">Email:</div>
+                  <div className="text-muted-foreground">メールアドレス:</div>
                   <div>{reservation.email}</div>
                 </>
               )}
               
-              <div className="text-muted-foreground">Water temperature:</div>
+              <div className="text-muted-foreground">水風呂温度:</div>
               <div>{reservation.water_temperature}°C</div>
             </div>
           </div>
 
           <div className="space-y-4">
-            <h4 className="font-medium">Payment Method</h4>
+            <h4 className="font-medium">お支払い方法</h4>
             <RadioGroup defaultValue="cash" onValueChange={(value: "cash" | "online") => handlePaymentMethodSelect(value)}>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="cash" id="cash" />
-                <Label htmlFor="cash">Pay at venue (¥40,000)</Label>
+                <Label htmlFor="cash">現地でのお支払い (¥40,000)</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="online" id="online" />
-                <Label htmlFor="online">Pay online now (¥40,000)</Label>
+                <Label htmlFor="online">オンライン決済 (¥40,000)</Label>
               </div>
             </RadioGroup>
           </div>
@@ -97,11 +97,11 @@ export function ReservationConfirmDialog({
 
         <AlertDialogFooter className="flex-col sm:flex-row gap-2">
           <Button variant="outline" onClick={onEdit}>
-            Edit Details
+            内容を修正
           </Button>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>キャンセル</AlertDialogCancel>
           <AlertDialogAction onClick={() => handlePaymentMethodSelect("cash")}>
-            Confirm Reservation
+            予約を確定
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

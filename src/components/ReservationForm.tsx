@@ -78,7 +78,6 @@ const ReservationForm = () => {
 
       if (error) throw error;
 
-      // Send notifications
       const notificationResponse = await supabase.functions.invoke(
         "send-reservation-notification",
         {
@@ -95,7 +94,7 @@ const ReservationForm = () => {
       );
 
       if (notificationResponse.error) {
-        console.error("Failed to send notifications:", notificationResponse.error);
+        console.error("通知の送信に失敗しました:", notificationResponse.error);
         toast.error("予約は完了しましたが、通知の送信に失敗しました。");
       }
 
@@ -112,7 +111,7 @@ const ReservationForm = () => {
       
       queryClient.invalidateQueries({ queryKey: ["reservations"] });
     } catch (error) {
-      console.error("Error inserting reservation:", error);
+      console.error("予約の登録に失敗しました:", error);
       toast.error("予約の登録に失敗しました。もう一度お試しください。");
     }
   };
@@ -144,7 +143,7 @@ const ReservationForm = () => {
   return (
     <div className="glass-card p-8 animate-fade-in">
       <h2 className="text-3xl font-bold mb-8 text-center text-gradient">
-        Reservation
+        ご予約
       </h2>
       
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -176,9 +175,9 @@ const ReservationForm = () => {
         </div>
 
         <div className="text-center mt-8">
-          <p className="mb-4 text-sauna-stone">Price: ¥40,000 (tax included)</p>
+          <p className="mb-4 text-sauna-stone">料金: ¥40,000 (税込)</p>
           <Button type="submit" className="w-full md:w-auto hover-lift">
-            Book
+            予約する
           </Button>
         </div>
       </form>

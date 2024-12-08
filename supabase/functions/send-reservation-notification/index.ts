@@ -29,16 +29,12 @@ const TIME_SLOTS = {
 };
 
 const formatPhoneNumber = (phone: string): string => {
-  // Remove all non-digit characters
   const digits = phone.replace(/\D/g, '');
   
-  // If it's a Japanese number starting with 0
   if (digits.startsWith('0')) {
-    // Remove the leading 0 and add +81
     return '+81' + digits.slice(1);
   }
   
-  // If it already has a country code (starts with non-zero)
   if (!digits.startsWith('0')) {
     return '+' + digits;
   }
@@ -47,20 +43,18 @@ const formatPhoneNumber = (phone: string): string => {
 };
 
 const handler = async (req: Request): Promise<Response> => {
-  console.log("Notification function called");
+  console.log("通知機能が呼び出されました");
 
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const reservation: ReservationNotification = await req.json();
-    console.log("Received reservation:", reservation);
+    console.log("予約情報を受信:", reservation);
 
     const notifications = [];
 
-    // Send email if provided
     if (reservation.email) {
       try {
         const emailRes = await fetch("https://api.resend.com/emails", {
@@ -72,50 +66,49 @@ const handler = async (req: Request): Promise<Response> => {
           body: JSON.stringify({
             from: "Sauna Reservation <onboarding@resend.dev>",
             to: [reservation.email],
-            subject: "Your Sauna Reservation Confirmation",
+            subject: "サウナのご予約確認",
             html: `
-              <h1>Reservation Confirmation</h1>
-              <p>Dear ${reservation.guestName},</p>
-              <p>Your sauna reservation has been confirmed with the following details:</p>
+              <h1>ご予約確認</h1>
+              <p>${reservation.guestName}様</p>
+              <p>サウナのご予約ありがとうございます。以下の内容で承りました：</p>
               <ul>
-                <li>Date: ${reservation.date}</li>
-                <li>Time: ${TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]}</li>
-                <li>Number of guests: ${reservation.guestCount}</li>
-                <li>Water temperature: ${reservation.waterTemperature}°C</li>
+                <li>日付: ${reservation.date}</li>
+                <li>時間: ${TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]}</li>
+                <li>人数: ${reservation.guestCount}名</li>
+                <li>水風呂温度: ${reservation.waterTemperature}°C</li>
               </ul>
-              <p>We look forward to seeing you!</p>
+              <p>ご来店を心よりお待ちしております。</p>
             `,
           }),
         });
 
         if (!emailRes.ok) {
-          throw new Error(`Email sending failed: ${await emailRes.text()}`);
+          throw new Error(`メール送信に失敗しました: ${await emailRes.text()}`);
         }
-        console.log("Email sent successfully");
+        console.log("メールを送信しました");
         notifications.push("email");
       } catch (error) {
-        console.error("Error sending email:", error);
+        console.error("メール送信エラー:", error);
       }
     }
 
-    // Send SMS using Twilio
     try {
       const formattedPhone = formatPhoneNumber(reservation.phone);
-      console.log("Original phone:", reservation.phone);
-      console.log("Formatted phone:", formattedPhone);
+      console.log("電話番号:", reservation.phone);
+      console.log("フォーマット後の電話番号:", formattedPhone);
 
       const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
       const formData = new URLSearchParams();
       formData.append('To', formattedPhone);
       formData.append('From', TWILIO_PHONE_NUMBER);
-      formData.append('Body', `Your sauna reservation is confirmed!\nDate: ${reservation.date}\nTime: ${
+      formData.append('Body', `サウナのご予約ありがとうございます。\n日付: ${reservation.date}\n時間: ${
         TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]
-      }\nGuests: ${reservation.guestCount}\nWater temp: ${
+      }\n人数: ${reservation.guestCount}名\n水風呂温度: ${
         reservation.waterTemperature
-      }°C`);
+      }°C\nご来店を心よりお待ちしております。`);
 
-      console.log("Sending SMS to:", formattedPhone);
-      console.log("SMS content:", formData.toString());
+      console.log("SMSを送信:", formattedPhone);
+      console.log("SMS内容:", formData.toString());
 
       const smsRes = await fetch(twilioUrl, {
         method: "POST",
@@ -127,18 +120,16 @@ const handler = async (req: Request): Promise<Response> => {
       });
 
       const smsResponseText = await smsRes.text();
-      console.log("Twilio API response:", smsResponseText);
+      console.log("Twilio APIレスポンス:", smsResponseText);
 
       if (!smsRes.ok) {
-        console.error("SMS sending failed:", smsResponseText);
-        // Do not throw an error, just log it
+        console.error("SMS送信に失敗しました:", smsResponseText);
       } else {
-        console.log("SMS sent successfully");
+        console.log("SMSを送信しました");
         notifications.push("sms");
       }
     } catch (error) {
-      console.error("Error sending SMS:", error);
-      // Do not throw an error, just log it
+      console.error("SMS送信エラー:", error);
     }
 
     return new Response(
@@ -152,7 +143,7 @@ const handler = async (req: Request): Promise<Response> => {
       }
     );
   } catch (error) {
-    console.error("Error in notification function:", error);
+    console.error("通知機能でエラーが発生しました:", error);
     return new Response(
       JSON.stringify({
         success: false,
