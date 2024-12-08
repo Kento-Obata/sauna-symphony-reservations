@@ -1,16 +1,18 @@
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks } from "date-fns";
 import { ja } from 'date-fns/locale';
 import { ReservationStatus } from "@/components/ReservationStatus";
-import { Reservation } from "@/types/reservation";
+import { Reservation, TimeSlot } from "@/types/reservation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { TIME_SLOTS } from "../TimeSlotSelect";
+import { AdminReservationDialog } from "../admin/AdminReservationDialog";
 
 interface ReservationCalendarProps {
   date: Date | undefined;
   setDate: (date: Date | undefined) => void;
   reservations: Reservation[] | undefined;
+  isAdmin?: boolean;
 }
 
 const TIME_SLOT_LABELS = {
@@ -23,6 +25,7 @@ export const ReservationCalendar = ({
   date,
   setDate,
   reservations,
+  isAdmin = false,
 }: ReservationCalendarProps) => {
   const currentDate = date || new Date();
   const weekStart = startOfWeek(currentDate, { locale: ja });
@@ -35,6 +38,25 @@ export const ReservationCalendar = ({
     return reservations.filter(
       (r) => r.date === dateString && r.time_slot === timeSlot
     );
+  };
+
+  const getTimeSlotReservations = (selectedDate: Date) => {
+    const defaultSlotReservations: Record<TimeSlot, number> = {
+      morning: 0,
+      afternoon: 0,
+      evening: 0
+    };
+
+    if (!reservations) return defaultSlotReservations;
+
+    const dateString = format(selectedDate, 'yyyy-MM-dd');
+    
+    return reservations
+      .filter(r => r.date === dateString)
+      .reduce((acc, r) => {
+        acc[r.time_slot] = (acc[r.time_slot] || 0) + 1;
+        return acc;
+      }, { ...defaultSlotReservations });
   };
 
   const handlePreviousWeek = () => {
@@ -98,6 +120,15 @@ export const ReservationCalendar = ({
           </TableBody>
         </Table>
       </div>
+
+      {isAdmin && (
+        <div className="flex justify-end">
+          <AdminReservationDialog
+            selectedDate={currentDate}
+            timeSlotReservations={getTimeSlotReservations(currentDate)}
+          />
+        </div>
+      )}
     </div>
   );
 };

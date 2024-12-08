@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
 import { format } from "date-fns";
-import { ja } from "date-fns/locale";
+import { ja } from 'date-fns/locale';
 import { useReservations } from "@/hooks/useReservations";
 import { ReservationCalendar } from "@/components/reservation/ReservationCalendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,6 +45,7 @@ const Admin = () => {
                 date={currentDate}
                 setDate={setCurrentDate}
                 reservations={reservations}
+                isAdmin={true}
               />
             </CardContent>
           </Card>
