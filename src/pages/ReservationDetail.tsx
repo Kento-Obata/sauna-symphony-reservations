@@ -61,6 +61,12 @@ const ReservationDetail = () => {
     },
   });
 
+  const handleModify = () => {
+    // Store the current reservation data in sessionStorage
+    sessionStorage.setItem('modifyReservation', JSON.stringify(reservation));
+    navigate('/');
+  };
+
   if (isLoading) {
     return (
       <div className="container mx-auto p-4 space-y-4">
@@ -86,12 +92,6 @@ const ReservationDetail = () => {
       </div>
     );
   }
-
-  const handleModify = () => {
-    // Store the current reservation data in sessionStorage
-    sessionStorage.setItem('modifyReservation', JSON.stringify(reservation));
-    navigate('/');
-  };
 
   return (
     <div className="container mx-auto p-4">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TimeSlot } from "@/types/reservation";
 import { toast } from "sonner";
 import { format, isValid } from "date-fns";
@@ -19,6 +19,23 @@ export const useReservationForm = () => {
   const [reservationCode, setReservationCode] = useState<string>();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+
+  // Load existing reservation data if available
+  useEffect(() => {
+    const existingReservation = sessionStorage.getItem('modifyReservation');
+    if (existingReservation) {
+      const reservation = JSON.parse(existingReservation);
+      setDate(new Date(reservation.date));
+      setTimeSlot(reservation.time_slot);
+      setName(reservation.guest_name);
+      setEmail(reservation.email || "");
+      setPhone(reservation.phone);
+      setPeople(reservation.guest_count.toString());
+      setTemperature(reservation.water_temperature.toString());
+      // Clear the stored data after loading
+      sessionStorage.removeItem('modifyReservation');
+    }
+  }, []);
 
   const resetForm = () => {
     setDate(undefined);
