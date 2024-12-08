@@ -19,8 +19,8 @@ export const Header = () => {
         }}
       />
       
-      <div className="relative z-10 w-full mx-auto md:px-4">
-        <div className="flex flex-col items-start space-y-8 px-4 md:px-0">
+      <div className="relative z-10 w-full mx-auto text-center">
+        <div className="flex flex-col items-center space-y-8 px-4 md:px-0">
           {/* Brand and Location */}
           <div className="space-y-2">
             <h1 className="text-5xl font-light text-gradient">Sauna U</h1>
