@@ -106,7 +106,7 @@ const ReservationForm = () => {
   };
 
   const getDayContent = (day: Date) => {
-    if (!reservations) return null;
+    if (!reservations || isBefore(day, new Date())) return null;
 
     const dateString = format(day, 'yyyy-MM-dd');
     const dateReservations = reservations.filter(

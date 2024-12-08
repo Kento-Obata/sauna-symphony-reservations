@@ -6,10 +6,12 @@ export const useReservations = () => {
   return useQuery({
     queryKey: ["reservations"],
     queryFn: async () => {
+      const today = new Date().toISOString().split('T')[0];
+      
       const { data, error } = await supabase
         .from("reservations")
         .select("*")
-        .gte('date', new Date().toISOString().split('T')[0])
+        .gte('date', today)
         .order('date', { ascending: true });
 
       if (error) throw error;
