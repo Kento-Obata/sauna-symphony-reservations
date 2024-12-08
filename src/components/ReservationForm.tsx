@@ -23,6 +23,11 @@ const ReservationForm = () => {
 
   const { data: reservations, isLoading, error } = useReservations();
 
+  const handleDateChange = (newDate: Date | undefined) => {
+    setDate(newDate);
+    setTimeSlot(""); // Reset time slot when date changes
+  };
+
   const getTimeSlotReservations = (selectedDate: Date) => {
     const defaultSlotReservations: Record<TimeSlot, number> = {
       morning: 0,
@@ -163,7 +168,7 @@ const ReservationForm = () => {
           <div className="w-full flex justify-center md:justify-start">
             <ReservationCalendar
               date={date}
-              setDate={setDate}
+              setDate={handleDateChange}
               reservations={reservations}
             />
           </div>
@@ -182,7 +187,7 @@ const ReservationForm = () => {
             temperature={temperature}
             setTemperature={setTemperature}
             date={date}
-            setDate={setDate}
+            setDate={handleDateChange}
             timeSlotReservations={timeSlotReservations}
           />
         </div>
