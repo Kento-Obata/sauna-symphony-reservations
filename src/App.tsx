@@ -3,13 +3,11 @@ import Index from "@/pages/Index";
 import Admin from "@/pages/Admin";
 import AdminLogin from "@/pages/AdminLogin";
 import { AdminGuard } from "@/components/admin/AdminGuard";
-import { Header } from "@/components/Header";
 import { Toaster } from "@/components/ui/sonner";
 
 function App() {
   return (
     <Router>
-      <Header />
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/admin/login" element={<AdminLogin />} />

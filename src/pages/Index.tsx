@@ -4,10 +4,10 @@ import ReservationForm from "@/components/ReservationForm";
 const Index = () => {
   return (
     <div className="min-h-screen pb-20">
-      <Header />
+      {/* Header is now only rendered once in the Header component */}
+      <ReservationForm />
+      
       <section className="max-w-4xl mx-auto px-4 py-20">
-        <ReservationForm />
-        
         <div className="mt-20 glass-card p-8">
           <h2 className="text-3xl font-bold mb-8 text-center text-gradient">
             アクセス
