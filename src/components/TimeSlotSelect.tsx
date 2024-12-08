@@ -7,7 +7,6 @@ import {
 } from "@/components/ui/select";
 import { TimeSlot } from "@/types/reservation";
 import { isBefore, addHours, setHours, setMinutes } from "date-fns";
-import { AlertOctagon } from "lucide-react";
 
 export const TIME_SLOTS = {
   morning: { start: '10:00', end: '12:30' },
@@ -32,6 +31,8 @@ export const isTimeSlotDisabled = (slot: TimeSlot, selectedDate: Date) => {
   return isBefore(slotTime, twoHoursFromNow);
 };
 
+const MAX_RESERVATIONS = 3;
+
 export const TimeSlotSelect = ({
   value,
   onValueChange,
@@ -55,9 +56,11 @@ export const TimeSlotSelect = ({
             { value: 'evening', label: '夕方 17:00-19:30' }
           ].map(({ value, label }) => {
             const isDisabled = selectedDate ? (
-              timeSlotReservations[value as TimeSlot] >= 1 ||
+              timeSlotReservations[value as TimeSlot] >= MAX_RESERVATIONS ||
               isTimeSlotDisabled(value as TimeSlot, selectedDate)
             ) : false;
+
+            const remainingSlots = MAX_RESERVATIONS - (timeSlotReservations[value as TimeSlot] || 0);
 
             return (
               <SelectItem 
@@ -67,8 +70,10 @@ export const TimeSlotSelect = ({
               >
                 <div className="flex items-center justify-between w-full">
                   <span>{label}</span>
-                  {!isDisabled && timeSlotReservations[value as TimeSlot] > 0 && (
-                    <AlertOctagon className="h-4 w-4 text-yellow-500" />
+                  {!isDisabled && remainingSlots < MAX_RESERVATIONS && (
+                    <span className="text-green-500 text-sm font-medium">
+                      残り{remainingSlots}枠
+                    </span>
                   )}
                 </div>
               </SelectItem>
