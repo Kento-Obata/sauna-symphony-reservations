@@ -4,7 +4,7 @@ import ReservationForm from "@/components/ReservationForm";
 const Index = () => {
   return (
     <div className="min-h-screen pb-20">
-      {/* Header is now only rendered once in the Header component */}
+      <Header />
       <ReservationForm />
       
       <section className="max-w-4xl mx-auto px-4 py-20">
