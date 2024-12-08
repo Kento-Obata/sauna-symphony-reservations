@@ -50,6 +50,23 @@ export const ReservationDateSelect = ({
     return dateReservations.length >= 3;
   };
 
+  const formatDisplayDate = (dateString: string) => {
+    try {
+      const parsedDate = new Date(dateString);
+      // Check if the date is valid
+      if (isNaN(parsedDate.getTime())) {
+        console.error('Invalid date:', dateString);
+        return 'Invalid date';
+      }
+      return format(parsedDate, "yyyy年MM月dd日(E)", {
+        locale: ja,
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Invalid date';
+    }
+  };
+
   return (
     <>
       <div className="text-muted-foreground col-span-2">予約日:</div>
@@ -68,9 +85,7 @@ export const ReservationDateSelect = ({
             />
           </div>
         ) : (
-          format(new Date(date), "yyyy年MM月dd日(E)", {
-            locale: ja,
-          })
+          formatDisplayDate(date)
         )}
       </div>
     </>
