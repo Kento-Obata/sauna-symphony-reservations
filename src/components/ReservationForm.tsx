@@ -33,7 +33,13 @@ const ReservationForm = () => {
   const { data: reservations, isLoading, error } = useReservations();
 
   const getTimeSlotReservations = (selectedDate: Date) => {
-    if (!reservations) return {};
+    const defaultSlotReservations: Record<TimeSlot, number> = {
+      morning: 0,
+      afternoon: 0,
+      evening: 0
+    };
+
+    if (!reservations) return defaultSlotReservations;
 
     const dateString = format(selectedDate, 'yyyy-MM-dd');
     
@@ -42,7 +48,7 @@ const ReservationForm = () => {
       .reduce((acc, r) => {
         acc[r.time_slot] = (acc[r.time_slot] || 0) + 1;
         return acc;
-      }, {} as Record<TimeSlot, number>);
+      }, { ...defaultSlotReservations });
 
     return slotReservations;
   };
