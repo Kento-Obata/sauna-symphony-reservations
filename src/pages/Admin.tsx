@@ -1,5 +1,3 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { AdminCalendar } from "@/components/admin/AdminCalendar";
 import { AdminUpcomingReservations } from "@/components/admin/AdminUpcomingReservations";
 import { Button } from "@/components/ui/button";
@@ -9,16 +7,8 @@ import { useState } from "react";
 import { useReservations } from "@/hooks/useReservations";
 
 const Admin = () => {
-  const navigate = useNavigate();
   const [showNewReservationDialog, setShowNewReservationDialog] = useState(false);
   const { data: reservations } = useReservations();
-
-  // TODO: Implement proper auth check
-  useEffect(() => {
-    // Temporary: redirect to home if not admin
-    // This should be replaced with proper auth check
-    navigate("/");
-  }, [navigate]);
 
   return (
     <div className="container mx-auto px-4 py-8">
