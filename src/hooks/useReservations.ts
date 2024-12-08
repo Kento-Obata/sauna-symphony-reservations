@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ReservationFormData } from "@/types/reservation";
+import { Reservation } from "@/types/reservation";
 
 export const useReservations = () => {
   return useQuery({
@@ -15,7 +15,7 @@ export const useReservations = () => {
         .order('date', { ascending: true });
 
       if (error) throw error;
-      return data as ReservationFormData[];
+      return data as Reservation[];
     },
   });
 };
