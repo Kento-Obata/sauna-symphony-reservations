@@ -44,9 +44,17 @@ export const AdminCalendar = ({ reservations = [] }: AdminCalendarProps) => {
     setShowReservationDialog(true);
   };
 
-  const getStatusColor = (count: number) => {
-    if (count === 0) return "text-green-500";
-    if (count < 3) return "text-yellow-500";
+  const getStatusDisplay = (reservations: Reservation[]) => {
+    if (reservations.length === 0) {
+      return <span className="text-green-500">○</span>;
+    }
+    const totalGuests = reservations.reduce((sum, res) => sum + res.guest_count, 0);
+    return <span className={getStatusColor(totalGuests)}>{totalGuests}名</span>;
+  };
+
+  const getStatusColor = (guestCount: number) => {
+    if (guestCount === 0) return "text-green-500";
+    if (guestCount < 6) return "text-yellow-500";
     return "text-red-500";
   };
 
@@ -88,10 +96,7 @@ export const AdminCalendar = ({ reservations = [] }: AdminCalendarProps) => {
               {time.start}
             </div>
             {days.map((day) => {
-              const reservationsCount = getReservationsForDateAndSlot(
-                day,
-                slot
-              ).length;
+              const slotReservations = getReservationsForDateAndSlot(day, slot);
               return (
                 <button
                   key={`${day}-${slot}`}
@@ -104,9 +109,7 @@ export const AdminCalendar = ({ reservations = [] }: AdminCalendarProps) => {
                     }
                   `}
                 >
-                  <span className={getStatusColor(reservationsCount)}>
-                    {reservationsCount}件
-                  </span>
+                  {getStatusDisplay(slotReservations)}
                 </button>
               );
             })}
