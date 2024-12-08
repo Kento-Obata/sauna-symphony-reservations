@@ -1,10 +1,18 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { ReservationDetails } from "@/components/reservation/ReservationDetails";
-import { TimeSlot } from "@/types/reservation";
 import { format } from "date-fns";
-import { toast } from "sonner";
+import { ja } from 'date-fns/locale';
+import { TimeSlot } from "@/types/reservation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { TimeSlotSelect } from "@/components/TimeSlotSelect";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -21,55 +29,51 @@ export const AdminReservationDialog = ({
   initialTimeSlot,
   trigger
 }: AdminReservationDialogProps) => {
+  const [isOpen, setIsOpen] = useState(false);
   const [timeSlot, setTimeSlot] = useState<TimeSlot | "">(initialTimeSlot || "");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [people, setPeople] = useState("");
-  const [temperature, setTemperature] = useState("");
-  const [isOpen, setIsOpen] = useState(false);
+  const [guestCount, setGuestCount] = useState(1);
+  const [waterTemperature, setWaterTemperature] = useState(40);
   const queryClient = useQueryClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!timeSlot || !name || !phone || !people || !temperature) {
-      toast.error("必須項目をすべて入力してください。");
-      return;
-    }
+    if (!timeSlot) return;
+
+    const formattedDate = format(selectedDate, 'yyyy-MM-dd');
 
     try {
-      const reservationData = {
-        date: format(selectedDate, "yyyy-MM-dd"),
-        time_slot: timeSlot,
-        guest_name: name,
-        guest_count: parseInt(people),
-        email: email || null,
-        phone: phone,
-        water_temperature: parseInt(temperature),
-      };
-
       const { error } = await supabase
-        .from("reservations")
-        .insert(reservationData);
+        .from('reservations')
+        .insert({
+          date: formattedDate,
+          time_slot: timeSlot,
+          guest_name: name,
+          guest_count: guestCount,
+          email: email || null,
+          phone,
+          water_temperature: waterTemperature,
+        });
 
       if (error) throw error;
 
-      toast.success("予約を登録しました");
+      queryClient.invalidateQueries({ queryKey: ['reservations'] });
       setIsOpen(false);
-      queryClient.invalidateQueries({ queryKey: ["reservations"] });
-      
-      // Reset form
-      setTimeSlot("");
-      setName("");
-      setEmail("");
-      setPhone("");
-      setPeople("");
-      setTemperature("");
+      resetForm();
     } catch (error) {
-      console.error("予約の登録に失敗しました:", error);
-      toast.error("予約の登録に失敗しました。もう一度お試しください。");
+      console.error('Error creating reservation:', error);
     }
+  };
+
+  const resetForm = () => {
+    setTimeSlot(initialTimeSlot || "");
+    setName("");
+    setEmail("");
+    setPhone("");
+    setGuestCount(1);
+    setWaterTemperature(40);
   };
 
   return (
@@ -79,31 +83,82 @@ export const AdminReservationDialog = ({
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>新規予約登録</DialogTitle>
+          <DialogTitle>新規予約 - {format(selectedDate, 'yyyy年MM月dd日 (E)', { locale: ja })}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <ReservationDetails
-            timeSlot={timeSlot}
-            setTimeSlot={setTimeSlot}
-            name={name}
-            setName={setName}
-            email={email}
-            setEmail={setEmail}
-            phone={phone}
-            setPhone={setPhone}
-            people={people}
-            setPeople={setPeople}
-            temperature={temperature}
-            setTemperature={setTemperature}
-            date={selectedDate}
-            timeSlotReservations={timeSlotReservations}
-          />
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="timeSlot">時間帯</Label>
+            <TimeSlotSelect
+              value={timeSlot}
+              onChange={setTimeSlot}
+              timeSlotReservations={timeSlotReservations}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="name">お名前</Label>
+            <Input
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email">メールアドレス</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="phone">電話番号</Label>
+            <Input
+              id="phone"
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="guestCount">人数</Label>
+            <Input
+              id="guestCount"
+              type="number"
+              min={1}
+              max={10}
+              value={guestCount}
+              onChange={(e) => setGuestCount(parseInt(e.target.value))}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="waterTemperature">水温</Label>
+            <Input
+              id="waterTemperature"
+              type="number"
+              min={35}
+              max={45}
+              value={waterTemperature}
+              onChange={(e) => setWaterTemperature(parseInt(e.target.value))}
+              required
+            />
+          </div>
+
           <div className="flex justify-end space-x-2">
             <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
               キャンセル
             </Button>
             <Button type="submit">
-              予約を登録
+              予約を作成
             </Button>
           </div>
         </form>
