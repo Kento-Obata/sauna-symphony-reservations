@@ -40,7 +40,7 @@ export const Header = () => {
       <div className="absolute top-4 right-4 z-20 flex items-center gap-4">
         <button
           onClick={() => setShowForm(!showForm)}
-          className="text-white hover:text-sauna-copper transition-colors text-sm"
+          className="text-white/60 hover:text-sauna-copper transition-colors text-xs"
         >
           予約確認
         </button>
