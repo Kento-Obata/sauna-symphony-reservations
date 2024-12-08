@@ -8,25 +8,48 @@ import { toast } from "sonner";
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!email || !password) {
+      toast.error("メールアドレスとパスワードを入力してください");
+      return;
+    }
+
+    setIsLoading(true);
+    
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message === "Invalid login credentials") {
+          toast.error("メールアドレスまたはパスワードが間違っています");
+        } else {
+          toast.error("ログインに失敗しました");
+        }
+        console.error("Login error:", error);
+        return;
+      }
 
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('role')
+        .eq('id', data.user.id)
         .single();
 
-      if (profile?.role !== 'admin') {
+      if (profileError) {
+        console.error("Error fetching profile:", profileError);
+        toast.error("プロフィールの取得に失敗しました");
+        return;
+      }
+
+      if (!profile || profile.role !== 'admin') {
         await supabase.auth.signOut();
         toast.error("管理者権限がありません");
         return;
@@ -37,6 +60,8 @@ const AdminLogin = () => {
     } catch (error) {
       console.error("Error logging in:", error);
       toast.error("ログインに失敗しました");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -56,11 +81,12 @@ const AdminLogin = () => {
               </label>
               <Input
                 id="email"
-                type="text"
+                type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="メールアドレス"
                 required
+                disabled={isLoading}
               />
             </div>
             <div>
@@ -74,6 +100,7 @@ const AdminLogin = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="パスワード"
                 required
+                disabled={isLoading}
               />
             </div>
           </div>
@@ -82,8 +109,9 @@ const AdminLogin = () => {
             <Button
               type="submit"
               className="w-full"
+              disabled={isLoading}
             >
-              ログイン
+              {isLoading ? "ログイン中..." : "ログイン"}
             </Button>
           </div>
         </form>
