@@ -14,8 +14,16 @@ export const ReservationCalendar = ({
   setDate,
   reservations,
 }: ReservationCalendarProps) => {
+  const today = new Date();
+  const threeMonthsFromNow = addMonths(today, 3);
+
   const getDayContent = (day: Date) => {
-    if (!reservations || isBefore(day, new Date())) return null;
+    // Only show reservation status for dates between today and three months from now
+    if (
+      !reservations || 
+      isBefore(day, today) || 
+      isAfter(day, threeMonthsFromNow)
+    ) return null;
 
     const dateString = format(day, 'yyyy-MM-dd');
     const dateReservations = reservations.filter(
@@ -33,9 +41,6 @@ export const ReservationCalendar = ({
       </div>
     );
   };
-
-  const today = new Date();
-  const threeMonthsFromNow = addMonths(today, 3);
 
   return (
     <Calendar
