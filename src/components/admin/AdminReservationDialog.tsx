@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface AdminReservationDialogProps {
   open: boolean;
@@ -29,6 +29,20 @@ export const AdminReservationDialog = ({
   const [phone, setPhone] = useState("");
   const [people, setPeople] = useState("");
   const [temperature, setTemperature] = useState("");
+
+  // Update date when defaultDate changes
+  useEffect(() => {
+    if (defaultDate) {
+      setDate(defaultDate);
+    }
+  }, [defaultDate]);
+
+  // Update timeSlot when defaultTimeSlot changes
+  useEffect(() => {
+    if (defaultTimeSlot) {
+      setTimeSlot(defaultTimeSlot);
+    }
+  }, [defaultTimeSlot]);
 
   const handleSubmit = async () => {
     if (!date || !timeSlot || !name || !phone || !people || !temperature) {
