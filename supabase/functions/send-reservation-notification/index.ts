@@ -130,13 +130,15 @@ const handler = async (req: Request): Promise<Response> => {
       console.log("Twilio API response:", smsResponseText);
 
       if (!smsRes.ok) {
-        throw new Error(`SMS sending failed: ${smsResponseText}`);
+        console.error("SMS sending failed:", smsResponseText);
+        // Do not throw an error, just log it
+      } else {
+        console.log("SMS sent successfully");
+        notifications.push("sms");
       }
-      console.log("SMS sent successfully");
-      notifications.push("sms");
     } catch (error) {
       console.error("Error sending SMS:", error);
-      throw error;
+      // Do not throw an error, just log it
     }
 
     return new Response(
