@@ -28,6 +28,24 @@ const TIME_SLOTS = {
   evening: "17:00-19:30",
 };
 
+const formatPhoneNumber = (phone: string): string => {
+  // Remove all non-digit characters
+  const digits = phone.replace(/\D/g, '');
+  
+  // If it's a Japanese number starting with 0
+  if (digits.startsWith('0')) {
+    // Remove the leading 0 and add +81
+    return '+81' + digits.slice(1);
+  }
+  
+  // If it already has a country code (starts with non-zero)
+  if (!digits.startsWith('0')) {
+    return '+' + digits;
+  }
+  
+  return digits;
+};
+
 const handler = async (req: Request): Promise<Response> => {
   console.log("Notification function called");
 
@@ -82,16 +100,13 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send SMS using Twilio
     try {
-      // Format the phone number to E.164 format if it's not already
-      let phoneNumber = reservation.phone;
-      if (!phoneNumber.startsWith('+')) {
-        // Assuming Japanese phone number if no country code
-        phoneNumber = '+81' + phoneNumber.replace(/^0/, '');
-      }
+      const formattedPhone = formatPhoneNumber(reservation.phone);
+      console.log("Original phone:", reservation.phone);
+      console.log("Formatted phone:", formattedPhone);
 
       const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
       const formData = new URLSearchParams();
-      formData.append('To', phoneNumber);
+      formData.append('To', formattedPhone);
       formData.append('From', TWILIO_PHONE_NUMBER);
       formData.append('Body', `Your sauna reservation is confirmed!\nDate: ${reservation.date}\nTime: ${
         TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]
@@ -99,7 +114,7 @@ const handler = async (req: Request): Promise<Response> => {
         reservation.waterTemperature
       }°C`);
 
-      console.log("Sending SMS to:", phoneNumber);
+      console.log("Sending SMS to:", formattedPhone);
       console.log("SMS content:", formData.toString());
 
       const smsRes = await fetch(twilioUrl, {
@@ -121,7 +136,7 @@ const handler = async (req: Request): Promise<Response> => {
       notifications.push("sms");
     } catch (error) {
       console.error("Error sending SMS:", error);
-      throw error; // Re-throw to handle in the outer catch block
+      throw error;
     }
 
     return new Response(
