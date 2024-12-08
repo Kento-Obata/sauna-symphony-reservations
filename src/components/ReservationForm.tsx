@@ -77,11 +77,14 @@ const ReservationForm = () => {
 
     const totalGuests = dateReservations.reduce((sum, r) => sum + r.guest_count, 0);
     
-    return totalGuests > 0 ? (
-      <div className="absolute bottom-0 right-0">
-        <ReservationStatus guestCount={totalGuests} />
-      </div>
-    ) : null;
+    if (totalGuests > 0) {
+      return (
+        <div className="absolute bottom-0 right-0 p-0.5">
+          <ReservationStatus guestCount={totalGuests} />
+        </div>
+      );
+    }
+    return null;
   };
 
   return (
@@ -100,7 +103,7 @@ const ReservationForm = () => {
               className="rounded-md border"
               components={{
                 DayContent: ({ date }) => (
-                  <div className="relative w-full h-full">
+                  <div className="relative w-full h-full flex items-center justify-center">
                     <span>{date.getDate()}</span>
                     {getDayContent(date)}
                   </div>
