@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
 import { format } from "date-fns";
@@ -11,6 +11,7 @@ const Admin = () => {
   const session = useSession();
   const navigate = useNavigate();
   const { data: reservations } = useReservations();
+  const [currentDate, setCurrentDate] = useState(new Date());
 
   useEffect(() => {
     if (!session) {
@@ -41,8 +42,8 @@ const Admin = () => {
             </CardHeader>
             <CardContent>
               <ReservationCalendar
-                date={undefined}
-                setDate={() => {}}
+                date={currentDate}
+                setDate={setCurrentDate}
                 reservations={reservations}
               />
             </CardContent>
