@@ -82,9 +82,9 @@ const ReservationForm = () => {
     const totalGuests = dateReservations.reduce((sum, r) => sum + r.guest_count, 0);
     
     return (
-      <div className="relative w-full h-full flex flex-col items-center justify-center gap-1">
-        <span className="mt-1">{day.getDate()}</span>
-        <div className="absolute bottom-1">
+      <div className="w-full h-full flex flex-col items-center justify-start pt-1 gap-2">
+        <span>{day.getDate()}</span>
+        <div>
           <ReservationStatus guestCount={totalGuests} />
         </div>
       </div>
