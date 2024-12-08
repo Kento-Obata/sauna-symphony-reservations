@@ -33,19 +33,15 @@ export const Header = () => {
           <div className="glass-card p-6 space-y-5 w-full max-w-2xl hover-lift">
             <div className="space-y-4">
               <h2 className="text-lg font-light text-white">
-                1日3組限定、
-                <br />
-                完全貸切プライベートサウナ
+                1日3組限定 完全貸切プライベートサウナ
               </h2>
               <div className="space-y-3">
                 <p className="text-xs text-sauna-stone/90 font-light">
                   予約前に最低5℃まで
-                  <br />
                   水温を選ぶだけ
                 </p>
                 <p className="text-xs text-sauna-stone/90 font-light">
                   詳細非公開、
-                  <br />
                   五感を刺激する究極のサウナ体験を
                 </p>
               </div>
