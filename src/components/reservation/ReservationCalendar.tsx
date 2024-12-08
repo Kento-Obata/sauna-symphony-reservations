@@ -6,6 +6,7 @@ import { Reservation } from "@/types/reservation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { TIME_SLOTS } from "../TimeSlotSelect";
 
 interface ReservationCalendarProps {
   date: Date | undefined;
@@ -13,10 +14,10 @@ interface ReservationCalendarProps {
   reservations: Reservation[] | undefined;
 }
 
-const TIME_SLOTS = {
-  morning: "午前",
-  afternoon: "午後",
-  evening: "夜",
+const TIME_SLOT_LABELS = {
+  morning: `10:00-12:30`,
+  afternoon: `13:30-16:00`,
+  evening: `17:00-19:30`,
 } as const;
 
 export const ReservationCalendar = ({
@@ -89,9 +90,9 @@ export const ReservationCalendar = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {Object.entries(TIME_SLOTS).map(([slot, label]) => (
+            {Object.entries(TIME_SLOT_LABELS).map(([slot, timeRange]) => (
               <TableRow key={slot}>
-                <TableCell className="font-medium">{label}</TableCell>
+                <TableCell className="font-medium">{timeRange}</TableCell>
                 {daysInWeek.map((day) => {
                   const slotReservations = getReservationsForSlot(day, slot as keyof typeof TIME_SLOTS);
                   return (
