@@ -3,9 +3,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Home, XCircle } from "lucide-react";
+import { Home, XCircle, Pencil } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { AdminReservationDetailsDialog } from "@/components/admin/AdminReservationDetailsDialog";
+import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +30,7 @@ const ReservationDetail = () => {
   const { reservationCode } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [showEditDialog, setShowEditDialog] = useState(false);
 
   const { data: reservation, isLoading, error } = useQuery({
     queryKey: ["reservation", reservationCode],
@@ -141,6 +144,15 @@ const ReservationDetail = () => {
 
           {reservation.status !== 'cancelled' && (
             <div className="flex justify-end gap-4 mt-6">
+              <Button
+                variant="outline"
+                className="flex items-center gap-2"
+                onClick={() => setShowEditDialog(true)}
+              >
+                <Pencil className="h-4 w-4" />
+                予約を変更
+              </Button>
+
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
@@ -173,6 +185,14 @@ const ReservationDetail = () => {
           )}
         </div>
       </div>
+
+      {reservation && (
+        <AdminReservationDetailsDialog
+          isOpen={showEditDialog}
+          onClose={() => setShowEditDialog(false)}
+          reservation={reservation}
+        />
+      )}
     </div>
   );
 };
