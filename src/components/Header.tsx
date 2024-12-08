@@ -34,7 +34,7 @@ const Header = () => {
                 5℃ 〜 20℃
               </p>
               <p className="text-sm text-sauna-stone/80">
-                地下深層水の掛け流し
+                選べる水温
               </p>
             </div>
           </div>
@@ -47,8 +47,7 @@ const Header = () => {
                 <h2 className="text-lg font-medium text-sauna-copper">三郡山の風</h2>
               </div>
               <p className="text-sauna-stone/80 leading-relaxed">
-                三つの山からなる谷間を吹き抜ける
-                涼やかな風が、身体を包み込む。
+                五感を解き放つ、究極のサウナ体験。
               </p>
             </div>
             <div className="glass-card p-6 hover-lift">
