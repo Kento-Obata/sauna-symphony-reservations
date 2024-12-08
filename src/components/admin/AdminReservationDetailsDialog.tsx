@@ -87,13 +87,16 @@ export const AdminReservationDetailsDialog = ({
             <div className="text-muted-foreground">時間帯:</div>
             <div>
               {isEditing ? (
-                <Select value={timeSlot} onValueChange={setTimeSlot}>
+                <Select 
+                  value={timeSlot} 
+                  onValueChange={(value: TimeSlot) => setTimeSlot(value)}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {Object.entries(TIME_SLOTS).map(([key, slot]) => (
-                      <SelectItem key={key} value={key}>
+                      <SelectItem key={key} value={key as TimeSlot}>
                         {slot.start}-{slot.end}
                       </SelectItem>
                     ))}
