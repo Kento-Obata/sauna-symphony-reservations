@@ -8,16 +8,10 @@ import {
 } from "@/components/ui/select";
 import { TimeSlot } from "@/types/reservation";
 import { TimeSlotSelect } from "@/components/TimeSlotSelect";
-import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
+import { format, addMonths, startOfMonth, getDaysInMonth } from "date-fns";
 import { ja } from "date-fns/locale";
-import { CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ReservationDetailsProps {
   timeSlot: TimeSlot | "";
@@ -54,35 +48,82 @@ export const ReservationDetails = ({
   setDate,
   timeSlotReservations,
 }: ReservationDetailsProps) => {
+  const today = new Date();
+  const months = Array.from({ length: 12 }, (_, i) => addMonths(today, i));
+
+  const handleMonthSelect = (monthStr: string) => {
+    const selectedMonth = new Date(monthStr);
+    setDate?.(selectedMonth);
+  };
+
+  const handleDateSelect = (day: number) => {
+    if (!date) return;
+    const newDate = new Date(date.getFullYear(), date.getMonth(), day);
+    setDate?.(newDate);
+  };
+
+  const getDaysArray = (selectedDate: Date) => {
+    const daysInMonth = getDaysInMonth(selectedDate);
+    return Array.from({ length: daysInMonth }, (_, i) => i + 1);
+  };
+
   return (
     <div className="space-y-4">
       {setDate && (
-        <div>
-          <label className="block text-sm mb-2">予約日 *</label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-full justify-start text-left font-normal"
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {date ? (
-                  format(date, "yyyy年MM月dd日 (E)", { locale: ja })
-                ) : (
-                  <span>日付を選択</span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={date}
-                onSelect={setDate}
-                initialFocus
-                locale={ja}
-              />
-            </PopoverContent>
-          </Popover>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm mb-2">月を選択 *</label>
+            <Select
+              value={date ? format(date, "yyyy-MM") : undefined}
+              onValueChange={handleMonthSelect}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="月を選択" />
+              </SelectTrigger>
+              <SelectContent>
+                {months.map((month) => (
+                  <SelectItem
+                    key={format(month, "yyyy-MM")}
+                    value={format(month, "yyyy-MM")}
+                  >
+                    {format(month, "yyyy年MM月", { locale: ja })}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {date && (
+            <div>
+              <label className="block text-sm mb-2">日付を選択 *</label>
+              <ScrollArea className="h-[200px] border rounded-md p-2">
+                <div className="grid grid-cols-4 gap-2">
+                  {getDaysArray(date).map((day) => {
+                    const dayDate = new Date(
+                      date.getFullYear(),
+                      date.getMonth(),
+                      day
+                    );
+                    const isSelected =
+                      date &&
+                      day === date.getDate() &&
+                      date.getMonth() === dayDate.getMonth();
+
+                    return (
+                      <Button
+                        key={day}
+                        variant={isSelected ? "default" : "outline"}
+                        className="w-full"
+                        onClick={() => handleDateSelect(day)}
+                      >
+                        {day}日
+                      </Button>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+            </div>
+          )}
         </div>
       )}
 
