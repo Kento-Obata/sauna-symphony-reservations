@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Map from './Map';
 
 const Header = () => {
   const [backgroundImage] = useState<string>('https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9');
@@ -44,6 +45,14 @@ const Header = () => {
                 </p>
               </div>
             </div>
+          </div>
+
+          {/* Address and Map */}
+          <div className="w-full space-y-4">
+            <p className="text-sm text-sauna-stone/90 font-light text-center">
+              〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4
+            </p>
+            <Map />
           </div>
         </div>
       </div>
