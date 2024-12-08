@@ -1,5 +1,4 @@
-import { Calendar } from "@/components/ui/calendar";
-import { isBefore, format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks } from "date-fns";
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks } from "date-fns";
 import { ja } from 'date-fns/locale';
 import { ReservationStatus } from "@/components/ReservationStatus";
 import { Reservation } from "@/types/reservation";
@@ -48,21 +47,12 @@ export const ReservationCalendar = ({
 
   return (
     <div className="space-y-4">
-      <Calendar
-        mode="single"
-        selected={date}
-        onSelect={setDate}
-        disabled={(date) => isBefore(date, new Date())}
-        className="rounded-md border"
-      />
-
       <div className="rounded-md border">
         <div className="flex items-center justify-between p-4 border-b">
           <Button
             variant="outline"
             size="icon"
             onClick={handlePreviousWeek}
-            disabled={isBefore(weekStart, new Date())}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
