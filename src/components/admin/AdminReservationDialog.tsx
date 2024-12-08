@@ -51,6 +51,18 @@ export const AdminReservationDialog = ({
     }
 
     try {
+      // Check for existing reservations
+      const { data: existingReservations } = await supabase
+        .from("reservations")
+        .select("*")
+        .eq("date", format(date, "yyyy-MM-dd"))
+        .eq("time_slot", timeSlot);
+
+      if (existingReservations && existingReservations.length > 0) {
+        toast.error("申し訳ありませんが、この時間帯はすでに予約が入っています。");
+        return;
+      }
+
       const { error } = await supabase.from("reservations").insert({
         date: format(date, "yyyy-MM-dd"),
         time_slot: timeSlot,

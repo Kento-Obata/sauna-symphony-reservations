@@ -72,6 +72,18 @@ const ReservationForm = () => {
         return;
       }
 
+      // Check for existing reservations
+      const { data: existingReservations } = await supabase
+        .from("reservations")
+        .select("*")
+        .eq("date", reservationData.date)
+        .eq("time_slot", reservationData.time_slot);
+
+      if (existingReservations && existingReservations.length > 0) {
+        toast.error("申し訳ありませんが、この時間帯はすでに予約が入っています。");
+        return;
+      }
+
       const { error } = await supabase
         .from("reservations")
         .insert(reservationData);
