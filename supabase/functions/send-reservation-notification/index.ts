@@ -55,7 +55,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     const notifications = [];
     const GOOGLE_MAPS_URL = "https://maps.google.com/maps?q=8Q5GHG7V%2BJ5";
-    const RESERVATION_URL = `https://your-domain.com/reservation/${reservation.reservationCode}`;
+    const BASE_URL = "https://sauna-reservation.vercel.app"; // 仮のドメイン
+    const RESERVATION_URL = `${BASE_URL}/reservation/${reservation.reservationCode}`;
 
     if (reservation.email) {
       try {
