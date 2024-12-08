@@ -84,7 +84,7 @@ export const AdminReservationDialog = ({
       <DialogTrigger asChild>
         {trigger || <Button variant="outline">新規予約を追加</Button>}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>新規予約 - {format(selectedDate, 'yyyy年MM月dd日 (E)', { locale: ja })}</DialogTitle>
         </DialogHeader>
@@ -92,12 +92,15 @@ export const AdminReservationDialog = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label>予約日</Label>
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={(date) => date && setSelectedDate(date)}
-              className="rounded-md border"
-            />
+            <div className="border rounded-md p-3">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={(date) => date && setSelectedDate(date)}
+                className="mx-auto"
+                fromDate={new Date()}
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
