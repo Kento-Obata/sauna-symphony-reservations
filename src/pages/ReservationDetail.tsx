@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
-import { TIME_SLOTS } from "@/components/TimeSlotSelect";
 import { useState } from "react";
 import { ModifyReservationDialog } from "@/components/reservation/ModifyReservationDialog";
 import { toast } from "sonner";
@@ -14,7 +13,7 @@ const ReservationDetail = () => {
   const navigate = useNavigate();
   const [showModifyDialog, setShowModifyDialog] = useState(false);
 
-  console.log("Reservation code from params:", code);
+  console.log("Reservation code from URL:", code);
 
   const { data: reservation, isLoading, error } = useQuery({
     queryKey: ["reservation", code],
@@ -45,34 +44,9 @@ const ReservationDetail = () => {
 
       return data;
     },
-    enabled: !!code,
+    enabled: Boolean(code),
     retry: false,
   });
-
-  const handleCancel = async () => {
-    if (!reservation) return;
-
-    const isConfirmed = window.confirm(
-      "予約をキャンセルしてもよろしいですか？"
-    );
-
-    if (!isConfirmed) return;
-
-    try {
-      const { error } = await supabase
-        .from("reservations")
-        .update({ status: "cancelled" })
-        .eq("id", reservation.id);
-
-      if (error) throw error;
-
-      toast.success("予約をキャンセルしました");
-      navigate("/");
-    } catch (error) {
-      console.error("予約のキャンセルに失敗しました:", error);
-      toast.error("予約のキャンセルに失敗しました。もう一度お試しください。");
-    }
-  };
 
   if (!code) {
     return (
@@ -107,6 +81,31 @@ const ReservationDetail = () => {
       </div>
     );
   }
+
+  const handleCancel = async () => {
+    if (!reservation) return;
+
+    const isConfirmed = window.confirm(
+      "予約をキャンセルしてもよろしいですか？"
+    );
+
+    if (!isConfirmed) return;
+
+    try {
+      const { error } = await supabase
+        .from("reservations")
+        .update({ status: "cancelled" })
+        .eq("id", reservation.id);
+
+      if (error) throw error;
+
+      toast.success("予約をキャンセルしました");
+      navigate("/");
+    } catch (error) {
+      console.error("予約のキャンセルに失敗しました:", error);
+      toast.error("予約のキャンセルに失敗しました。もう一度お試しください。");
+    }
+  };
 
   return (
     <div className="container mx-auto p-4">
