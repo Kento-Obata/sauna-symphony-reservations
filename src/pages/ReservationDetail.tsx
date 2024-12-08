@@ -14,18 +14,6 @@ const ReservationDetail = () => {
   const navigate = useNavigate();
   const [showModifyDialog, setShowModifyDialog] = useState(false);
 
-  // Add validation for the reservation code
-  if (!code) {
-    return (
-      <div className="container mx-auto p-4">
-        <div className="text-center space-y-4">
-          <p className="text-sauna-stone">予約コードが見つかりません。</p>
-          <Button onClick={() => navigate("/")}>トップページへ戻る</Button>
-        </div>
-      </div>
-    );
-  }
-
   const { data: reservation, isLoading, error } = useQuery({
     queryKey: ["reservation", code],
     queryFn: async () => {
@@ -38,7 +26,6 @@ const ReservationDetail = () => {
       if (error) throw error;
       return data;
     },
-    // Disable the query if code is undefined
     enabled: !!code,
   });
 
@@ -66,6 +53,17 @@ const ReservationDetail = () => {
       toast.error("予約のキャンセルに失敗しました。もう一度お試しください。");
     }
   };
+
+  if (!code) {
+    return (
+      <div className="container mx-auto p-4">
+        <div className="text-center space-y-4">
+          <p className="text-sauna-stone">予約コードが見つかりません。</p>
+          <Button onClick={() => navigate("/")}>トップページへ戻る</Button>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
