@@ -1,9 +1,11 @@
 import { Calendar } from "@/components/ui/calendar";
-import { isBefore, format, startOfWeek, endOfWeek, eachDayOfInterval } from "date-fns";
+import { isBefore, format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks } from "date-fns";
 import { ja } from 'date-fns/locale';
 import { ReservationStatus } from "@/components/ReservationStatus";
 import { Reservation } from "@/types/reservation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface ReservationCalendarProps {
   date: Date | undefined;
@@ -35,6 +37,14 @@ export const ReservationCalendar = ({
     );
   };
 
+  const handlePreviousWeek = () => {
+    setDate(subWeeks(currentDate, 1));
+  };
+
+  const handleNextWeek = () => {
+    setDate(addWeeks(currentDate, 1));
+  };
+
   return (
     <div className="space-y-4">
       <Calendar
@@ -46,6 +56,27 @@ export const ReservationCalendar = ({
       />
 
       <div className="rounded-md border">
+        <div className="flex items-center justify-between p-4 border-b">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handlePreviousWeek}
+            disabled={isBefore(weekStart, new Date())}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="font-medium">
+            {format(weekStart, 'yyyy年MM月dd日', { locale: ja })} - {format(weekEnd, 'MM月dd日', { locale: ja })}
+          </span>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleNextWeek}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+
         <Table>
           <TableHeader>
             <TableRow>
