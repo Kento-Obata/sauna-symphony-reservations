@@ -88,12 +88,15 @@ export const AdminReservationDetailsDialog = ({
               date={date}
               onDateChange={handleDateChange}
               isEditing={isEditing}
+              currentReservationId={reservation.id}
             />
 
             <ReservationTimeSelect
               timeSlot={timeSlot}
               onTimeSlotChange={setTimeSlot}
               isEditing={isEditing}
+              date={date}
+              currentReservationId={reservation.id}
             />
 
             <div className="text-muted-foreground">お名前:</div>
