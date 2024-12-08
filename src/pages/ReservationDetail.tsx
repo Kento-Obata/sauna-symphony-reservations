@@ -28,6 +28,8 @@ const ReservationDetail = () => {
         .single();
 
       if (error) throw error;
+      if (!data) throw new Error("予約が見つかりません");
+      
       return data;
     },
     enabled: !!code,
@@ -58,6 +60,17 @@ const ReservationDetail = () => {
     }
   };
 
+  if (!code) {
+    return (
+      <div className="container mx-auto p-4">
+        <div className="text-center space-y-4">
+          <p className="text-sauna-stone">予約コードが必要です</p>
+          <Button onClick={() => navigate("/")}>トップページへ戻る</Button>
+        </div>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="container mx-auto p-4 space-y-4">
@@ -74,7 +87,7 @@ const ReservationDetail = () => {
     return (
       <div className="container mx-auto p-4">
         <div className="text-center space-y-4">
-          <p className="text-sauna-stone">予約が見つかりませんでした。</p>
+          <p className="text-sauna-stone">予約が見つかりません</p>
           <Button onClick={() => navigate("/")}>トップページへ戻る</Button>
         </div>
       </div>
