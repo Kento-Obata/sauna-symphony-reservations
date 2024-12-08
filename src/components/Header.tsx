@@ -1,29 +1,7 @@
-import { useEffect, useState } from 'react';
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from 'react';
 
 const Header = () => {
-  const [backgroundImage, setBackgroundImage] = useState<string>('/placeholder.svg');
-
-  useEffect(() => {
-    const generateImage = async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke('generate-sauna-image');
-        
-        if (error) {
-          console.error('Error generating image:', error);
-          return;
-        }
-
-        if (data.data && data.data[0].url) {
-          setBackgroundImage(data.data[0].url);
-        }
-      } catch (error) {
-        console.error('Error invoking function:', error);
-      }
-    };
-
-    generateImage();
-  }, []);
+  const [backgroundImage] = useState<string>('https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9');
 
   return (
     <header className="relative h-screen flex items-center justify-center overflow-hidden">
