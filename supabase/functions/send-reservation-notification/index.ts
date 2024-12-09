@@ -20,6 +20,7 @@ interface ReservationNotification {
   phone: string;
   waterTemperature: number;
   reservationCode: string;
+  confirmationToken: string;
 }
 
 const TIME_SLOTS = {
@@ -56,7 +57,7 @@ const handler = async (req: Request): Promise<Response> => {
     const notifications = [];
     const GOOGLE_MAPS_URL = "https://maps.google.com/maps?q=8Q5GHG7V%2BJ5";
     const BASE_URL = "https://preview--sauna-symphony-reservations.lovable.app";
-    const RESERVATION_URL = `${BASE_URL}/reservation/${reservation.reservationCode}`;
+    const CONFIRMATION_URL = `${BASE_URL}/reservation/confirm/${reservation.confirmationToken}`;
 
     if (reservation.email) {
       try {
@@ -69,11 +70,13 @@ const handler = async (req: Request): Promise<Response> => {
           body: JSON.stringify({
             from: "Sauna Reservation <onboarding@resend.dev>",
             to: [reservation.email],
-            subject: "サウナのご予約確認",
+            subject: "サウナの仮予約確認",
             html: `
-              <h1>ご予約確認</h1>
+              <h1>仮予約確認</h1>
               <p>${reservation.guestName}様</p>
-              <p>サウナのご予約ありがとうございます。以下の内容で承りました：</p>
+              <p>サウナの仮予約を受け付けました。以下のリンクから20分以内に予約を確定してください：</p>
+              <p><a href="${CONFIRMATION_URL}">予約を確定する</a></p>
+              <p>予約内容：</p>
               <ul>
                 <li>予約コード: ${reservation.reservationCode}</li>
                 <li>日付: ${reservation.date}</li>
@@ -81,12 +84,10 @@ const handler = async (req: Request): Promise<Response> => {
                 <li>人数: ${reservation.guestCount}名</li>
                 <li>水風呂温度: ${reservation.waterTemperature}°C</li>
               </ul>
-              <p>予約の詳細は以下のURLからご確認いただけます：</p>
-              <p><a href="${RESERVATION_URL}">${RESERVATION_URL}</a></p>
+              <p>※このリンクの有効期限は20分です。</p>
               <p>住所: 〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4</p>
               <p>Plus Code: 8Q5GHG7V+J5</p>
               <p>Google Maps: <a href="${GOOGLE_MAPS_URL}">こちらから確認できます</a></p>
-              <p>ご来店を心よりお待ちしております。</p>
             `,
           }),
         });
@@ -110,11 +111,11 @@ const handler = async (req: Request): Promise<Response> => {
       const formData = new URLSearchParams();
       formData.append('To', formattedPhone);
       formData.append('From', TWILIO_PHONE_NUMBER);
-      formData.append('Body', `サウナのご予約ありがとうございます。\n\n予約コード: ${reservation.reservationCode}\n\n日付: ${reservation.date}\n時間: ${
+      formData.append('Body', `サウナの仮予約を受け付けました。\n\n以下のリンクから20分以内に予約を確定してください：\n${CONFIRMATION_URL}\n\n予約内容：\n予約コード: ${reservation.reservationCode}\n日付: ${reservation.date}\n時間: ${
         TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]
       }\n人数: ${reservation.guestCount}名\n水風呂温度: ${
         reservation.waterTemperature
-      }°C\n\n予約の詳細はこちら：\n${RESERVATION_URL}\n\n住所: 〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4\nPlus Code: 8Q5GHG7V+J5\nGoogle Maps: ${GOOGLE_MAPS_URL}\n\nご来店を心よりお待ちしております。`);
+      }°C\n\n※このリンクの有効期限は20分です。\n\n住所: 〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4\nPlus Code: 8Q5GHG7V+J5\nGoogle Maps: ${GOOGLE_MAPS_URL}`);
 
       console.log("SMSを送信:", formattedPhone);
       console.log("SMS内容:", formData.toString());

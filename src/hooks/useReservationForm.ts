@@ -112,8 +112,8 @@ export const useReservationForm = () => {
 
       if (error) throw error;
 
-      if (!newReservation?.reservation_code) {
-        throw new Error("予約コードが生成されませんでした。");
+      if (!newReservation?.reservation_code || !newReservation.confirmation_token) {
+        throw new Error("予約コードまたは確認トークンが生成されませんでした。");
       }
 
       setReservationCode(newReservation.reservation_code);
@@ -130,6 +130,7 @@ export const useReservationForm = () => {
             phone: reservationData.phone,
             waterTemperature: reservationData.water_temperature,
             reservationCode: newReservation.reservation_code,
+            confirmationToken: newReservation.confirmation_token,
           },
         }
       );
@@ -139,14 +140,13 @@ export const useReservationForm = () => {
         toast.error("予約は完了しましたが、通知の送信に失敗しました。");
       }
 
-      // Navigate to completion page with reservation code
-      // Note: We're keeping the isSubmitting state true until the navigation is complete
-      navigate('/reservation/complete', { 
+      // Navigate to temporary reservation page
+      navigate('/reservation/pending', { 
         state: { reservationCode: newReservation.reservation_code },
-        replace: true // Use replace to prevent back navigation to the form
+        replace: true
       });
 
-      toast.success("予約を受け付けました");
+      toast.success("仮予約を受け付けました。メールまたはSMSの確認リンクから予約を確定してください。");
       queryClient.invalidateQueries({ queryKey: ["reservations"] });
     } catch (error) {
       console.error("予約の登録に失敗しました:", error);

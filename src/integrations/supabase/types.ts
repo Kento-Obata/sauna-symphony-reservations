@@ -35,12 +35,15 @@ export type Database = {
       }
       reservations: {
         Row: {
+          confirmation_token: string | null
           created_at: string
           date: string
           email: string | null
+          expires_at: string | null
           guest_count: number
           guest_name: string
           id: string
+          is_confirmed: boolean | null
           phone: string
           reservation_code: string | null
           status: string
@@ -48,12 +51,15 @@ export type Database = {
           water_temperature: number
         }
         Insert: {
+          confirmation_token?: string | null
           created_at?: string
           date: string
           email?: string | null
+          expires_at?: string | null
           guest_count: number
           guest_name: string
           id?: string
+          is_confirmed?: boolean | null
           phone: string
           reservation_code?: string | null
           status?: string
@@ -61,12 +67,15 @@ export type Database = {
           water_temperature: number
         }
         Update: {
+          confirmation_token?: string | null
           created_at?: string
           date?: string
           email?: string | null
+          expires_at?: string | null
           guest_count?: number
           guest_name?: string
           id?: string
+          is_confirmed?: boolean | null
           phone?: string
           reservation_code?: string | null
           status?: string
@@ -80,6 +89,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_expired_reservations: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       ensure_admin_role: {
         Args: Record<PropertyKey, never>
         Returns: undefined
