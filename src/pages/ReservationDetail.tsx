@@ -44,16 +44,22 @@ export const ReservationDetail = () => {
       const { data, error } = await supabase
         .from("reservations")
         .select("*")
-        .eq("reservation_code", reservationCode)
-        .single();
+        .eq("reservation_code", reservationCode);
 
       if (error) {
         console.error("Error fetching reservation:", error);
         throw error;
       }
-      
-      console.log("Fetched reservation:", data);
-      return data;
+
+      // データが存在しない場合のチェック
+      if (!data || data.length === 0) {
+        console.log("No reservation found with code:", reservationCode);
+        throw new Error("予約が見つかりませんでした");
+      }
+
+      const reservationData = data[0];
+      console.log("Fetched reservation:", reservationData);
+      return reservationData;
     },
     retry: false,
     enabled: !!reservationCode,
