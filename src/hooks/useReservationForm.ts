@@ -88,16 +88,23 @@ export const useReservationForm = () => {
         email: email || null,
         phone: phone,
         water_temperature: parseInt(temperature),
-        status: "pending",  // Set initial status as pending
+        status: "pending" as const,  // Explicitly set status as "pending"
       };
 
-      // Check for existing reservations
-      const { data: existingReservations } = await supabase
+      console.log("Submitting reservation data:", reservationData);
+
+      // Check for existing confirmed reservations
+      const { data: existingReservations, error: checkError } = await supabase
         .from("reservations")
         .select("*")
         .eq("date", reservationData.date)
         .eq("time_slot", reservationData.time_slot)
-        .eq("status", "confirmed"); // Only check confirmed reservations
+        .eq("status", "confirmed");
+
+      if (checkError) {
+        console.error("Error checking existing reservations:", checkError);
+        throw checkError;
+      }
 
       if (existingReservations && existingReservations.length > 0) {
         toast.error("申し訳ありませんが、この時間帯はすでに予約が入っています。");
@@ -112,7 +119,10 @@ export const useReservationForm = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error inserting reservation:", error);
+        throw error;
+      }
 
       if (!newReservation?.reservation_code || !newReservation.confirmation_token) {
         throw new Error("予約コードまたは確認トークンが生成されませんでした。");
