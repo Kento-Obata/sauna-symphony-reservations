@@ -41,31 +41,22 @@ export const ReservationDetail = () => {
     queryFn: async () => {
       console.log("Fetching reservation with code:", reservationCode);
       
-      // まず全ての予約を取得して確認
-      const { data: allReservations, error: allError } = await supabase
-        .from("reservations")
-        .select("*");
-
-      if (allError) {
-        console.error("Error fetching all reservations:", allError);
-        throw allError;
-      }
-
-      console.log("All reservations:", allReservations);
-
-      // 特定の予約を取得
       const { data, error } = await supabase
         .from("reservations")
-        .select("*")
+        .select()
         .eq("reservation_code", reservationCode)
-        .single();
+        .maybeSingle();
 
       if (error) {
-        console.error("Error fetching specific reservation:", error);
-        console.log("Attempted to fetch reservation with code:", reservationCode);
+        console.error("Error fetching reservation:", error);
         throw error;
       }
-      
+
+      if (!data) {
+        console.log("No reservation found with code:", reservationCode);
+        throw new Error("予約が見つかりませんでした");
+      }
+
       console.log("Fetched reservation:", data);
       return data;
     },
