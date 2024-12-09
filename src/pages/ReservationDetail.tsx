@@ -32,18 +32,45 @@ const ReservationDetail = () => {
   const queryClient = useQueryClient();
   const [showEditDialog, setShowEditDialog] = useState(false);
 
+  // Add validation for reservationCode
+  if (!reservationCode) {
+    return (
+      <div className="container mx-auto p-4">
+        <h1 className="text-2xl font-bold text-red-500">
+          予約コードが見つかりません
+        </h1>
+        <p className="mt-2 text-gray-600">
+          URLをご確認の上、もう一度お試しください。
+        </p>
+        <Button 
+          className="mt-4"
+          onClick={() => navigate('/')}
+        >
+          トップページへ戻る
+        </Button>
+      </div>
+    );
+  }
+
   const { data: reservation, isLoading, error } = useQuery({
     queryKey: ["reservation", reservationCode],
     queryFn: async () => {
+      console.log("Fetching reservation with code:", reservationCode);
       const { data, error } = await supabase
         .from("reservations")
         .select("*")
         .eq("reservation_code", reservationCode)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching reservation:", error);
+        throw error;
+      }
+      
+      console.log("Fetched reservation:", data);
       return data;
     },
+    enabled: !!reservationCode, // Only run query if reservationCode exists
   });
 
   const cancelReservation = useMutation({
@@ -86,6 +113,12 @@ const ReservationDetail = () => {
         <p className="mt-2 text-gray-600">
           予約コードをご確認の上、もう一度お試しください。
         </p>
+        <Button 
+          className="mt-4"
+          onClick={() => navigate('/')}
+        >
+          トップページへ戻る
+        </Button>
       </div>
     );
   }
@@ -196,5 +229,3 @@ const ReservationDetail = () => {
     </div>
   );
 };
-
-export default ReservationDetail;
