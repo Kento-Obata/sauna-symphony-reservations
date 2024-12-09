@@ -14,8 +14,7 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-// カスタムドメインに応じて変更が必要です
-const BASE_URL = "https://www.u-sauna-private.com";
+const BASE_URL = Deno.env.get('BASE_URL') || 'https://www.u-sauna-private.com';
 const GOOGLE_MAPS_URL = "https://maps.google.com/maps?q=8Q5GHG7V%2BJ5";
 
 interface ReservationNotification {
@@ -170,3 +169,4 @@ const handler = async (req: Request): Promise<Response> => {
 };
 
 serve(handler);
+
