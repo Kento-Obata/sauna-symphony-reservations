@@ -1,15 +1,22 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { Resend } from "https://esm.sh/resend@2.0.0";
+import { Twilio } from "https://esm.sh/twilio@4.19.0";
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
-const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
-const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER");
+const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
+const twilioClient = new Twilio(
+  Deno.env.get('TWILIO_ACCOUNT_SID'),
+  Deno.env.get('TWILIO_AUTH_TOKEN')
+);
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
+
+// カスタムドメインに応じて変更が必要です
+const BASE_URL = "https://your-custom-domain.com";
+const GOOGLE_MAPS_URL = "https://maps.google.com/maps?q=8Q5GHG7V%2BJ5";
 
 interface ReservationNotification {
   date: string;
@@ -55,8 +62,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("予約情報を受信:", reservation);
 
     const notifications = [];
-    const GOOGLE_MAPS_URL = "https://maps.google.com/maps?q=8Q5GHG7V%2BJ5";
-    const BASE_URL = "https://preview--sauna-symphony-reservations.lovable.app";
+
     const CONFIRMATION_URL = `${BASE_URL}/reservation/confirm/${reservation.confirmationToken}`;
 
     if (reservation.email) {
@@ -65,7 +71,7 @@ const handler = async (req: Request): Promise<Response> => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${RESEND_API_KEY}`,
+            Authorization: `Bearer ${resend.apiKey}`,
           },
           body: JSON.stringify({
             from: "Sauna Reservation <onboarding@resend.dev>",
@@ -107,15 +113,11 @@ const handler = async (req: Request): Promise<Response> => {
       console.log("電話番号:", reservation.phone);
       console.log("フォーマット後の電話番号:", formattedPhone);
 
-      const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
+      const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${Deno.env.get('TWILIO_ACCOUNT_SID')}/Messages.json`;
       const formData = new URLSearchParams();
       formData.append('To', formattedPhone);
-      formData.append('From', TWILIO_PHONE_NUMBER);
-      formData.append('Body', `サウナの仮予約を受け付けました。\n\n以下のリンクから20分以内に予約を確定してください：\n${CONFIRMATION_URL}\n\n予約内容：\n予約コード: ${reservation.reservationCode}\n日付: ${reservation.date}\n時間: ${
-        TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]
-      }\n人数: ${reservation.guestCount}名\n水風呂温度: ${
-        reservation.waterTemperature
-      }°C\n\n※このリンクの有効期限は20分です。\n\n住所: 〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4\nPlus Code: 8Q5GHG7V+J5\nGoogle Maps: ${GOOGLE_MAPS_URL}`);
+      formData.append('From', Deno.env.get('TWILIO_PHONE_NUMBER'));
+      formData.append('Body', `サウナの仮予約を受け付けました。\n\n以下のリンクから20分以内に予約を確定してください：\n${CONFIRMATION_URL}\n\n予約内容：\n予約コード: ${reservation.reservationCode}\n日付: ${reservation.date}\n時間: ${TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]}\n人数: ${reservation.guestCount}名\n水風呂温度: ${reservation.waterTemperature}°C\n\n※このリンクの有効期限は20分です。\n\n住所: 〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4\nPlus Code: 8Q5GHG7V+J5\nGoogle Maps: ${GOOGLE_MAPS_URL}`);
 
       console.log("SMSを送信:", formattedPhone);
       console.log("SMS内容:", formData.toString());
@@ -124,7 +126,7 @@ const handler = async (req: Request): Promise<Response> => {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
-          Authorization: `Basic ${btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)}`,
+          Authorization: `Basic ${btoa(`${Deno.env.get('TWILIO_ACCOUNT_SID')}:${Deno.env.get('TWILIO_AUTH_TOKEN')}`)}`,
         },
         body: formData,
       });
