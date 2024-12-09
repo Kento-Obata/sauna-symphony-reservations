@@ -40,26 +40,23 @@ export const ReservationDetail = () => {
     queryKey: ["reservation", reservationCode],
     queryFn: async () => {
       console.log("Fetching reservation with code:", reservationCode);
+      
       const { data, error } = await supabase
         .from("reservations")
         .select("*")
         .eq("reservation_code", reservationCode)
-        .maybeSingle();
+        .single();
 
       if (error) {
         console.error("Error fetching reservation:", error);
         throw error;
       }
       
-      if (!data) {
-        console.log("No reservation found with code:", reservationCode);
-        throw new Error("予約が見つかりませんでした");
-      }
-      
       console.log("Fetched reservation:", data);
       return data;
     },
     retry: false,
+    enabled: !!reservationCode,
   });
 
   const cancelReservation = useMutation({
@@ -93,11 +90,30 @@ export const ReservationDetail = () => {
     );
   }
 
-  if (error || !reservation) {
+  if (error) {
     return (
       <div className="container mx-auto p-4">
         <h1 className="text-2xl font-bold text-red-500">
-          予約情報が見つかりませんでした
+          予約情報の取得に失敗しました
+        </h1>
+        <p className="mt-2 text-gray-600">
+          もう一度お試しいただくか、管理者にお問い合わせください。
+        </p>
+        <Button 
+          className="mt-4"
+          onClick={() => navigate('/')}
+        >
+          トップページへ戻る
+        </Button>
+      </div>
+    );
+  }
+
+  if (!reservation) {
+    return (
+      <div className="container mx-auto p-4">
+        <h1 className="text-2xl font-bold text-red-500">
+          予約が見つかりませんでした
         </h1>
         <p className="mt-2 text-gray-600">
           予約コードをご確認の上、もう一度お試しください。
