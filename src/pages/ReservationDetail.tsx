@@ -41,33 +41,20 @@ export const ReservationDetail = () => {
     queryFn: async () => {
       console.log("Searching for reservation code:", reservationCode);
       
-      // First, let's check all reservations to see if the code exists
-      const { data: allReservations, error: allError } = await supabase
-        .from("reservations")
-        .select("reservation_code");
-      
-      if (allError) {
-        console.error("Error fetching all reservations:", allError);
-        throw allError;
-      }
-      
-      console.log("All reservation codes:", allReservations.map(r => r.reservation_code));
-      
-      // Now try to fetch the specific reservation
       const { data, error } = await supabase
         .from("reservations")
         .select()
         .eq("reservation_code", reservationCode)
-        .single();
+        .maybeSingle();  // Changed from .single() to .maybeSingle()
 
       if (error) {
-        console.error("Error fetching specific reservation:", error);
+        console.error("Error fetching reservation:", error);
         throw error;
       }
 
       if (!data) {
         console.log("No reservation found with code:", reservationCode);
-        throw new Error("予約が見つかりませんでした");
+        return null;  // Return null instead of throwing error
       }
 
       console.log("Found reservation:", data);
@@ -163,25 +150,12 @@ export const ReservationDetail = () => {
         </h1>
         
         <div className="space-y-4">
-          {isLoading ? (
-            <Skeleton className="h-48" />
-          ) : error ? (
-            <div className="text-center text-red-500">
-              <p>予約情報の取得に失敗しました</p>
-              <p className="text-sm mt-2">
-                もう一度お試しいただくか、管理者にお問い合わせください。
-              </p>
-            </div>
-          ) : reservation ? (
-            <>
-              <ReservationInfo reservation={reservation} />
-              <ReservationActions 
-                status={reservation.status}
-                setShowEditDialog={setShowEditDialog}
-                cancelReservation={cancelReservation}
-              />
-            </>
-          ) : null}
+          <ReservationInfo reservation={reservation} />
+          <ReservationActions 
+            status={reservation.status}
+            setShowEditDialog={setShowEditDialog}
+            cancelReservation={cancelReservation}
+          />
         </div>
       </div>
 
