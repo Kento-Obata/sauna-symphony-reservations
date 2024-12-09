@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 import { Resend } from 'https://esm.sh/resend@2.0.0'
 import { Twilio } from 'https://esm.sh/twilio@4.19.0'
 
