@@ -1,159 +1,81 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from '@supabase/supabase-js'
+import { Resend } from 'resend'
+import twilio from 'twilio'
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
-const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
-const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER");
+const resend = new Resend(Deno.env.get('RESEND_API_KEY'))
+const twilioClient = twilio(
+  Deno.env.get('TWILIO_ACCOUNT_SID'),
+  Deno.env.get('TWILIO_AUTH_TOKEN')
+)
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
-
-interface ExpirationNotification {
-  guestName: string;
-  email: string | null;
-  phone: string;
-  reservationCode: string;
-  date: string;
-  timeSlot: string;
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const formatPhoneNumber = (phone: string): string => {
-  const digits = phone.replace(/\D/g, '');
-  
-  if (digits.startsWith('0')) {
-    return '+81' + digits.slice(1);
-  }
-  
-  if (!digits.startsWith('0')) {
-    return '+' + digits;
-  }
-  
-  return digits;
-};
+interface ReservationData {
+  guestName: string
+  email: string | null
+  phone: string
+  reservationCode: string
+  date: string
+  timeSlot: string
+}
 
-const handler = async (req: Request): Promise<Response> => {
-  console.log("予約期限切れ通知機能が呼び出されました");
-
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const reservation: ExpirationNotification = await req.json();
-    console.log("予約期限切れ情報を受信:", reservation);
+    const reservationData: ReservationData = await req.json()
+    const { guestName, email, phone, reservationCode, date, timeSlot } = reservationData
 
-    const notifications = [];
-    const TIME_SLOTS = {
-      morning: "10:00-12:30",
-      afternoon: "13:30-16:00",
-      evening: "17:00-19:30",
-    };
+    console.log('Sending expiration notification for reservation:', reservationData)
 
-    if (reservation.email) {
-      try {
-        const emailRes = await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${RESEND_API_KEY}`,
-          },
-          body: JSON.stringify({
-            from: "Sauna Reservation <onboarding@resend.dev>",
-            to: [reservation.email],
-            subject: "サウナの仮予約が期限切れになりました",
-            html: `
-              <h1>仮予約期限切れのお知らせ</h1>
-              <p>${reservation.guestName}様</p>
-              <p>申し訳ございませんが、以下の仮予約は20分以内に確定されなかったため、キャンセルされました：</p>
-              <ul>
-                <li>予約コード: ${reservation.reservationCode}</li>
-                <li>日付: ${reservation.date}</li>
-                <li>時間: ${TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]}</li>
-              </ul>
-              <p>もう一度予約をご希望の場合は、お手数ですが再度予約手続きをお願いいたします。</p>
-            `,
-          }),
-        });
-
-        if (!emailRes.ok) {
-          throw new Error(`メール送信に失敗しました: ${await emailRes.text()}`);
-        }
-        console.log("期限切れ通知メールを送信しました");
-        notifications.push("email");
-      } catch (error) {
-        console.error("メール送信エラー:", error);
-      }
+    // Send email if email is provided
+    if (email) {
+      await resend.emails.send({
+        from: 'Sauna Reservation <onsen@resend.dev>',
+        to: email,
+        subject: '予約が期限切れになりました',
+        html: `
+          <p>${guestName}様</p>
+          <p>ご予約の確認が20分以内に完了しなかったため、予約番号${reservationCode}の予約は期限切れとなりました。</p>
+          <p>予約内容:</p>
+          <ul>
+            <li>日付: ${date}</li>
+            <li>時間帯: ${timeSlot}</li>
+          </ul>
+          <p>もう一度ご予約いただけますと幸いです。</p>
+        `
+      })
+      console.log('Expiration email sent successfully')
     }
 
-    try {
-      const formattedPhone = formatPhoneNumber(reservation.phone);
-      console.log("電話番号:", reservation.phone);
-      console.log("フォーマット後の電話番号:", formattedPhone);
-
-      const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
-      const formData = new URLSearchParams();
-      formData.append('To', formattedPhone);
-      formData.append('From', TWILIO_PHONE_NUMBER);
-      formData.append('Body', 
-        `${reservation.guestName}様\n\n` +
-        `申し訳ございませんが、以下の仮予約は20分以内に確定されなかったため、キャンセルされました：\n\n` +
-        `予約コード: ${reservation.reservationCode}\n` +
-        `日付: ${reservation.date}\n` +
-        `時間: ${TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]}\n\n` +
-        `もう一度予約をご希望の場合は、お手数ですが再度予約手続きをお願いいたします。`
-      );
-
-      console.log("SMS期限切れ通知を送信:", formattedPhone);
-      console.log("SMS内容:", formData.toString());
-
-      const smsRes = await fetch(twilioUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          Authorization: `Basic ${btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)}`,
-        },
-        body: formData,
-      });
-
-      const smsResponseText = await smsRes.text();
-      console.log("Twilio APIレスポンス:", smsResponseText);
-
-      if (!smsRes.ok) {
-        console.error("SMS送信に失敗しました:", smsResponseText);
-      } else {
-        console.log("SMS期限切れ通知を送信しました");
-        notifications.push("sms");
-      }
-    } catch (error) {
-      console.error("SMS送信エラー:", error);
-    }
+    // Send SMS
+    await twilioClient.messages.create({
+      body: `${guestName}様、予約番号${reservationCode}の予約は確認が完了しなかったため期限切れとなりました。もう一度ご予約ください。`,
+      from: Deno.env.get('TWILIO_PHONE_NUMBER'),
+      to: phone
+    })
+    console.log('Expiration SMS sent successfully')
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        notifications: notifications,
-      }),
+      JSON.stringify({ message: 'Expiration notifications sent successfully' }),
       {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       }
-    );
+    )
   } catch (error) {
-    console.error("通知機能でエラーが発生しました:", error);
+    console.error('Error sending expiration notifications:', error)
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message,
-      }),
+      JSON.stringify({ error: 'Failed to send expiration notifications' }),
       {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
       }
-    );
+    )
   }
-};
-
-serve(handler);
+})
