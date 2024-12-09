@@ -44,6 +44,19 @@ export const AdminReservationDetailsDialog = ({
     }
   }, [reservation]);
 
+  const getStatusDisplay = (status: string) => {
+    switch (status) {
+      case "pending":
+        return "仮予約";
+      case "confirmed":
+        return "予約確定";
+      case "cancelled":
+        return "キャンセル済み";
+      default:
+        return status;
+    }
+  };
+
   if (!reservation) return null;
 
   const handleSave = async () => {
@@ -194,7 +207,7 @@ export const AdminReservationDetailsDialog = ({
 
             <div className="text-muted-foreground">ステータス:</div>
             <div>
-              {reservation.status === "cancelled" ? "キャンセル済み" : "予約確定"}
+              {getStatusDisplay(reservation.status)}
             </div>
           </div>
 
