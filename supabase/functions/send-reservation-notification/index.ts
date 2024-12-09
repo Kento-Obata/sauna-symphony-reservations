@@ -55,7 +55,7 @@ const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { 
-      headers: corsHeaders,
+      headers: { ...corsHeaders },
       status: 204
     });
   }
@@ -67,14 +67,16 @@ const handler = async (req: Request): Promise<Response> => {
     const notifications = [];
 
     const CONFIRMATION_URL = `${reservation.baseUrl}/reservation/confirm/${reservation.confirmationToken}`;
+    console.log("確認URL:", CONFIRMATION_URL);
 
     if (reservation.email) {
       try {
+        console.log("メール送信を試行中...");
         const emailRes = await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${resend.apiKey}`,
+            Authorization: `Bearer ${Deno.env.get('RESEND_API_KEY')}`,
           },
           body: JSON.stringify({
             from: "Sauna Reservation <onboarding@resend.dev>",
@@ -101,8 +103,11 @@ const handler = async (req: Request): Promise<Response> => {
           }),
         });
 
+        const emailResponseData = await emailRes.text();
+        console.log("メール送信レスポンス:", emailResponseData);
+
         if (!emailRes.ok) {
-          throw new Error(`メール送信に失敗しました: ${await emailRes.text()}`);
+          throw new Error(`メール送信に失敗しました: ${emailResponseData}`);
         }
         console.log("メールを送信しました");
         notifications.push("email");
@@ -138,7 +143,7 @@ const handler = async (req: Request): Promise<Response> => {
       console.log("Twilio APIレスポンス:", smsResponseText);
 
       if (!smsRes.ok) {
-        console.error("SMS送信に失敗しました:", smsResponseText);
+        throw new Error(`SMS送信に失敗しました: ${smsResponseText}`);
       } else {
         console.log("SMSを送信しました");
         notifications.push("sms");
