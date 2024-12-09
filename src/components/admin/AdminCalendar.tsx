@@ -44,7 +44,7 @@ export const AdminCalendar = ({
       (r) => 
         r.date === format(date, "yyyy-MM-dd") && 
         r.time_slot === timeSlot &&
-        r.status === "confirmed" // Only show confirmed reservations
+        (r.status === "confirmed" || r.status === "pending") // Include both confirmed and pending reservations
     );
   };
 
@@ -73,8 +73,27 @@ export const AdminCalendar = ({
     if (reservations.length === 0) {
       return <span className="text-green-500">○</span>;
     }
-    const totalGuests = reservations.reduce((sum, res) => sum + res.guest_count, 0);
-    return <span className={getStatusColor(totalGuests)}>{totalGuests}名</span>;
+
+    const confirmedReservations = reservations.filter(r => r.status === "confirmed");
+    const pendingReservations = reservations.filter(r => r.status === "pending");
+    
+    const totalConfirmedGuests = confirmedReservations.reduce((sum, res) => sum + res.guest_count, 0);
+    const totalPendingGuests = pendingReservations.reduce((sum, res) => sum + res.guest_count, 0);
+
+    return (
+      <div className="flex flex-col items-center text-sm">
+        {totalConfirmedGuests > 0 && (
+          <span className={getStatusColor(totalConfirmedGuests)}>
+            {totalConfirmedGuests}名
+          </span>
+        )}
+        {totalPendingGuests > 0 && (
+          <span className="text-yellow-500 italic">
+            ({totalPendingGuests}名)
+          </span>
+        )}
+      </div>
+    );
   };
 
   const getStatusColor = (guestCount: number) => {
@@ -141,6 +160,17 @@ export const AdminCalendar = ({
             })}
           </>
         ))}
+      </div>
+
+      <div className="mt-4 flex gap-4 text-sm">
+        <div className="flex items-center gap-2">
+          <span className="text-black dark:text-white">確定予約:</span>
+          <span className="text-yellow-500">5名</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-black dark:text-white">仮予約:</span>
+          <span className="text-yellow-500 italic">(3名)</span>
+        </div>
       </div>
 
       <AdminReservationDialog
