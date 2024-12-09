@@ -26,7 +26,7 @@ interface ReservationNotification {
   waterTemperature: number;
   reservationCode: string;
   confirmationToken: string;
-  baseUrl: string;  // Add baseUrl to the interface
+  baseUrl: string;
 }
 
 const TIME_SLOTS = {
@@ -52,8 +52,12 @@ const formatPhoneNumber = (phone: string): string => {
 const handler = async (req: Request): Promise<Response> => {
   console.log("通知機能が呼び出されました");
 
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { 
+      headers: corsHeaders,
+      status: 204
+    });
   }
 
   try {
