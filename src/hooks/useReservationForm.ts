@@ -88,6 +88,7 @@ export const useReservationForm = () => {
         email: email || null,
         phone: phone,
         water_temperature: parseInt(temperature),
+        status: "pending",  // 仮予約状態で登録
       };
 
       // Check for existing reservations

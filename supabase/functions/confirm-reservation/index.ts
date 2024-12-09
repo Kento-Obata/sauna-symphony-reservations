@@ -28,6 +28,7 @@ const handler = async (req: Request): Promise<Response> => {
       .from("reservations")
       .select("*")
       .eq("confirmation_token", token)
+      .eq("status", "pending")  // 仮予約状態のみを対象とする
       .single();
 
     if (findError || !reservation) {
@@ -63,6 +64,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { error: updateError } = await supabase
       .from("reservations")
       .update({
+        status: "confirmed",  // ステータスを本予約に更新
         is_confirmed: true,
         confirmation_token: null,
         expires_at: null,
