@@ -162,16 +162,7 @@ export const AdminCalendar = ({
         ))}
       </div>
 
-      <div className="mt-4 flex gap-4 text-sm">
-        <div className="flex items-center gap-2">
-          <span className="text-black dark:text-white">確定予約:</span>
-          <span className="text-yellow-500">5名</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-black dark:text-white">仮予約:</span>
-          <span className="text-yellow-500 italic">(3名)</span>
-        </div>
-      </div>
+      {/* Removed the legend div as per user request */}
 
       <AdminReservationDialog
         open={showReservationDialog}
