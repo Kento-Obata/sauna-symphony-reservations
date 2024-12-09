@@ -10,6 +10,7 @@ export default function ReservationPending() {
   useEffect(() => {
     // If no reservation code is provided, redirect to home
     if (!reservationCode) {
+      console.log("No reservation code found, redirecting to home");
       navigate('/');
     }
   }, [reservationCode, navigate]);
@@ -30,6 +31,7 @@ export default function ReservationPending() {
           <div className="space-y-4 text-sauna-stone">
             <p>メールまたはSMSに送信された確認リンクから、20分以内に予約を確定してください。</p>
             <p>20分を過ぎると予約は自動的にキャンセルされます。</p>
+            <p className="text-xs">※ドメインが「u-sauna-private.com」からのリンクが正しいものです。</p>
           </div>
 
           <div className="pt-6">
