@@ -7,13 +7,15 @@ const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
-// カスタムドメインに応じて変更が必要です
-const BASE_URL = "https://your-custom-domain.com";
-const GOOGLE_MAPS_URL = "https://maps.google.com/maps?q=8Q5GHG7V%2BJ5";
+const TIME_SLOTS = {
+  morning: "10:00-12:30",
+  afternoon: "13:30-16:00",
+  evening: "17:00-19:30",
+};
 
 interface UpdateNotification {
   date: string;
@@ -52,6 +54,9 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("予約更新情報を受信:", reservation);
 
     const notifications = [];
+    const GOOGLE_MAPS_URL = "https://maps.google.com/maps?q=8Q5GHG7V%2BJ5";
+    const BASE_URL = "https://preview--sauna-symphony-reservations.lovable.app";
+    const RESERVATION_URL = `${BASE_URL}/reservation/${reservation.reservationCode}`;
 
     if (reservation.email) {
       try {
