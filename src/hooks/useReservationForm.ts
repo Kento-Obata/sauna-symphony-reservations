@@ -88,7 +88,7 @@ export const useReservationForm = () => {
         email: email || null,
         phone: phone,
         water_temperature: parseInt(temperature),
-        status: "pending" as const,  // Explicitly set status as "pending"
+        status: "pending" as const,
       };
 
       console.log("Submitting reservation data:", reservationData);
@@ -130,6 +130,20 @@ export const useReservationForm = () => {
 
       setReservationCode(newReservation.reservation_code);
 
+      // In development environment, skip the notification
+      if (import.meta.env.DEV) {
+        console.log("Development environment: Skipping notification");
+        // Navigate to temporary reservation page
+        navigate('/reservation/pending', { 
+          state: { reservationCode: newReservation.reservation_code },
+          replace: true
+        });
+        toast.success("仮予約を受け付けました。");
+        queryClient.invalidateQueries({ queryKey: ["reservations"] });
+        return;
+      }
+
+      // Production: Send notification
       const notificationResponse = await supabase.functions.invoke(
         "send-reservation-notification",
         {
