@@ -73,6 +73,9 @@ export const ReservationConfirmDialog = ({
           <div className="text-center text-sm text-muted-foreground">
             <p>上記の内容で予約を確定しますか？</p>
             <p className="mt-2">料金: ¥40,000 (税込)</p>
+            <p className="mt-2 text-yellow-600 font-bold">
+              ※ SMSまたはEmailのリンクをクリックすることで本予約が完了します
+            </p>
           </div>
 
           <div className="flex justify-center gap-4">
@@ -93,7 +96,7 @@ export const ReservationConfirmDialog = ({
                   予約中...
                 </>
               ) : (
-                "予約を確定する"
+                "仮予約へ進む"
               )}
             </Button>
           </div>
