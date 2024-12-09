@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import { Resend } from "https://esm.sh/@resend/node@0.16.0";
+import { Resend } from "https://esm.sh/resend@2.0.0";
 import { Twilio } from "https://esm.sh/twilio@4.19.0";
 
 const corsHeaders = {
