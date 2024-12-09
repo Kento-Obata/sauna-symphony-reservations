@@ -55,7 +55,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const notifications = [];
     const GOOGLE_MAPS_URL = "https://maps.google.com/maps?q=8Q5GHG7V%2BJ5";
-    const BASE_URL = "https://preview--sauna-symphony-reservations.lovable.app";
+    const BASE_URL = "https://u-sauna-private.com";
     const RESERVATION_URL = `${BASE_URL}/reservation/${reservation.reservationCode}`;
 
     if (reservation.email) {
