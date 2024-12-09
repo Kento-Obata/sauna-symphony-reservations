@@ -12,6 +12,19 @@ interface ReservationInfoProps {
 }
 
 export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
+  const getStatusDisplay = (status: string) => {
+    switch (status) {
+      case "pending":
+        return "仮予約";
+      case "confirmed":
+        return "予約確定";
+      case "cancelled":
+        return "キャンセル済み";
+      default:
+        return status;
+    }
+  };
+
   return (
     <div className="grid grid-cols-2 gap-4">
       <div className="text-sauna-stone">予約コード:</div>
@@ -43,8 +56,8 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
       <div>{reservation.water_temperature}°C</div>
 
       <div className="text-sauna-stone">ステータス:</div>
-      <div className={reservation.status === 'cancelled' ? 'text-red-500' : 'text-green-500'}>
-        {reservation.status === 'cancelled' ? 'キャンセル済み' : '予約確定'}
+      <div className={reservation.status === 'cancelled' ? 'text-red-500' : reservation.status === 'pending' ? 'text-yellow-500' : 'text-green-500'}>
+        {getStatusDisplay(reservation.status)}
       </div>
     </div>
   );
