@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
         subject: '予約が期限切れになりました',
         html: `
           <p>${guestName}様</p>
-          <p>ご予約の確認が20分以内に完了しなかったため、予約番号${reservationCode}の予約は期限切れとなりました。</p>
+          <p>ご予約の確認が1分以内に完了しなかったため、予約番号${reservationCode}の予約は期限切れとなりました。</p>
           <p>予約内容:</p>
           <ul>
             <li>日付: ${date}</li>
