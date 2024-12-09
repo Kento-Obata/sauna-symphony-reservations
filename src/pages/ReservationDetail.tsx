@@ -44,7 +44,7 @@ export const ReservationDetail = () => {
         .from("reservations")
         .select("*")
         .eq("reservation_code", reservationCode)
-        .maybeSingle(); // Changed from single() to maybeSingle()
+        .maybeSingle();
 
       if (error) {
         console.error("Error fetching reservation:", error);
@@ -52,13 +52,14 @@ export const ReservationDetail = () => {
       }
       
       if (!data) {
+        console.log("No reservation found with code:", reservationCode);
         throw new Error("予約が見つかりませんでした");
       }
       
       console.log("Fetched reservation:", data);
       return data;
     },
-    enabled: !!reservationCode,
+    retry: false,
   });
 
   const cancelReservation = useMutation({
