@@ -15,8 +15,8 @@ serve(async (req) => {
     const { date, timeSlot, guestName, guestCount, email, phone, waterTemperature, reservationCode, confirmationToken } = await req.json();
 
     const notifications = [];
+    const BASE_URL = "https://u-sauna-private.com";
     const GOOGLE_MAPS_URL = "https://maps.google.com/maps?q=8Q5GHG7V%2BJ5";
-    const BASE_URL = "https://u-sauna-private.com";  // カスタムドメインに更新
     const CONFIRMATION_URL = `${BASE_URL}/reservation/confirm/${confirmationToken}`;
 
     console.log("Starting notification process for:", { guestName, phone, email });
@@ -81,15 +81,21 @@ serve(async (req) => {
           Deno.env.get("TWILIO_AUTH_TOKEN")
         );
 
-        // Format phone number
+        // Format phone number for Twilio
         let formattedPhone = phone.replace(/[^\d]/g, ''); // Remove non-digit characters
+        
+        // Log the original and intermediate formatted phone number
+        console.log("Original phone:", phone);
+        console.log("After removing non-digits:", formattedPhone);
+        
+        // Only add +81 if the number starts with 0
         if (formattedPhone.startsWith('0')) {
-          formattedPhone = '+81' + formattedPhone.slice(1);
+          formattedPhone = '+81' + formattedPhone.substring(1);
         } else if (!formattedPhone.startsWith('+')) {
           formattedPhone = '+' + formattedPhone;
         }
         
-        console.log("Formatted phone number:", formattedPhone);
+        console.log("Final formatted phone number:", formattedPhone);
 
         const message = await twilioClient.messages.create({
           body: `【U】ご予約ありがとうございます。以下のリンクから予約を確定してください（有効期限20分）\n${CONFIRMATION_URL}`,
