@@ -13,19 +13,34 @@ export default function ReservationConfirm() {
   useEffect(() => {
     const confirmReservation = async () => {
       if (!token) {
+        console.error("No token provided");
         setError("無効な確認トークンです。");
         setIsLoading(false);
         return;
       }
 
       try {
+        console.log("Confirming reservation with token:", token);
+        
+        // First, check if the reservation exists
+        const { data: existingReservation } = await supabase
+          .from("reservations")
+          .select("*")
+          .eq("confirmation_token", token)
+          .single();
+
+        console.log("Existing reservation:", existingReservation);
+
         const { data, error } = await supabase.functions.invoke("confirm-reservation", {
           body: { token },
         });
 
+        console.log("Confirmation response:", data, error);
+
         if (error) throw error;
 
         if (data.success && data.reservation_code) {
+          console.log("Reservation confirmed successfully:", data.reservation_code);
           navigate(`/reservation/complete`, { 
             state: { reservationCode: data.reservation_code },
             replace: true
@@ -34,7 +49,7 @@ export default function ReservationConfirm() {
           throw new Error("予約の確認に失敗しました。");
         }
       } catch (err) {
-        console.error("予約確認エラー:", err);
+        console.error("Reservation confirmation error:", err);
         setError("予約の確認に失敗しました。時間が経過している可能性があります。");
         setIsLoading(false);
       }
