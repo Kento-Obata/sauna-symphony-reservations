@@ -61,6 +61,16 @@ export const AdminReservationDetailsDialog = ({
 
   const handleSave = async () => {
     try {
+      console.log("Updating reservation with data:", {
+        guest_name: guestName,
+        guest_count: parseInt(guestCount),
+        phone: phone,
+        email: email || null,
+        water_temperature: parseInt(waterTemperature),
+        time_slot: timeSlot,
+        date: date,
+      });
+
       const { error } = await supabase
         .from("reservations")
         .update({
@@ -74,7 +84,10 @@ export const AdminReservationDetailsDialog = ({
         })
         .eq("id", reservation.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating reservation:", error);
+        throw error;
+      }
 
       // Send update notification
       const notificationResponse = await supabase.functions.invoke(
@@ -100,7 +113,12 @@ export const AdminReservationDetailsDialog = ({
         toast.success("予約情報を更新しました");
       }
 
-      queryClient.invalidateQueries({ queryKey: ["reservations"] });
+      // Invalidate both the reservations list and the single reservation query
+      await queryClient.invalidateQueries({ queryKey: ["reservations"] });
+      await queryClient.invalidateQueries({ 
+        queryKey: ["reservation", reservation.reservation_code] 
+      });
+      
       setIsEditing(false);
     } catch (error) {
       console.error("Error updating reservation:", error);
