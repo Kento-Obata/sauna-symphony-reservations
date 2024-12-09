@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
-import { Resend } from "https://esm.sh/@resend/node@0.16.0";
 import { Twilio } from "https://esm.sh/twilio@4.19.0";
 
 const corsHeaders = {
@@ -19,57 +18,64 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     const twilioClient = new Twilio(
       Deno.env.get("TWILIO_ACCOUNT_SID"),
       Deno.env.get("TWILIO_AUTH_TOKEN")
     );
 
-    const { reservation } = await req.json();
+    const { date, timeSlot, guestName, guestCount, email, phone, waterTemperature, reservationCode, confirmationToken } = await req.json();
 
     const notifications = [];
     const GOOGLE_MAPS_URL = "https://maps.google.com/maps?q=8Q5GHG7V%2BJ5";
     const BASE_URL = "https://www.u-sauna-private.com";
-    const CONFIRMATION_URL = `${BASE_URL}/reservation/confirm/${reservation.confirmation_token}`;
+    const CONFIRMATION_URL = `${BASE_URL}/reservation/confirm/${confirmationToken}`;
 
-    if (reservation.email) {
-      const emailData = await resend.emails.send({
-        from: "U <noreply@u-sauna-private.com>",
-        to: reservation.email,
-        subject: "【U】ご予約の確認",
-        html: `
-          <p>${reservation.guest_name} 様</p>
-          <p>Uのご予約ありがとうございます。<br>以下のリンクから予約を確定してください。</p>
-          <p><a href="${CONFIRMATION_URL}">予約を確定する</a></p>
-          <p>※このリンクの有効期限は20分です。</p>
-          <hr>
-          <h3>ご予約内容</h3>
-          <p>
-            日時: ${reservation.date} ${
-          reservation.time_slot === "morning"
-            ? "10:00-13:00"
-            : reservation.time_slot === "afternoon"
-            ? "14:00-17:00"
-            : "18:00-21:00"
-        }<br>
-            人数: ${reservation.guest_count}名<br>
-            水風呂温度: ${reservation.water_temperature}℃
-          </p>
-          <p>
-            場所: <a href="${GOOGLE_MAPS_URL}">Googleマップで見る</a>
-          </p>
-          <hr>
-          <p>ご不明な点がございましたら、このメールにご返信ください。</p>
-        `,
+    if (email) {
+      const emailData = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${RESEND_API_KEY}`,
+        },
+        body: JSON.stringify({
+          from: "U <noreply@u-sauna-private.com>",
+          to: email,
+          subject: "【U】ご予約の確認",
+          html: `
+            <p>${guestName} 様</p>
+            <p>Uのご予約ありがとうございます。<br>以下のリンクから予約を確定してください。</p>
+            <p><a href="${CONFIRMATION_URL}">予約を確定する</a></p>
+            <p>※このリンクの有効期限は20分です。</p>
+            <hr>
+            <h3>ご予約内容</h3>
+            <p>
+              日時: ${date} ${
+                timeSlot === "morning"
+                  ? "10:00-13:00"
+                  : timeSlot === "afternoon"
+                  ? "14:00-17:00"
+                  : "18:00-21:00"
+              }<br>
+              人数: ${guestCount}名<br>
+              水風呂温度: ${waterTemperature}℃
+            </p>
+            <p>
+              場所: <a href="${GOOGLE_MAPS_URL}">Googleマップで見る</a>
+            </p>
+            <hr>
+            <p>ご不明な点がございましたら、このメールにご返信ください。</p>
+          `,
+        }),
       });
-      notifications.push(emailData);
+      notifications.push(await emailData.json());
     }
 
-    if (reservation.phone) {
+    if (phone) {
       const message = await twilioClient.messages.create({
         body: `【U】ご予約ありがとうございます。以下のリンクから予約を確定してください（有効期限20分）\n${CONFIRMATION_URL}`,
         from: Deno.env.get("TWILIO_PHONE_NUMBER"),
-        to: reservation.phone,
+        to: phone,
       });
       notifications.push(message);
     }
@@ -79,6 +85,7 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
+    console.error("Error in send-reservation-notification:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 400,
