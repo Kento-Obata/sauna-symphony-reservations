@@ -15,7 +15,7 @@ const corsHeaders = {
 };
 
 // カスタムドメインに応じて変更が必要です
-const BASE_URL = "https://your-custom-domain.com";
+const BASE_URL = "https://www.u-sauna-private.com";
 const GOOGLE_MAPS_URL = "https://maps.google.com/maps?q=8Q5GHG7V%2BJ5";
 
 interface ReservationNotification {
