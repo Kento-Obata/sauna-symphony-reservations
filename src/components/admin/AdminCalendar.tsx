@@ -41,7 +41,10 @@ export const AdminCalendar = ({
 
   const getReservationsForDateAndSlot = (date: Date, timeSlot: string) => {
     return reservations.filter(
-      (r) => r.date === format(date, "yyyy-MM-dd") && r.time_slot === timeSlot
+      (r) => 
+        r.date === format(date, "yyyy-MM-dd") && 
+        r.time_slot === timeSlot &&
+        r.status === "confirmed" // Only show confirmed reservations
     );
   };
 
