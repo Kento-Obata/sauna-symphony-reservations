@@ -20,35 +20,17 @@ export default function ReservationConfirm() {
       }
 
       try {
-        console.log("Starting reservation confirmation with token:", token);
+        console.log("Confirming reservation with token:", token);
         
-        // First, check if the reservation exists and is not expired
-        const { data: existingReservation, error: fetchError } = await supabase
+        // First, check if the reservation exists
+        const { data: existingReservation } = await supabase
           .from("reservations")
           .select("*")
           .eq("confirmation_token", token)
           .single();
 
-        if (fetchError) {
-          console.error("Error fetching reservation:", fetchError);
-          throw new Error("予約情報の取得に失敗しました。");
-        }
+        console.log("Existing reservation:", existingReservation);
 
-        if (!existingReservation) {
-          console.error("No reservation found with token:", token);
-          throw new Error("予約が見つかりません。");
-        }
-
-        if (existingReservation.is_confirmed) {
-          console.log("Reservation already confirmed:", existingReservation.reservation_code);
-          navigate(`/reservation/complete`, { 
-            state: { reservationCode: existingReservation.reservation_code },
-            replace: true
-          });
-          return;
-        }
-
-        console.log("Calling confirm-reservation function");
         const { data, error } = await supabase.functions.invoke("confirm-reservation", {
           body: { token },
         });
