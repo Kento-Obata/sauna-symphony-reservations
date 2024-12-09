@@ -1,12 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
-import twilio from "https://esm.sh/twilio@4.19.0";
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
-const twilioClient = new twilio(
-  Deno.env.get('TWILIO_ACCOUNT_SID'),
-  Deno.env.get('TWILIO_AUTH_TOKEN')
-);
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -121,13 +116,35 @@ const handler = async (req: Request): Promise<Response> => {
       console.log("電話番号:", reservation.phone);
       console.log("フォーマット後の電話番号:", formattedPhone);
 
-      const message = await twilioClient.messages.create({
-        body: `サウナの仮予約を受け付けました。\n\n以下のリンクから20分以内に予約を確定してください：\n${CONFIRMATION_URL}\n\n予約内容：\n予約コード: ${reservation.reservationCode}\n日付: ${reservation.date}\n時間: ${TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]}\n人数: ${reservation.guestCount}名\n水風呂温度: ${reservation.waterTemperature}°C\n\n※このリンクの有効期限は20分です。\n\n住所: 〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4\nPlus Code: 8Q5GHG7V+J5\nGoogle Maps: ${GOOGLE_MAPS_URL}`,
-        to: formattedPhone,
-        from: Deno.env.get('TWILIO_PHONE_NUMBER'),
+      const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID');
+      const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN');
+      const TWILIO_PHONE_NUMBER = Deno.env.get('TWILIO_PHONE_NUMBER');
+
+      const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
+      const messageBody = `サウナの仮予約を受け付けました。\n\n以下のリンクから20分以内に予約を確定してください：\n${CONFIRMATION_URL}\n\n予約内容：\n予約コード: ${reservation.reservationCode}\n日付: ${reservation.date}\n時間: ${TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]}\n人数: ${reservation.guestCount}名\n水風呂温度: ${reservation.waterTemperature}°C\n\n※このリンクの有効期限は20分です。\n\n住所: 〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4\nPlus Code: 8Q5GHG7V+J5\nGoogle Maps: ${GOOGLE_MAPS_URL}`;
+
+      const formData = new URLSearchParams();
+      formData.append('To', formattedPhone);
+      formData.append('From', TWILIO_PHONE_NUMBER || '');
+      formData.append('Body', messageBody);
+
+      console.log("SMS送信を試行中...");
+      const smsRes = await fetch(twilioUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': `Basic ${btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)}`,
+        },
+        body: formData.toString(),
       });
 
-      console.log("SMS送信完了:", message.sid);
+      const smsResponseData = await smsRes.text();
+      console.log("SMS送信レスポンス:", smsResponseData);
+
+      if (!smsRes.ok) {
+        throw new Error(`SMS送信に失敗しました: ${smsResponseData}`);
+      }
+      console.log("SMSを送信しました");
       notifications.push("sms");
     } catch (error) {
       console.error("SMS送信エラー:", error);
