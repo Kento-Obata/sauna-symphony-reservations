@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
-import { Resend } from 'resend'
-import twilio from 'twilio'
+import { Resend } from 'https://esm.sh/resend@2.0.0'
+import { Twilio } from 'https://esm.sh/twilio@4.19.0'
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY'))
-const twilioClient = twilio(
+const twilioClient = new Twilio(
   Deno.env.get('TWILIO_ACCOUNT_SID'),
   Deno.env.get('TWILIO_AUTH_TOKEN')
 )
