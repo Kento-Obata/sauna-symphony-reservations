@@ -88,7 +88,7 @@ export const useReservationForm = () => {
         email: email || null,
         phone: phone,
         water_temperature: parseInt(temperature),
-        status: "pending",  // 仮予約状態で登録
+        status: "pending",  // Set initial status as pending
       };
 
       // Check for existing reservations
@@ -96,7 +96,8 @@ export const useReservationForm = () => {
         .from("reservations")
         .select("*")
         .eq("date", reservationData.date)
-        .eq("time_slot", reservationData.time_slot);
+        .eq("time_slot", reservationData.time_slot)
+        .eq("status", "confirmed"); // Only check confirmed reservations
 
       if (existingReservations && existingReservations.length > 0) {
         toast.error("申し訳ありませんが、この時間帯はすでに予約が入っています。");
