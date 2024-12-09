@@ -16,10 +16,11 @@ serve(async (req) => {
 
     const notifications = [];
     const GOOGLE_MAPS_URL = "https://maps.google.com/maps?q=8Q5GHG7V%2BJ5";
-    const BASE_URL = "https://www.u-sauna-private.com";
+    const BASE_URL = "https://u-sauna-private.com";  // カスタムドメインに更新
     const CONFIRMATION_URL = `${BASE_URL}/reservation/confirm/${confirmationToken}`;
 
     console.log("Starting notification process for:", { guestName, phone, email });
+    console.log("Confirmation URL:", CONFIRMATION_URL);
 
     if (email) {
       try {

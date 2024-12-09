@@ -31,6 +31,9 @@ const handler = async (req: Request): Promise<Response> => {
       .eq("status", "pending")  // 仮予約状態のみを対象とする
       .single();
 
+    console.log("Found reservation:", reservation);
+    console.log("Find error:", findError);
+
     if (findError || !reservation) {
       console.error("予約が見つかりません:", findError);
       return new Response(
