@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Index from "@/pages/Index";
 import Admin from "@/pages/Admin";
 import AdminLogin from "@/pages/AdminLogin";
-import ReservationDetail from "@/pages/ReservationDetail";
+import { ReservationDetail } from "@/pages/ReservationDetail";
 import ReservationPending from "@/pages/ReservationPending";
 import ReservationConfirm from "@/pages/ReservationConfirm";
 import ReservationComplete from "@/pages/ReservationComplete";

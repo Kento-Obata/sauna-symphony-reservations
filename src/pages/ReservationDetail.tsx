@@ -147,3 +147,5 @@ export const ReservationDetail = () => {
     </div>
   );
 };
+
+export default ReservationDetail;
