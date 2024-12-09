@@ -140,8 +140,10 @@ export const useReservationForm = () => {
       }
 
       // Navigate to completion page with reservation code
+      // Note: We're keeping the isSubmitting state true until the navigation is complete
       navigate('/reservation/complete', { 
-        state: { reservationCode: newReservation.reservation_code }
+        state: { reservationCode: newReservation.reservation_code },
+        replace: true // Use replace to prevent back navigation to the form
       });
 
       toast.success("予約を受け付けました");
@@ -149,7 +151,6 @@ export const useReservationForm = () => {
     } catch (error) {
       console.error("予約の登録に失敗しました:", error);
       toast.error("予約の登録に失敗しました。もう一度お試しください。");
-    } finally {
       setIsSubmitting(false);
     }
   };
