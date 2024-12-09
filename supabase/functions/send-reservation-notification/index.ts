@@ -8,22 +8,12 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
-
-    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-    const twilioClient = new Twilio(
-      Deno.env.get("TWILIO_ACCOUNT_SID"),
-      Deno.env.get("TWILIO_AUTH_TOKEN")
-    );
-
     const { date, timeSlot, guestName, guestCount, email, phone, waterTemperature, reservationCode, confirmationToken } = await req.json();
 
     const notifications = [];
@@ -32,11 +22,11 @@ serve(async (req) => {
     const CONFIRMATION_URL = `${BASE_URL}/reservation/confirm/${confirmationToken}`;
 
     if (email) {
-      const emailData = await fetch("https://api.resend.com/emails", {
+      const emailResponse = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${RESEND_API_KEY}`,
+          Authorization: `Bearer ${Deno.env.get("RESEND_API_KEY")}`,
         },
         body: JSON.stringify({
           from: "U <noreply@u-sauna-private.com>",
@@ -68,10 +58,15 @@ serve(async (req) => {
           `,
         }),
       });
-      notifications.push(await emailData.json());
+      notifications.push(await emailResponse.json());
     }
 
     if (phone) {
+      const twilioClient = new Twilio(
+        Deno.env.get("TWILIO_ACCOUNT_SID"),
+        Deno.env.get("TWILIO_AUTH_TOKEN")
+      );
+
       const message = await twilioClient.messages.create({
         body: `【U】ご予約ありがとうございます。以下のリンクから予約を確定してください（有効期限20分）\n${CONFIRMATION_URL}`,
         from: Deno.env.get("TWILIO_PHONE_NUMBER"),
