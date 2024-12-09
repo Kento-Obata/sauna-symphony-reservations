@@ -5,6 +5,7 @@ import { format, isValid } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import { BASE_URL } from "@/config/environment";
 
 export const useReservationForm = () => {
   const [date, setDate] = useState<Date | undefined>(undefined);
@@ -143,6 +144,7 @@ export const useReservationForm = () => {
             waterTemperature: reservationData.water_temperature,
             reservationCode: newReservation.reservation_code,
             confirmationToken: newReservation.confirmation_token,
+            baseUrl: BASE_URL,  // Add baseUrl to the request
           },
         }
       );

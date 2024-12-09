@@ -14,7 +14,6 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-const BASE_URL = Deno.env.get('BASE_URL') || 'http://localhost:5173';
 const GOOGLE_MAPS_URL = "https://maps.google.com/maps?q=8Q5GHG7V%2BJ5";
 
 interface ReservationNotification {
@@ -27,6 +26,7 @@ interface ReservationNotification {
   waterTemperature: number;
   reservationCode: string;
   confirmationToken: string;
+  baseUrl: string;  // Add baseUrl to the interface
 }
 
 const TIME_SLOTS = {
@@ -62,7 +62,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const notifications = [];
 
-    const CONFIRMATION_URL = `${BASE_URL}/reservation/confirm/${reservation.confirmationToken}`;
+    const CONFIRMATION_URL = `${reservation.baseUrl}/reservation/confirm/${reservation.confirmationToken}`;
 
     if (reservation.email) {
       try {
