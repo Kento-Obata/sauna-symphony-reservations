@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 import { Twilio } from "https://esm.sh/twilio@4.19.0";
 
 const corsHeaders = {
@@ -81,11 +80,14 @@ serve(async (req) => {
           Deno.env.get("TWILIO_AUTH_TOKEN")
         );
 
-        // Format phone number if needed
-        let formattedPhone = phone;
-        if (phone.startsWith("0")) {
-          formattedPhone = "+81" + phone.slice(1);
+        // Format phone number
+        let formattedPhone = phone.replace(/[^\d]/g, ''); // Remove non-digit characters
+        if (formattedPhone.startsWith('0')) {
+          formattedPhone = '+81' + formattedPhone.slice(1);
+        } else if (!formattedPhone.startsWith('+')) {
+          formattedPhone = '+' + formattedPhone;
         }
+        
         console.log("Formatted phone number:", formattedPhone);
 
         const message = await twilioClient.messages.create({
@@ -94,10 +96,16 @@ serve(async (req) => {
           to: formattedPhone,
         });
         
+        console.log("SMS sent successfully. Message SID:", message.sid);
         notifications.push(message);
-        console.log("SMS sent successfully:", message.sid);
       } catch (error) {
         console.error("Failed to send SMS:", error);
+        console.error("Twilio error details:", {
+          sid: error.sid,
+          status: error.status,
+          code: error.code,
+          message: error.message
+        });
         throw new Error(`SMS sending failed: ${error.message}`);
       }
     }
