@@ -74,7 +74,7 @@ export const ReservationConfirmDialog = ({
             <p>上記の内容で予約を確定しますか？</p>
             <p className="mt-2">料金: ¥40,000 (税込)</p>
             <p className="mt-2 text-yellow-600 font-bold">
-              ※ SMSとメールを送るので、そこのリンクをクリックすることで本予約が完了します
+              ※ 本予約用のSMSとメールが送信されます。
             </p>
           </div>
 
