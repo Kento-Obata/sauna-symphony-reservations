@@ -45,7 +45,8 @@ export const ReservationDetail = () => {
         .from("reservations")
         .select()
         .eq("reservation_code", reservationCode)
-        .maybeSingle();
+        .limit(1)
+        .single();
 
       if (error) {
         console.error("Error fetching reservation:", error);
