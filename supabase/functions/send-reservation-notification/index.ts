@@ -6,10 +6,7 @@ const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
-
-const GOOGLE_MAPS_URL = "https://maps.google.com/maps?q=8Q5GHG7V%2BJ5";
 
 interface ReservationNotification {
   date: string;
@@ -89,7 +86,7 @@ const handler = async (req: Request): Promise<Response> => {
               <p>※このリンクの有効期限は20分です。</p>
               <p>住所: 〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4</p>
               <p>Plus Code: 8Q5GHG7V+J5</p>
-              <p>Google Maps: <a href="${GOOGLE_MAPS_URL}">こちらから確認できます</a></p>
+              <p>Google Maps: <a href="https://maps.google.com/maps?q=8Q5GHG7V%2BJ5">こちらから確認できます</a></p>
             `,
           }),
         });
@@ -117,7 +114,7 @@ const handler = async (req: Request): Promise<Response> => {
       const TWILIO_PHONE_NUMBER = Deno.env.get('TWILIO_PHONE_NUMBER');
 
       const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
-      const messageBody = `サウナの仮予約を受け付けました。\n\n以下のリンクから20分以内に予約を確定してください：\n${CONFIRMATION_URL}\n\n予約内容：\n予約コード: ${reservation.reservationCode}\n日付: ${reservation.date}\n時間: ${TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]}\n人数: ${reservation.guestCount}名\n水風呂温度: ${reservation.waterTemperature}°C\n\n※このリンクの有効期限は20分です。\n\n住所: 〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4\nPlus Code: 8Q5GHG7V+J5\nGoogle Maps: ${GOOGLE_MAPS_URL}`;
+      const messageBody = `サウナの仮予約を受け付けました。\n\n以下のリンクから20分以内に予約を確定してください：\n${CONFIRMATION_URL}\n\n予約内容：\n予約コード: ${reservation.reservationCode}\n日付: ${reservation.date}\n時間: ${TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]}\n人数: ${reservation.guestCount}名\n水風呂温度: ${reservation.waterTemperature}°C\n\n※このリンクの有効期限は20分です。\n\n住所: 〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4\nPlus Code: 8Q5GHG7V+J5\nGoogle Maps: https://maps.google.com/maps?q=8Q5GHG7V%2BJ5`;
 
       const formData = new URLSearchParams();
       formData.append('To', formattedPhone);
