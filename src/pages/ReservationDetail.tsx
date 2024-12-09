@@ -10,7 +10,7 @@ import { useState } from "react";
 import { ReservationInfo } from "@/components/reservation/ReservationInfo";
 import { ReservationActions } from "@/components/reservation/ReservationActions";
 
-const ReservationDetail = () => {
+export const ReservationDetail = () => {
   const { code: reservationCode } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -44,11 +44,15 @@ const ReservationDetail = () => {
         .from("reservations")
         .select("*")
         .eq("reservation_code", reservationCode)
-        .single();
+        .maybeSingle(); // Changed from single() to maybeSingle()
 
       if (error) {
         console.error("Error fetching reservation:", error);
         throw error;
+      }
+      
+      if (!data) {
+        throw new Error("予約が見つかりませんでした");
       }
       
       console.log("Fetched reservation:", data);
@@ -143,5 +147,3 @@ const ReservationDetail = () => {
     </div>
   );
 };
-
-export default ReservationDetail;
