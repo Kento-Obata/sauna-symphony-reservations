@@ -47,12 +47,8 @@ const formatPhoneNumber = (phone: string): string => {
 const handler = async (req: Request): Promise<Response> => {
   console.log("通知機能が呼び出されました");
 
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    return new Response(null, { 
-      headers: { ...corsHeaders },
-      status: 204
-    });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
