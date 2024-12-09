@@ -27,7 +27,7 @@ export const ReservationCalendar = ({
 
     const dateString = format(day, 'yyyy-MM-dd');
     const dateReservations = reservations.filter(
-      (r) => r.date === dateString && r.status === "confirmed" // Only count confirmed reservations
+      (r) => r.date === dateString && (r.status === "confirmed" || r.status === "pending")
     );
 
     const reservationCount = dateReservations.length;

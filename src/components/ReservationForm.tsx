@@ -53,7 +53,7 @@ const ReservationForm = () => {
     const dateString = format(selectedDate, 'yyyy-MM-dd');
     
     const slotReservations = reservations
-      .filter(r => r.date === dateString && r.status === "confirmed") // Only count confirmed reservations
+      .filter(r => r.date === dateString && (r.status === "confirmed" || r.status === "pending"))
       .reduce((acc, r) => {
         acc[r.time_slot] = (acc[r.time_slot] || 0) + 1;
         return acc;
