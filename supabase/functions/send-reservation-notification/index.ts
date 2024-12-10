@@ -1,14 +1,16 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { Resend } from "https://esm.sh/resend@2.0.0";
+import { Twilio } from "https://esm.sh/twilio@4.19.0";
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
-const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
-const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER");
+const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
+const twilioClient = new Twilio(
+  Deno.env.get('TWILIO_ACCOUNT_SID'),
+  Deno.env.get('TWILIO_AUTH_TOKEN')
+);
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
 interface ReservationNotification {
@@ -56,7 +58,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const notifications = [];
     const GOOGLE_MAPS_URL = "https://maps.google.com/maps?q=8Q5GHG7V%2BJ5";
-    const BASE_URL = "https://preview--sauna-symphony-reservations.lovable.app";
+    const BASE_URL = "https://www.u-sauna-private.com";
     const CONFIRMATION_URL = `${BASE_URL}/reservation/confirm/${reservation.confirmationToken}`;
 
     if (reservation.email) {
