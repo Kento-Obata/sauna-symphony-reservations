@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
-import twilio from "https://esm.sh/twilio@4.19.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -53,7 +52,6 @@ const handler = async (req: Request): Promise<Response> => {
     const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN');
     const TWILIO_PHONE_NUMBER = Deno.env.get('TWILIO_PHONE_NUMBER');
 
-    // 環境変数のログ出力（シークレット値は含まない）
     console.log("Environment variables check:", {
       hasResendKey: !!RESEND_API_KEY,
       hasTwilioSid: !!TWILIO_ACCOUNT_SID,
@@ -67,13 +65,12 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const resend = new Resend(RESEND_API_KEY);
-    const twilioClient = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
 
     const reservation: ReservationNotification = await req.json();
     console.log("Received reservation data:", {
       ...reservation,
-      phone: "REDACTED",  // 電話番号は表示しない
-      confirmationToken: "REDACTED"  // トークンは表示しない
+      phone: "REDACTED",
+      confirmationToken: "REDACTED"
     });
 
     const notifications = [];
@@ -123,27 +120,40 @@ const handler = async (req: Request): Promise<Response> => {
       const formattedPhone = formatPhoneNumber(reservation.phone);
       console.log("Attempting to send SMS to formatted number:", formattedPhone);
 
-      const smsRes = await twilioClient.messages.create({
-        body: `サウナの仮予約を受け付けました。\n\n以下のリンクから20分以内に予約を確定してください：\n${CONFIRMATION_URL}\n\n予約内容：\n予約コード: ${reservation.reservationCode}\n日付: ${reservation.date}\n時間: ${
-          TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]
-        }\n人数: ${reservation.guestCount}名\n水風呂温度: ${
-          reservation.waterTemperature
-        }°C\n\n※このリンクの有効期限は20分です。\n\n住所: 〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4\nPlus Code: 8Q5GHG7V+J5\nGoogle Maps: ${GOOGLE_MAPS_URL}`,
-        to: formattedPhone,
-        from: TWILIO_PHONE_NUMBER,
-      });
+      // Create the form data for Twilio API
+      const formData = new URLSearchParams();
+      formData.append('To', formattedPhone);
+      formData.append('From', TWILIO_PHONE_NUMBER);
+      formData.append('Body', `サウナの仮予約を受け付けました。\n\n以下のリンクから20分以内に予約を確定してください：\n${CONFIRMATION_URL}\n\n予約内容：\n予約コード: ${reservation.reservationCode}\n日付: ${reservation.date}\n時間: ${
+        TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]
+      }\n人数: ${reservation.guestCount}名\n水風呂温度: ${
+        reservation.waterTemperature
+      }°C\n\n※このリンクの有効期限は20分です。\n\n住所: 〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4\nPlus Code: 8Q5GHG7V+J5\nGoogle Maps: ${GOOGLE_MAPS_URL}`);
 
-      console.log("SMS sent successfully:", smsRes);
+      // Make direct HTTP request to Twilio API
+      const twilioResponse = await fetch(
+        `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Authorization': `Basic ${btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)}`,
+          },
+          body: formData,
+        }
+      );
+
+      const twilioResult = await twilioResponse.json();
+      console.log("Twilio API Response:", twilioResult);
+
+      if (!twilioResponse.ok) {
+        throw new Error(`Twilio API error: ${JSON.stringify(twilioResult)}`);
+      }
+
+      console.log("SMS sent successfully");
       notifications.push("sms");
     } catch (error) {
       console.error("SMS sending error:", error);
-      console.error("Full error details:", {
-        name: error.name,
-        message: error.message,
-        code: error.code,
-        status: error.status,
-        moreInfo: error.moreInfo
-      });
     }
 
     return new Response(
