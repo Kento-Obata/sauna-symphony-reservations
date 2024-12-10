@@ -4,16 +4,19 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
 serve(async (req) => {
-  console.log("Received request:", {
+  console.log("Request received:", {
     method: req.method,
     url: req.url,
     headers: Object.fromEntries(req.headers.entries()),
   });
 
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
+    console.log("Handling OPTIONS request");
     return new Response("ok", { headers: corsHeaders });
   }
 
@@ -27,7 +30,7 @@ serve(async (req) => {
     console.log("Received token:", token);
 
     if (!token) {
-      console.error("No token provided in request body");
+      console.error("No token provided");
       throw new Error("Token is required");
     }
 
@@ -73,7 +76,10 @@ serve(async (req) => {
         reservation_code: updatedReservation.reservation_code,
       }),
       {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+        },
       },
     );
   } catch (error) {
@@ -84,7 +90,10 @@ serve(async (req) => {
         error: error.message,
       }),
       {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+        },
         status: 400,
       },
     );

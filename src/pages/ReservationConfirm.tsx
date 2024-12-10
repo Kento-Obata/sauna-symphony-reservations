@@ -18,7 +18,6 @@ export default function ReservationConfirm() {
       }
 
       try {
-        // Add detailed logging
         console.log("Starting reservation confirmation process");
         console.log("Token:", token);
         
