@@ -54,6 +54,14 @@ const handler = async (req: Request): Promise<Response> => {
     const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN');
     const TWILIO_PHONE_NUMBER = Deno.env.get('TWILIO_PHONE_NUMBER');
 
+    // 環境変数のログ出力（シークレット値は含まない）
+    console.log("Environment variables check:", {
+      hasResendKey: !!RESEND_API_KEY,
+      hasTwilioSid: !!TWILIO_ACCOUNT_SID,
+      hasTwilioToken: !!TWILIO_AUTH_TOKEN,
+      hasPhoneNumber: !!TWILIO_PHONE_NUMBER
+    });
+
     if (!RESEND_API_KEY || !TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
       console.error("Missing required environment variables");
       throw new Error("Server configuration error");
@@ -63,12 +71,21 @@ const handler = async (req: Request): Promise<Response> => {
     const twilioClient = new Twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
 
     const reservation: ReservationNotification = await req.json();
-    console.log("Received reservation data:", reservation);
+    console.log("Received reservation data:", {
+      ...reservation,
+      phone: "REDACTED",  // 電話番号は表示しない
+      confirmationToken: "REDACTED"  // トークンは表示しない
+    });
 
     const notifications = [];
     const GOOGLE_MAPS_URL = "https://maps.google.com/maps?q=8Q5GHG7V%2BJ5";
     const BASE_URL = "https://www.u-sauna-private.com";
     const CONFIRMATION_URL = `${BASE_URL}/reservation/confirm/${reservation.confirmationToken}`;
+
+    console.log("Generated URLs:", {
+      CONFIRMATION_URL,
+      GOOGLE_MAPS_URL
+    });
 
     if (reservation.email) {
       try {
@@ -105,7 +122,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     try {
       const formattedPhone = formatPhoneNumber(reservation.phone);
-      console.log("Attempting to send SMS to:", formattedPhone);
+      console.log("Attempting to send SMS to formatted number:", formattedPhone);
 
       const smsRes = await twilioClient.messages.create({
         body: `サウナの仮予約を受け付けました。\n\n以下のリンクから20分以内に予約を確定してください：\n${CONFIRMATION_URL}\n\n予約内容：\n予約コード: ${reservation.reservationCode}\n日付: ${reservation.date}\n時間: ${
@@ -121,6 +138,13 @@ const handler = async (req: Request): Promise<Response> => {
       notifications.push("sms");
     } catch (error) {
       console.error("SMS sending error:", error);
+      console.error("Full error details:", {
+        name: error.name,
+        message: error.message,
+        code: error.code,
+        status: error.status,
+        moreInfo: error.moreInfo
+      });
     }
 
     return new Response(
