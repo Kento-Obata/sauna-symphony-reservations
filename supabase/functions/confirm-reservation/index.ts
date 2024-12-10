@@ -11,15 +11,16 @@ const corsHeaders = {
 };
 
 const handler = async (req: Request): Promise<Response> => {
-  console.log("予約確認機能が呼び出されました");
+  console.log("予約確認機能が呼び出されました - リクエストメソッド:", req.method);
 
   if (req.method === "OPTIONS") {
+    console.log("OPTIONSリクエストを処理します");
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const { token } = await req.json();
-    console.log("確認トークン:", token);
+    console.log("受け取った確認トークン:", token);
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -44,6 +45,8 @@ const handler = async (req: Request): Promise<Response> => {
         }
       );
     }
+
+    console.log("予約が見つかりました:", reservation);
 
     // Check if the reservation has expired
     if (new Date(reservation.expires_at) < new Date()) {
