@@ -39,10 +39,7 @@ const handler = async (req: Request): Promise<Response> => {
 
   if (req.method === "OPTIONS") {
     return new Response(null, { 
-      headers: { 
-        ...corsHeaders,
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      }
+      headers: { ...corsHeaders }
     });
   }
 
@@ -113,6 +110,11 @@ const handler = async (req: Request): Promise<Response> => {
         notifications.push("email");
       } catch (error) {
         console.error("Email sending error:", error);
+        console.error("Full error details:", {
+          name: error.name,
+          message: error.message,
+          cause: error.cause
+        });
       }
     }
 
@@ -120,7 +122,6 @@ const handler = async (req: Request): Promise<Response> => {
       const formattedPhone = formatPhoneNumber(reservation.phone);
       console.log("Attempting to send SMS to formatted number:", formattedPhone);
 
-      // Create the form data for Twilio API
       const formData = new URLSearchParams();
       formData.append('To', formattedPhone);
       formData.append('From', TWILIO_PHONE_NUMBER);
@@ -130,7 +131,6 @@ const handler = async (req: Request): Promise<Response> => {
         reservation.waterTemperature
       }°C\n\n※このリンクの有効期限は20分です。\n\n住所: 〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4\nPlus Code: 8Q5GHG7V+J5\nGoogle Maps: ${GOOGLE_MAPS_URL}`);
 
-      // Make direct HTTP request to Twilio API
       const twilioResponse = await fetch(
         `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
         {
