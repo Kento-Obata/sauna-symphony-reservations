@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
-import { Twilio } from "https://esm.sh/twilio@4.19.0";
+import twilio from "https://esm.sh/twilio@4.19.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -38,7 +38,6 @@ const formatPhoneNumber = (phone: string): string => {
 const handler = async (req: Request): Promise<Response> => {
   console.log("Notification function called");
 
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { 
       headers: { 
@@ -68,7 +67,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const resend = new Resend(RESEND_API_KEY);
-    const twilioClient = new Twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
+    const twilioClient = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
 
     const reservation: ReservationNotification = await req.json();
     console.log("Received reservation data:", {
