@@ -12,6 +12,8 @@ const corsHeaders = {
 
 const handler = async (req: Request): Promise<Response> => {
   console.log("予約確認機能が呼び出されました - リクエストメソッド:", req.method);
+  console.log("リクエストURL:", req.url);
+  console.log("リクエストヘッダー:", Object.fromEntries(req.headers.entries()));
 
   if (req.method === "OPTIONS") {
     console.log("OPTIONSリクエストを処理します");
@@ -19,21 +21,42 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { token } = await req.json();
-    console.log("受け取った確認トークン:", token);
+    const requestBody = await req.text();
+    console.log("リクエストボディ (raw):", requestBody);
 
+    let token;
+    try {
+      const jsonBody = JSON.parse(requestBody);
+      token = jsonBody.token;
+      console.log("パースされたトークン:", token);
+    } catch (parseError) {
+      console.error("JSONパースエラー:", parseError);
+      throw new Error("Invalid JSON in request body");
+    }
+
+    if (!token) {
+      console.error("トークンが提供されていません");
+      throw new Error("No token provided");
+    }
+
+    console.log("Supabaseクライアントを初期化します");
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Find the reservation by confirmation token
+    console.log("予約を検索中...");
     const { data: reservation, error: findError } = await supabase
       .from("reservations")
       .select("*")
       .eq("confirmation_token", token)
-      .eq("status", "pending")  // 仮予約状態のみを対象とする
+      .eq("status", "pending")
       .single();
 
-    if (findError || !reservation) {
-      console.error("予約が見つかりません:", findError);
+    if (findError) {
+      console.error("予約検索エラー:", findError);
+      throw findError;
+    }
+
+    if (!reservation) {
+      console.error("予約が見つかりません。トークン:", token);
       return new Response(
         JSON.stringify({
           success: false,
@@ -63,11 +86,11 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Update the reservation to confirmed status
+    console.log("予約を確定状態に更新します");
     const { error: updateError } = await supabase
       .from("reservations")
       .update({
-        status: "confirmed",  // ステータスを本予約に更新
+        status: "confirmed",
         is_confirmed: true,
         confirmation_token: null,
         expires_at: null,
