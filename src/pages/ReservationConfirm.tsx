@@ -18,22 +18,46 @@ export default function ReservationConfirm() {
       }
 
       try {
-        console.log("Confirming reservation with token:", token);
+        // Add detailed logging
+        console.log("Starting reservation confirmation process");
+        console.log("Token:", token);
         
+        // First check if the reservation exists and is not expired
+        const { data: reservation, error: fetchError } = await supabase
+          .from("reservations")
+          .select("*")
+          .eq("confirmation_token", token)
+          .single();
+
+        console.log("Fetched reservation:", reservation);
+        console.log("Fetch error:", fetchError);
+
+        if (fetchError || !reservation) {
+          console.error("Error fetching reservation:", fetchError);
+          toast.error("予約が見つからないか、有効期限が切れています。");
+          navigate("/");
+          return;
+        }
+
+        // Call the edge function
+        console.log("Calling confirm-reservation edge function");
         const { data, error } = await supabase.functions.invoke("confirm-reservation", {
           body: { token },
         });
 
-        console.log("Response from edge function:", { data, error });
+        console.log("Edge function response:", { data, error });
 
         if (error) {
+          console.error("Edge function error:", error);
           throw error;
         }
 
         if (data?.success) {
+          console.log("Reservation confirmed successfully");
           toast.success("予約が確定されました！");
           navigate(`/reservation/${data.reservation_code}`);
         } else {
+          console.error("Edge function returned success: false");
           toast.error("予約の確定に失敗しました。");
           navigate("/");
         }

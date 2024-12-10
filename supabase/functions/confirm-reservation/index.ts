@@ -1,121 +1,83 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const handler = async (req: Request): Promise<Response> => {
-  console.log("予約確認機能が呼び出されました - リクエストメソッド:", req.method);
-  console.log("リクエストURL:", req.url);
-  console.log("リクエストヘッダー:", Object.fromEntries(req.headers.entries()));
+serve(async (req) => {
+  console.log("Received request:", {
+    method: req.method,
+    url: req.url,
+    headers: Object.fromEntries(req.headers.entries()),
+  });
 
   if (req.method === "OPTIONS") {
-    console.log("OPTIONSリクエストを処理します");
-    return new Response(null, { headers: corsHeaders });
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    const requestBody = await req.text();
-    console.log("リクエストボディ (raw):", requestBody);
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+    );
 
-    let token;
-    try {
-      const jsonBody = JSON.parse(requestBody);
-      token = jsonBody.token;
-      console.log("パースされたトークン:", token);
-    } catch (parseError) {
-      console.error("JSONパースエラー:", parseError);
-      throw new Error("Invalid JSON in request body");
-    }
+    const { token } = await req.json();
+    console.log("Received token:", token);
 
     if (!token) {
-      console.error("トークンが提供されていません");
-      throw new Error("No token provided");
+      console.error("No token provided in request body");
+      throw new Error("Token is required");
     }
 
-    console.log("Supabaseクライアントを初期化します");
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
-    console.log("予約を検索中...");
-    const { data: reservation, error: findError } = await supabase
+    // Find the reservation
+    const { data: reservation, error: fetchError } = await supabaseClient
       .from("reservations")
       .select("*")
       .eq("confirmation_token", token)
-      .eq("status", "pending")
       .single();
 
-    if (findError) {
-      console.error("予約検索エラー:", findError);
-      throw findError;
+    console.log("Fetched reservation:", reservation);
+    console.log("Fetch error:", fetchError);
+
+    if (fetchError || !reservation) {
+      console.error("Error finding reservation:", fetchError);
+      throw new Error("Invalid or expired token");
     }
 
-    if (!reservation) {
-      console.error("予約が見つかりません。トークン:", token);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "Invalid or expired confirmation token",
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 404,
-        }
-      );
-    }
-
-    console.log("予約が見つかりました:", reservation);
-
-    // Check if the reservation has expired
-    if (new Date(reservation.expires_at) < new Date()) {
-      console.error("予約の有効期限が切れています");
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "Reservation has expired",
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 400,
-        }
-      );
-    }
-
-    console.log("予約を確定状態に更新します");
-    const { error: updateError } = await supabase
+    // Update the reservation
+    const { data: updatedReservation, error: updateError } = await supabaseClient
       .from("reservations")
       .update({
-        status: "confirmed",
         is_confirmed: true,
+        status: "confirmed",
         confirmation_token: null,
         expires_at: null,
       })
-      .eq("id", reservation.id);
+      .eq("confirmation_token", token)
+      .select()
+      .single();
+
+    console.log("Updated reservation:", updatedReservation);
+    console.log("Update error:", updateError);
 
     if (updateError) {
-      console.error("予約の更新に失敗しました:", updateError);
+      console.error("Error updating reservation:", updateError);
       throw updateError;
     }
-
-    console.log("予約を確定しました:", reservation.id);
 
     return new Response(
       JSON.stringify({
         success: true,
-        reservation_code: reservation.reservation_code,
+        reservation_code: updatedReservation.reservation_code,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      }
+      },
     );
   } catch (error) {
-    console.error("予約確認でエラーが発生しました:", error);
+    console.error("Error in confirm-reservation function:", error);
     return new Response(
       JSON.stringify({
         success: false,
@@ -123,10 +85,8 @@ const handler = async (req: Request): Promise<Response> => {
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
-      }
+        status: 400,
+      },
     );
   }
-};
-
-serve(handler);
+});
