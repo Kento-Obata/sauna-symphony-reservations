@@ -25,6 +25,11 @@ export default {
           stone: "#8E9196",
           wood: "#4A3B2F",
           iron: "#48494B",
+          beige: {
+            light: "#F5F1EA",
+            DEFAULT: "#E8E1D5",
+            dark: "#D8CFC0",
+          }
         },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
