@@ -2,12 +2,6 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { Twilio } from "https://esm.sh/twilio@4.19.0";
 
-const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
-const twilioClient = new Twilio(
-  Deno.env.get('TWILIO_ACCOUNT_SID'),
-  Deno.env.get('TWILIO_AUTH_TOKEN')
-);
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -38,23 +32,38 @@ const formatPhoneNumber = (phone: string): string => {
     return '+81' + digits.slice(1);
   }
   
-  if (!digits.startsWith('0')) {
-    return '+' + digits;
-  }
-  
   return digits;
 };
 
 const handler = async (req: Request): Promise<Response> => {
-  console.log("通知機能が呼び出されました");
+  console.log("Notification function called");
 
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { 
+      headers: { 
+        ...corsHeaders,
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      }
+    });
   }
 
   try {
+    const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
+    const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID');
+    const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN');
+    const TWILIO_PHONE_NUMBER = Deno.env.get('TWILIO_PHONE_NUMBER');
+
+    if (!RESEND_API_KEY || !TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
+      console.error("Missing required environment variables");
+      throw new Error("Server configuration error");
+    }
+
+    const resend = new Resend(RESEND_API_KEY);
+    const twilioClient = new Twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
+
     const reservation: ReservationNotification = await req.json();
-    console.log("予約情報を受信:", reservation);
+    console.log("Received reservation data:", reservation);
 
     const notifications = [];
     const GOOGLE_MAPS_URL = "https://maps.google.com/maps?q=8Q5GHG7V%2BJ5";
@@ -63,85 +72,55 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (reservation.email) {
       try {
-        const emailRes = await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${RESEND_API_KEY}`,
-          },
-          body: JSON.stringify({
-            from: "Sauna Reservation <onboarding@resend.dev>",
-            to: [reservation.email],
-            subject: "サウナの仮予約確認",
-            html: `
-              <h1>仮予約確認</h1>
-              <p>${reservation.guestName}様</p>
-              <p>サウナの仮予約を受け付けました。以下のリンクから20分以内に予約を確定してください：</p>
-              <p><a href="${CONFIRMATION_URL}">予約を確定する</a></p>
-              <p>予約内容：</p>
-              <ul>
-                <li>予約コード: ${reservation.reservationCode}</li>
-                <li>日付: ${reservation.date}</li>
-                <li>時間: ${TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]}</li>
-                <li>人数: ${reservation.guestCount}名</li>
-                <li>水風呂温度: ${reservation.waterTemperature}°C</li>
-              </ul>
-              <p>※このリンクの有効期限は20分です。</p>
-              <p>住所: 〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4</p>
-              <p>Plus Code: 8Q5GHG7V+J5</p>
-              <p>Google Maps: <a href="${GOOGLE_MAPS_URL}">こちらから確認できます</a></p>
-            `,
-          }),
+        console.log("Attempting to send email to:", reservation.email);
+        const emailRes = await resend.emails.send({
+          from: "Sauna Reservation <onboarding@resend.dev>",
+          to: [reservation.email],
+          subject: "サウナの仮予約確認",
+          html: `
+            <h1>仮予約確認</h1>
+            <p>${reservation.guestName}様</p>
+            <p>サウナの仮予約を受け付けました。以下のリンクから20分以内に予約を確定してください：</p>
+            <p><a href="${CONFIRMATION_URL}">予約を確定する</a></p>
+            <p>予約内容：</p>
+            <ul>
+              <li>予約コード: ${reservation.reservationCode}</li>
+              <li>日付: ${reservation.date}</li>
+              <li>時間: ${TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]}</li>
+              <li>人数: ${reservation.guestCount}名</li>
+              <li>水風呂温度: ${reservation.waterTemperature}°C</li>
+            </ul>
+            <p>※このリンクの有効期限は20分です。</p>
+            <p>住所: 〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4</p>
+            <p>Plus Code: 8Q5GHG7V+J5</p>
+            <p>Google Maps: <a href="${GOOGLE_MAPS_URL}">こちらから確認できます</a></p>
+          `,
         });
-
-        if (!emailRes.ok) {
-          throw new Error(`メール送信に失敗しました: ${await emailRes.text()}`);
-        }
-        console.log("メールを送信しました");
+        console.log("Email sent successfully:", emailRes);
         notifications.push("email");
       } catch (error) {
-        console.error("メール送信エラー:", error);
+        console.error("Email sending error:", error);
       }
     }
 
     try {
       const formattedPhone = formatPhoneNumber(reservation.phone);
-      console.log("電話番号:", reservation.phone);
-      console.log("フォーマット後の電話番号:", formattedPhone);
+      console.log("Attempting to send SMS to:", formattedPhone);
 
-      const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
-      const formData = new URLSearchParams();
-      formData.append('To', formattedPhone);
-      formData.append('From', TWILIO_PHONE_NUMBER);
-      formData.append('Body', `サウナの仮予約を受け付けました。\n\n以下のリンクから20分以内に予約を確定してください：\n${CONFIRMATION_URL}\n\n予約内容：\n予約コード: ${reservation.reservationCode}\n日付: ${reservation.date}\n時間: ${
-        TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]
-      }\n人数: ${reservation.guestCount}名\n水風呂温度: ${
-        reservation.waterTemperature
-      }°C\n\n※このリンクの有効期限は20分です。\n\n住所: 〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4\nPlus Code: 8Q5GHG7V+J5\nGoogle Maps: ${GOOGLE_MAPS_URL}`);
-
-      console.log("SMSを送信:", formattedPhone);
-      console.log("SMS内容:", formData.toString());
-
-      const smsRes = await fetch(twilioUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          Authorization: `Basic ${btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)}`,
-        },
-        body: formData,
+      const smsRes = await twilioClient.messages.create({
+        body: `サウナの仮予約を受け付けました。\n\n以下のリンクから20分以内に予約を確定してください：\n${CONFIRMATION_URL}\n\n予約内容：\n予約コード: ${reservation.reservationCode}\n日付: ${reservation.date}\n時間: ${
+          TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]
+        }\n人数: ${reservation.guestCount}名\n水風呂温度: ${
+          reservation.waterTemperature
+        }°C\n\n※このリンクの有効期限は20分です。\n\n住所: 〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4\nPlus Code: 8Q5GHG7V+J5\nGoogle Maps: ${GOOGLE_MAPS_URL}`,
+        to: formattedPhone,
+        from: TWILIO_PHONE_NUMBER,
       });
 
-      const smsResponseText = await smsRes.text();
-      console.log("Twilio APIレスポンス:", smsResponseText);
-
-      if (!smsRes.ok) {
-        console.error("SMS送信に失敗しました:", smsResponseText);
-      } else {
-        console.log("SMSを送信しました");
-        notifications.push("sms");
-      }
+      console.log("SMS sent successfully:", smsRes);
+      notifications.push("sms");
     } catch (error) {
-      console.error("SMS送信エラー:", error);
+      console.error("SMS sending error:", error);
     }
 
     return new Response(
@@ -155,7 +134,7 @@ const handler = async (req: Request): Promise<Response> => {
       }
     );
   } catch (error) {
-    console.error("通知機能でエラーが発生しました:", error);
+    console.error("Function error:", error);
     return new Response(
       JSON.stringify({
         success: false,
