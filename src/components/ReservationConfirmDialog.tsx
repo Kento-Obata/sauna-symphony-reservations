@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
+import { toast } from "@/hooks/use-toast";
 
 const timeSlotLabels: Record<TimeSlot, string> = {
   morning: "午前",
