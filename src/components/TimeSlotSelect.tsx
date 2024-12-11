@@ -40,43 +40,40 @@ export const TimeSlotSelect = ({
   timeSlotReservations,
 }: TimeSlotSelectProps) => {
   return (
-    <div>
-      <label className="block text-sm mb-2">時間帯</label>
-      <Select 
-        onValueChange={(value: TimeSlot) => onValueChange(value)} 
-        value={value}
-      >
-        <SelectTrigger>
-          <SelectValue placeholder="時間帯を選択" />
-        </SelectTrigger>
-        <SelectContent>
-          {[
-            { value: 'morning', label: '午前 10:00-12:30' },
-            { value: 'afternoon', label: '午後 13:30-16:00' },
-            { value: 'evening', label: '夕方 17:00-19:30' }
-          ].map(({ value, label }) => {
-            const isDisabled = selectedDate ? (
-              isTimeSlotDisabled(value as TimeSlot, selectedDate) ||
-              timeSlotReservations[value as TimeSlot] >= MAX_RESERVATIONS
-            ) : false;
+    <Select 
+      onValueChange={(value: TimeSlot) => onValueChange(value)} 
+      value={value}
+    >
+      <SelectTrigger>
+        <SelectValue placeholder="時間帯を選択" />
+      </SelectTrigger>
+      <SelectContent>
+        {[
+          { value: 'morning', label: '午前 10:00-12:30' },
+          { value: 'afternoon', label: '午後 13:30-16:00' },
+          { value: 'evening', label: '夕方 17:00-19:30' }
+        ].map(({ value, label }) => {
+          const isDisabled = selectedDate ? (
+            isTimeSlotDisabled(value as TimeSlot, selectedDate) ||
+            timeSlotReservations[value as TimeSlot] >= MAX_RESERVATIONS
+          ) : false;
 
-            const reservationCount = timeSlotReservations[value as TimeSlot];
-            const statusLabel = reservationCount > 0 
-              ? `(予約済み: ${reservationCount}件)`
-              : '';
+          const reservationCount = timeSlotReservations[value as TimeSlot];
+          const statusLabel = reservationCount > 0 
+            ? `(予約済み: ${reservationCount}件)`
+            : '';
 
-            return (
-              <SelectItem 
-                key={value} 
-                value={value}
-                disabled={isDisabled}
-              >
-                {label} {statusLabel}
-              </SelectItem>
-            );
-          })}
-        </SelectContent>
-      </Select>
-    </div>
+          return (
+            <SelectItem 
+              key={value} 
+              value={value}
+              disabled={isDisabled}
+            >
+              {label} {statusLabel}
+            </SelectItem>
+          );
+        })}
+      </SelectContent>
+    </Select>
   );
 };
