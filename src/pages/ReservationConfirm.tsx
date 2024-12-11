@@ -53,6 +53,29 @@ export default function ReservationConfirm() {
 
         if (data?.success) {
           console.log("Reservation confirmed successfully");
+
+          // Send confirmation notification
+          const notificationResponse = await supabase.functions.invoke(
+            "send-confirmation-notification",
+            {
+              body: {
+                date: reservation.date,
+                timeSlot: reservation.time_slot,
+                guestName: reservation.guest_name,
+                guestCount: reservation.guest_count,
+                email: reservation.email,
+                phone: reservation.phone,
+                waterTemperature: reservation.water_temperature,
+                reservationCode: data.reservation_code,
+              },
+            }
+          );
+
+          if (notificationResponse.error) {
+            console.error("確認通知の送信に失敗しました:", notificationResponse.error);
+            toast.error("予約は確定されましたが、確認通知の送信に失敗しました。");
+          }
+
           toast.success("予約が確定されました！");
           navigate(`/reservation/${data.reservation_code}`);
         } else {

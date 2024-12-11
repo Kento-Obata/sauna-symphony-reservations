@@ -13,7 +13,7 @@ export const useReservationForm = () => {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [people, setPeople] = useState("");
-  const [temperature, setTemperature] = useState("15"); // Initialize with default temperature
+  const [temperature, setTemperature] = useState("15");
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reservationCode, setReservationCode] = useState<string>();
@@ -27,7 +27,7 @@ export const useReservationForm = () => {
     setEmail("");
     setPhone("");
     setPeople("");
-    setTemperature("15"); // Reset to default temperature
+    setTemperature("15");
     setShowConfirmDialog(false);
     setIsSubmitting(false);
     setReservationCode(undefined);
@@ -126,8 +126,9 @@ export const useReservationForm = () => {
 
       setReservationCode(newReservation.reservation_code);
 
+      // Send pending notification
       const notificationResponse = await supabase.functions.invoke(
-        "send-reservation-notification",
+        "send-pending-notification",
         {
           body: {
             date: reservationData.date,
