@@ -44,7 +44,11 @@ export const ReservationConfirmDialog = ({
 
   const handleConfirm = () => {
     if (!termsAccepted) {
-      toast.error("利用規約に同意してください。");
+      toast({
+        variant: "destructive",
+        title: "エラー",
+        description: "利用規約に同意してください。",
+      });
       return;
     }
     onConfirm();
