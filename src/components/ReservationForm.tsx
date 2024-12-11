@@ -6,6 +6,10 @@ import { useReservations } from "@/hooks/useReservations";
 import { ReservationCalendar } from "./reservation/ReservationCalendar";
 import { ReservationDetails } from "./reservation/ReservationDetails";
 import { useReservationForm } from "@/hooks/useReservationForm";
+import { useState } from "react";
+import { Checkbox } from "./ui/checkbox";
+import { TermsDialog } from "./TermsDialog";
+import { toast } from "sonner";
 
 const ReservationForm = () => {
   const {
@@ -30,6 +34,9 @@ const ReservationForm = () => {
     isSubmitting,
     reservationCode,
   } = useReservationForm();
+
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [showTermsDialog, setShowTermsDialog] = useState(false);
 
   const { data: reservations, isLoading, error } = useReservations();
 
@@ -62,6 +69,17 @@ const ReservationForm = () => {
     return slotReservations;
   };
 
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!termsAccepted) {
+      toast.error("利用規約に同意してください。");
+      return;
+    }
+
+    handleSubmit(e);
+  };
+
   if (isLoading) {
     return <div>予約情報を読み込んでいます...</div>;
   }
@@ -92,7 +110,7 @@ const ReservationForm = () => {
         ご予約
       </h2>
       
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleFormSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="w-full flex justify-center md:justify-start">
             <ReservationCalendar
@@ -121,6 +139,21 @@ const ReservationForm = () => {
           />
         </div>
 
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="terms"
+            checked={termsAccepted}
+            onCheckedChange={() => setShowTermsDialog(true)}
+          />
+          <label
+            htmlFor="terms"
+            className="text-sm cursor-pointer hover:underline"
+            onClick={() => setShowTermsDialog(true)}
+          >
+            利用規約に同意する
+          </label>
+        </div>
+
         <div className="text-center mt-8">
           <p className="mb-4 text-sauna-stone">料金: ¥40,000 (税込)</p>
           <Button type="submit" className="w-full md:w-auto hover-lift">
@@ -128,6 +161,13 @@ const ReservationForm = () => {
           </Button>
         </div>
       </form>
+
+      <TermsDialog
+        open={showTermsDialog}
+        onOpenChange={setShowTermsDialog}
+        checked={termsAccepted}
+        onCheckedChange={setTermsAccepted}
+      />
 
       {currentReservation && (
         <ReservationConfirmDialog
