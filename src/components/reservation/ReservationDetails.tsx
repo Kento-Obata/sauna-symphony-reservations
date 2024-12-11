@@ -91,15 +91,22 @@ export const ReservationDetails = ({
         </div>
       )}
 
-      <TimeSlotSelect
-        value={timeSlot}
-        onValueChange={setTimeSlot}
-        selectedDate={date}
-        timeSlotReservations={timeSlotReservations}
-      />
+      <div>
+        <label className="block text-sm mb-2">
+          時間帯 <span className="text-red-500">*</span>
+        </label>
+        <TimeSlotSelect
+          value={timeSlot}
+          onValueChange={setTimeSlot}
+          selectedDate={date}
+          timeSlotReservations={timeSlotReservations}
+        />
+      </div>
 
       <div>
-        <label className="block text-sm mb-2">お名前（必須）</label>
+        <label className="block text-sm mb-2">
+          お名前 <span className="text-red-500">*</span>
+        </label>
         <Input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -108,7 +115,9 @@ export const ReservationDetails = ({
       </div>
 
       <div>
-        <label className="block text-sm mb-2">電話番号（必須）</label>
+        <label className="block text-sm mb-2">
+          電話番号 <span className="text-red-500">*</span>
+        </label>
         <Input
           type="tel"
           value={phone}
@@ -127,7 +136,9 @@ export const ReservationDetails = ({
       </div>
 
       <div>
-        <label className="block text-sm mb-2">人数（必須）</label>
+        <label className="block text-sm mb-2">
+          人数 <span className="text-red-500">*</span>
+        </label>
         <Select onValueChange={setPeople} value={people}>
           <SelectTrigger>
             <SelectValue placeholder="人数を選択" />
@@ -143,7 +154,9 @@ export const ReservationDetails = ({
       </div>
 
       <div>
-        <label className="block text-sm mb-2">水風呂温度（必須）</label>
+        <label className="block text-sm mb-2">
+          水風呂温度 <span className="text-red-500">*</span>
+        </label>
         <div className="text-sm text-muted-foreground mb-2">
           ※ 初めての方は15℃がおすすめです
         </div>
