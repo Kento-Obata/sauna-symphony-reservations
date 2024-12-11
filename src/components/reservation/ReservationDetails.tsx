@@ -99,7 +99,7 @@ export const ReservationDetails = ({
       />
 
       <div>
-        <label className="block text-sm mb-2">お名前 *</label>
+        <label className="block text-sm mb-2">お名前（必須）</label>
         <Input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -108,16 +108,7 @@ export const ReservationDetails = ({
       </div>
 
       <div>
-        <label className="block text-sm mb-2">メールアドレス</label>
-        <Input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm mb-2">電話番号 *</label>
+        <label className="block text-sm mb-2">電話番号（必須）</label>
         <Input
           type="tel"
           value={phone}
@@ -127,7 +118,16 @@ export const ReservationDetails = ({
       </div>
 
       <div>
-        <label className="block text-sm mb-2">人数 *</label>
+        <label className="block text-sm mb-2">メールアドレス（任意）</label>
+        <Input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm mb-2">人数（必須）</label>
         <Select onValueChange={setPeople} value={people}>
           <SelectTrigger>
             <SelectValue placeholder="人数を選択" />
@@ -143,8 +143,11 @@ export const ReservationDetails = ({
       </div>
 
       <div>
-        <label className="block text-sm mb-2">水風呂温度 *</label>
-        <Select onValueChange={setTemperature} value={temperature}>
+        <label className="block text-sm mb-2">水風呂温度（必須）</label>
+        <div className="text-sm text-muted-foreground mb-2">
+          ※ 初めての方は15℃がおすすめです
+        </div>
+        <Select onValueChange={setTemperature} value={temperature || "15"}>
           <SelectTrigger>
             <SelectValue placeholder="温度を選択" />
           </SelectTrigger>
