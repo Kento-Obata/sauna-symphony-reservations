@@ -4,10 +4,6 @@ import { TimeSlot, ReservationFormData } from "@/types/reservation";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Loader2 } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useState } from "react";
-import { Label } from "@/components/ui/label";
-import { toast } from "@/hooks/use-toast";
 
 const timeSlotLabels: Record<TimeSlot, string> = {
   morning: "午前",
@@ -34,25 +30,11 @@ export const ReservationConfirmDialog = ({
   isSubmitting,
   reservationCode,
 }: ReservationConfirmDialogProps) => {
-  const [termsAccepted, setTermsAccepted] = useState(false);
-  
   const formattedDate = reservation.date
     ? format(new Date(reservation.date), "yyyy年MM月dd日 (E)", {
         locale: ja,
       })
     : "";
-
-  const handleConfirm = () => {
-    if (!termsAccepted) {
-      toast({
-        variant: "destructive",
-        title: "エラー",
-        description: "利用規約に同意してください。",
-      });
-      return;
-    }
-    onConfirm();
-  };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -97,26 +79,6 @@ export const ReservationConfirmDialog = ({
             </p>
           </div>
 
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="terms" 
-              checked={termsAccepted}
-              onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
-            />
-            <Label htmlFor="terms" className="text-sm">
-              <a 
-                href="/terms" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:underline"
-                onClick={(e) => e.stopPropagation()}
-              >
-                利用規約
-              </a>
-              に同意します
-            </Label>
-          </div>
-
           <div className="flex justify-center gap-4">
             <Button
               variant="outline"
@@ -126,8 +88,8 @@ export const ReservationConfirmDialog = ({
               修正する
             </Button>
             <Button
-              onClick={handleConfirm}
-              disabled={isSubmitting || !termsAccepted}
+              onClick={onConfirm}
+              disabled={isSubmitting}
             >
               {isSubmitting ? (
                 <>

@@ -160,7 +160,7 @@ export const ReservationDetails = ({
         <div className="text-sm text-muted-foreground mb-2">
           ※ 初めての方は15℃がおすすめです
         </div>
-        <Select onValueChange={setTemperature} value={temperature || "15"}>
+        <Select onValueChange={setTemperature} value={temperature || "15"} defaultValue="15">
           <SelectTrigger>
             <SelectValue placeholder="温度を選択" />
           </SelectTrigger>
