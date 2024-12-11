@@ -20,6 +20,19 @@ export const useReservationForm = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
+  const resetForm = () => {
+    setDate(undefined);
+    setTimeSlot("");
+    setName("");
+    setEmail("");
+    setPhone("");
+    setPeople("");
+    setTemperature("15");
+    setShowConfirmDialog(false);
+    setIsSubmitting(false);
+    setReservationCode(undefined);
+  };
+
   const validateForm = () => {
     if (!date || !isValid(date)) {
       toast.error("有効な日付を選択してください。");
@@ -76,7 +89,7 @@ export const useReservationForm = () => {
 
       console.log("Submitting reservation data:", reservationData);
 
-      // Check for existing reservations first
+      // Check for existing confirmed reservations
       const { data: existingReservations, error: checkError } = await supabase
         .from("reservations")
         .select("*")
@@ -91,7 +104,7 @@ export const useReservationForm = () => {
 
       if (existingReservations && existingReservations.length > 0) {
         toast.error("申し訳ありませんが、この時間帯はすでに予約が入っています。");
-        setShowConfirmDialog(false);
+        setIsSubmitting(false);
         return;
       }
 
