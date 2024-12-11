@@ -23,6 +23,18 @@ const TIME_SLOTS = {
   evening: "17:00-19:30",
 };
 
+const TIME_SLOT_START = {
+  morning: "10:00",
+  afternoon: "13:30",
+  evening: "17:00",
+};
+
+const TIME_SLOT_END = {
+  morning: "12:30",
+  afternoon: "16:00",
+  evening: "19:30",
+};
+
 const ITEMS_TO_BRING = `
 ・バスタオル
 ・フェイスタオル
@@ -34,6 +46,48 @@ const ITEMS_TO_BRING = `
 const formatPhoneNumber = (phone: string): string => {
   const digits = phone.replace(/\D/g, '');
   return digits.startsWith('0') ? '+81' + digits.slice(1) : digits;
+};
+
+const generateCalendarLinks = (reservation: ReservationNotification) => {
+  const eventDate = reservation.date;
+  const startTime = TIME_SLOT_START[reservation.timeSlot as keyof typeof TIME_SLOT_START];
+  const endTime = TIME_SLOT_END[reservation.timeSlot as keyof typeof TIME_SLOT_END];
+  
+  const startDateTime = `${eventDate}T${startTime}:00`;
+  const endDateTime = `${eventDate}T${endTime}:00`;
+  
+  const eventTitle = encodeURIComponent(`サウナU - 予約 (${reservation.reservationCode})`);
+  const eventDescription = encodeURIComponent(
+    `予約コード: ${reservation.reservationCode}\n` +
+    `人数: ${reservation.guestCount}名様\n` +
+    `水風呂温度: ${reservation.waterTemperature}°C\n\n` +
+    `持ち物:\n${ITEMS_TO_BRING}`
+  );
+  const location = encodeURIComponent("福岡県糟屋郡宇美町障子岳6-8-4");
+
+  // Google Calendar link
+  const googleLink = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${eventTitle}&dates=${startDateTime.replace(/[-:]/g, '')}/${endDateTime.replace(/[-:]/g, '')}&details=${eventDescription}&location=${location}`;
+
+  // iCal format for Apple Calendar
+  const iCalData = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'BEGIN:VEVENT',
+    `DTSTART:${startDateTime.replace(/[-:]/g, '')}`,
+    `DTEND:${endDateTime.replace(/[-:]/g, '')}`,
+    `SUMMARY:${decodeURIComponent(eventTitle)}`,
+    `DESCRIPTION:${decodeURIComponent(eventDescription)}`,
+    `LOCATION:${decodeURIComponent(location)}`,
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].join('\n');
+
+  const iCalLink = `data:text/calendar;charset=utf8,${encodeURIComponent(iCalData)}`;
+
+  return {
+    google: googleLink,
+    ical: iCalLink
+  };
 };
 
 const handler = async (req: Request): Promise<Response> => {
@@ -61,6 +115,14 @@ const handler = async (req: Request): Promise<Response> => {
     const BASE_URL = "https://www.u-sauna-private.com";
     const RESERVATION_DETAILS_URL = `${BASE_URL}/reservation/${reservation.reservationCode}`;
 
+    const calendarLinks = generateCalendarLinks(reservation);
+    
+    const calendarSection = `
+カレンダーに予約を追加:
+- iPhone/Macのカレンダー: ${calendarLinks.ical}
+- Googleカレンダー: ${calendarLinks.google}
+`;
+
     const messageContent = `
 ご予約ありがとうございます。
 
@@ -84,6 +146,8 @@ Google Maps: ${GOOGLE_MAPS_URL}
 
 ご予約の詳細はこちらからご確認いただけます：
 ${RESERVATION_DETAILS_URL}
+
+${calendarSection}
 
 心よりお待ちしております。
 `;
