@@ -8,7 +8,6 @@ export default function ReservationComplete() {
   const reservationCode = location.state?.reservationCode;
 
   useEffect(() => {
-    // If no reservation code is provided, redirect to home
     if (!reservationCode) {
       navigate('/');
     }
@@ -30,6 +29,7 @@ export default function ReservationComplete() {
           <div className="space-y-4 text-sauna-stone">
             <p>予約内容の確認メールをお送りしました。</p>
             <p>当日は予約コードをご提示ください。</p>
+            <p className="font-medium">受付開始時間は、ご予約時間の15分前からとなります。</p>
           </div>
 
           <div className="space-y-4 pt-6">

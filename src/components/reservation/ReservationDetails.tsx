@@ -149,7 +149,7 @@ export const ReservationDetails = ({
             <SelectValue placeholder="温度を選択" />
           </SelectTrigger>
           <SelectContent>
-            {Array.from({ length: 16 }, (_, i) => i + 2).map((temp) => (
+            {Array.from({ length: 13 }, (_, i) => i + 5).map((temp) => (
               <SelectItem key={temp} value={temp.toString()}>
                 {temp}°C
               </SelectItem>
