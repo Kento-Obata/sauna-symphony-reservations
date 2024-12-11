@@ -31,6 +31,17 @@ interface ReservationDetailsProps {
   timeSlotReservations: Record<TimeSlot, number>;
 }
 
+const getTemperatureDescription = (temp: number): string => {
+  if (temp >= 5 && temp <= 10) {
+    return "超上級者、痛いくらい冷たいです";
+  } else if (temp >= 11 && temp <= 14) {
+    return "上級者、かなり冷たいです";
+  } else if (temp >= 15 && temp <= 17) {
+    return "ちょうど良い水温です";
+  }
+  return "";
+};
+
 export const ReservationDetails = ({
   timeSlot,
   setTimeSlot,
@@ -167,7 +178,7 @@ export const ReservationDetails = ({
           <SelectContent>
             {Array.from({ length: 13 }, (_, i) => i + 5).map((temp) => (
               <SelectItem key={temp} value={temp.toString()}>
-                {temp}°C
+                {temp}°C {getTemperatureDescription(temp) && `- ${getTemperatureDescription(temp)}`}
               </SelectItem>
             ))}
           </SelectContent>
