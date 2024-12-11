@@ -24,6 +24,14 @@ const TIME_SLOTS = {
   evening: "17:00-19:30",
 };
 
+const ITEMS_TO_BRING = `
+・バスタオル
+・フェイスタオル
+・着替え
+・シャンプー、リンス、ボディーソープ（備え付けもございます）
+・ドライヤー（備え付けもございます）
+`;
+
 const formatPhoneNumber = (phone: string): string => {
   const digits = phone.replace(/\D/g, '');
   
@@ -74,36 +82,52 @@ const handler = async (req: Request): Promise<Response> => {
     const GOOGLE_MAPS_URL = "https://maps.google.com/maps?q=8Q5GHG7V%2BJ5";
     const BASE_URL = "https://www.u-sauna-private.com";
     const CONFIRMATION_URL = `${BASE_URL}/reservation/confirm/${reservation.confirmationToken}`;
+    const RESERVATION_DETAILS_URL = `${BASE_URL}/reservation/${reservation.reservationCode}`;
 
     console.log("Generated URLs:", {
       CONFIRMATION_URL,
-      GOOGLE_MAPS_URL
+      GOOGLE_MAPS_URL,
+      RESERVATION_DETAILS_URL
     });
+
+    const commonMessageContent = `
+ご予約ありがとうございます。
+
+【ご予約内容】
+予約コード: ${reservation.reservationCode}
+日付: ${reservation.date}
+時間: ${TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]}
+人数: ${reservation.guestCount}名様
+水風呂温度: ${reservation.waterTemperature}°C
+
+【受付時間】
+ご予約時間の15分前からご案内いたします。
+
+【持ち物】
+${ITEMS_TO_BRING}
+
+【アクセス】
+住所: 〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4
+Plus Code: 8Q5GHG7V+J5
+Google Maps: ${GOOGLE_MAPS_URL}
+
+ご予約の詳細はこちらからご確認いただけます：
+${RESERVATION_DETAILS_URL}
+
+心よりお待ちしております。
+`;
 
     if (reservation.email) {
       try {
         console.log("Attempting to send email to:", reservation.email);
         const emailRes = await resend.emails.send({
-          from: "Sauna Reservation <onboarding@resend.dev>",
+          from: "Sauna U <onboarding@resend.dev>",
           to: [reservation.email],
-          subject: "サウナの仮予約確認",
+          subject: "サウナのご予約確認",
           html: `
-            <h1>仮予約確認</h1>
+            <h1>ご予約ありがとうございます</h1>
             <p>${reservation.guestName}様</p>
-            <p>サウナの仮予約を受け付けました。以下のリンクから20分以内に予約を確定してください：</p>
-            <p><a href="${CONFIRMATION_URL}">予約を確定する</a></p>
-            <p>予約内容：</p>
-            <ul>
-              <li>予約コード: ${reservation.reservationCode}</li>
-              <li>日付: ${reservation.date}</li>
-              <li>時間: ${TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]}</li>
-              <li>人数: ${reservation.guestCount}名</li>
-              <li>水風呂温度: ${reservation.waterTemperature}°C</li>
-            </ul>
-            <p>※このリンクの有効期限は20分です。</p>
-            <p>住所: 〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4</p>
-            <p>Plus Code: 8Q5GHG7V+J5</p>
-            <p>Google Maps: <a href="${GOOGLE_MAPS_URL}">こちらから確認できます</a></p>
+            ${commonMessageContent.split('\n').map(line => `<p>${line}</p>`).join('')}
           `,
         });
         console.log("Email sent successfully:", emailRes);
@@ -125,11 +149,7 @@ const handler = async (req: Request): Promise<Response> => {
       const formData = new URLSearchParams();
       formData.append('To', formattedPhone);
       formData.append('From', TWILIO_PHONE_NUMBER);
-      formData.append('Body', `サウナの仮予約を受け付けました。\n\n以下のリンクから20分以内に予約を確定してください：\n${CONFIRMATION_URL}\n\n予約内容：\n予約コード: ${reservation.reservationCode}\n日付: ${reservation.date}\n時間: ${
-        TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]
-      }\n人数: ${reservation.guestCount}名\n水風呂温度: ${
-        reservation.waterTemperature
-      }°C\n\n※このリンクの有効期限は20分です。\n\n住所: 〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4\nPlus Code: 8Q5GHG7V+J5\nGoogle Maps: ${GOOGLE_MAPS_URL}`);
+      formData.append('Body', commonMessageContent);
 
       const twilioResponse = await fetch(
         `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,

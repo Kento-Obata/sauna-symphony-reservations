@@ -4,40 +4,56 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Search } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 export const Header = () => {
-  const [reservationCode, setReservationCode] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleReservationLookup = (e: React.FormEvent) => {
+  const handleReservationLookup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reservationCode.trim()) {
-      toast.error('予約コードを入力してください');
+    if (!searchInput.trim()) {
+      toast.error('予約コードまたは電話番号を入力してください');
       return;
     }
-    navigate(`/reservation/${reservationCode.trim().toUpperCase()}`);
+
+    setIsLoading(true);
+    try {
+      // Check if input is a reservation code (alphanumeric, 8 characters)
+      if (/^[A-Z0-9]{8}$/.test(searchInput.trim().toUpperCase())) {
+        navigate(`/reservation/${searchInput.trim().toUpperCase()}`);
+        return;
+      }
+
+      // If not a reservation code, treat as phone number
+      const { error } = await supabase.functions.invoke('lookup-reservation', {
+        body: { phone: searchInput.trim() },
+      });
+
+      if (error) {
+        console.error('Lookup error:', error);
+        toast.error('予約の検索に失敗しました');
+        return;
+      }
+
+      toast.success('予約詳細のリンクをSMSで送信しました');
+      setSearchInput('');
+      setShowForm(false);
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('予約の検索に失敗しました');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <header className="relative h-[60vh] flex items-center justify-center overflow-hidden">
-      {/* 一時的に画像を使用し、後で動画に置き換えられるように準備 */}
       <div 
         className="absolute inset-0 transition-opacity duration-1000"
       >
-        {/* 動画を追加する際のプレースホルダーコメント */}
-        {/* 
-        <video
-          className="absolute inset-0 w-full h-full object-cover"
-          autoPlay
-          muted
-          loop
-          playsInline
-          poster="https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=80"
-        >
-          <source src="/path-to-your-video.mp4" type="video/mp4" />
-        </video>
-        */}
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
@@ -54,7 +70,6 @@ export const Header = () => {
         }}
       />
       
-      {/* Reservation Link and Form */}
       <div className="absolute top-4 right-4 z-20 flex items-center gap-4">
         <button
           onClick={() => setShowForm(!showForm)}
@@ -66,12 +81,12 @@ export const Header = () => {
           <form onSubmit={handleReservationLookup} className="flex gap-2">
             <Input
               type="text"
-              placeholder="予約コードを入力"
-              value={reservationCode}
-              onChange={(e) => setReservationCode(e.target.value)}
-              className="w-40 bg-sauna-charcoal/50 border-sauna-stone/30 text-white placeholder:text-sauna-stone/50"
+              placeholder="予約コード or 電話番号"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="w-48 bg-sauna-charcoal/50 border-sauna-stone/30 text-white placeholder:text-sauna-stone/50"
             />
-            <Button type="submit" variant="secondary" size="icon">
+            <Button type="submit" variant="secondary" size="icon" disabled={isLoading}>
               <Search className="h-4 w-4" />
             </Button>
           </form>
@@ -80,7 +95,6 @@ export const Header = () => {
       
       <div className="relative z-10 w-full mx-auto text-center pt-8">
         <div className="flex flex-col items-center space-y-4 px-4 md:px-0">
-          {/* Brand and Location */}
           <div className="space-y-1">
             <h1 className="text-4xl font-light text-gradient">Sauna U</h1>
             <p className="text-sm text-sauna-stone/90 font-light tracking-wide">
@@ -88,7 +102,6 @@ export const Header = () => {
             </p>
           </div>
 
-          {/* Main Features */}
           <div className="glass-card p-4 space-y-3 w-full max-w-2xl hover-lift">
             <div className="space-y-2">
               <h2 className="text-lg font-light text-white whitespace-normal">
