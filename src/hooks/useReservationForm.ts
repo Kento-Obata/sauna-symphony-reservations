@@ -13,7 +13,7 @@ export const useReservationForm = () => {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [people, setPeople] = useState("");
-  const [temperature, setTemperature] = useState("");
+  const [temperature, setTemperature] = useState("15"); // Initialize with default temperature
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reservationCode, setReservationCode] = useState<string>();
@@ -27,7 +27,7 @@ export const useReservationForm = () => {
     setEmail("");
     setPhone("");
     setPeople("");
-    setTemperature("");
+    setTemperature("15"); // Reset to default temperature
     setShowConfirmDialog(false);
     setIsSubmitting(false);
     setReservationCode(undefined);
@@ -52,10 +52,6 @@ export const useReservationForm = () => {
     }
     if (!people) {
       toast.error("人数を選択してください。");
-      return false;
-    }
-    if (!temperature) {
-      toast.error("水風呂温度を選択してください。");
       return false;
     }
     return true;
@@ -88,7 +84,7 @@ export const useReservationForm = () => {
         email: email || null,
         phone: phone,
         water_temperature: parseInt(temperature),
-        status: "pending" as const,  // Explicitly set status as "pending"
+        status: "pending" as const,
       };
 
       console.log("Submitting reservation data:", reservationData);
