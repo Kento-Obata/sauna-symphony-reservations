@@ -84,7 +84,7 @@ export const Header = () => {
           <div className="space-y-1">
             <h1 className="text-4xl font-light text-gradient">Sauna U</h1>
             <p className="text-sm text-sauna-stone/90 font-light tracking-wide">
-              福岡から車で30分
+              福岡から車で30分、五感を研ぎ澄ます体験型サウナ
             </p>
           </div>
 
@@ -96,10 +96,13 @@ export const Header = () => {
               </h2>
               <div className="space-y-2">
                 <p className="text-xs text-sauna-stone/90 font-light whitespace-nowrap">
-                  予約前に最低5℃の水温を選ぶだけ
+                  高音高湿度薪サウナ
                 </p>
                 <p className="text-xs text-sauna-stone/90 font-light whitespace-nowrap">
-                  詳細非公開<br />五感を刺激する究極のサウナ体験
+                  最低5℃、地下水掛流しの水風呂
+                </p>
+                <p className="text-xs text-sauna-stone/90 font-light whitespace-nowrap">
+                  福岡一望の景観、三郡山の風
                 </p>
               </div>
             </div>
