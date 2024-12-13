@@ -36,6 +36,16 @@ const ITEMS_TO_BRING = `
 ・フェイスパック（外気浴時にもご利用いただけます）
 `;
 
+const getSurcharge = (temp: number): number => {
+  if (temp <= 7) return 5000;
+  if (temp <= 10) return 3000;
+  return 0;
+};
+
+const formatPrice = (price: number): string => {
+  return `¥${price.toLocaleString()}`;
+};
+
 const formatPhoneNumber = (phone: string): string => {
   const digits = phone.replace(/\D/g, '');
   return digits.startsWith('0') ? '+81' + digits.slice(1) : digits;
@@ -66,6 +76,10 @@ const handler = async (req: Request): Promise<Response> => {
     const BASE_URL = "https://www.u-sauna-private.com";
     const RESERVATION_DETAILS_URL = `${BASE_URL}/reservation/${reservation.reservationCode}`;
 
+    const basePrice = 40000;
+    const surcharge = getSurcharge(reservation.waterTemperature);
+    const totalPrice = basePrice + surcharge;
+
     const messageContent = `
 ご予約ありがとうございます。
 
@@ -75,6 +89,9 @@ const handler = async (req: Request): Promise<Response> => {
 時間: ${TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]}
 人数: ${reservation.guestCount}名様
 水風呂温度: ${reservation.waterTemperature}°C
+
+【料金】
+${formatPrice(totalPrice)} (税込)${surcharge > 0 ? `\n※ 水温オプション料金 +${formatPrice(surcharge)} を含む` : ''}
 
 【受付時間】
 ご予約時間の15分前からご案内いたします。
