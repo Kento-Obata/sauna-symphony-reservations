@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { format } from "date-fns"; // Add this import
-import { ja } from "date-fns/locale"; // Make sure this import is present
-import { useReservations } from "@/hooks/useReservations";
+import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -12,6 +10,7 @@ import { AdminSearchBar } from "@/components/admin/AdminSearchBar";
 import { AdminCalendar } from "@/components/admin/AdminCalendar";
 import { AdminUpcomingReservations } from "@/components/admin/AdminUpcomingReservations";
 import { AdminSearchResults } from "@/components/admin/AdminSearchResults";
+import { ShopClosureManager } from "@/components/admin/ShopClosureManager";
 
 const Admin = () => {
   const [showNewReservationDialog, setShowNewReservationDialog] = useState(false);
@@ -128,6 +127,10 @@ const Admin = () => {
             onStatusChange={handleStatusChange}
           />
         </div>
+      </div>
+
+      <div className="mb-8">
+        <ShopClosureManager />
       </div>
 
       {(nameQuery || phoneQuery || dateQuery) && (

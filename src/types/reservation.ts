@@ -1,8 +1,7 @@
-import { Database } from "@/integrations/supabase/types";
+export type TimeSlot = "morning" | "afternoon" | "evening";
 
-export type TimeSlot = Database["public"]["Enums"]["time_slot"];
-
-export interface ReservationFormData {
+export interface Reservation {
+  id: string;
   date: string;
   time_slot: TimeSlot;
   guest_name: string;
@@ -10,11 +9,18 @@ export interface ReservationFormData {
   email: string | null;
   phone: string;
   water_temperature: number;
-}
-
-export interface Reservation extends ReservationFormData {
-  id: string;
   created_at: string;
   reservation_code: string | null;
   status: string;
+  is_confirmed: boolean | null;
+  confirmation_token: string | null;
+  expires_at: string | null;
+}
+
+export interface ShopClosure {
+  id: string;
+  date: string;
+  reason: string | null;
+  created_at: string;
+  updated_at: string;
 }
