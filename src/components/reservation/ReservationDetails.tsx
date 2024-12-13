@@ -82,6 +82,21 @@ export const ReservationDetails = ({
     }
   };
 
+  // Get available temperatures based on time slot
+  const getAvailableTemperatures = () => {
+    if (timeSlot === "morning") {
+      return Array.from({ length: 13 }, (_, i) => i + 5); // 5°C to 17°C
+    }
+    return Array.from({ length: 8 }, (_, i) => i + 10); // 10°C to 17°C
+  };
+
+  // Get surcharge based on temperature
+  const getSurcharge = (temp: number): number => {
+    if (temp <= 7) return 5000;
+    if (temp <= 10) return 3000;
+    return 0;
+  };
+
   return (
     <div className="space-y-4">
       {isMobile && (
@@ -165,13 +180,21 @@ export const ReservationDetails = ({
             <SelectValue placeholder="温度を選択" />
           </SelectTrigger>
           <SelectContent>
-            {Array.from({ length: 13 }, (_, i) => i + 5).map((temp) => (
-              <SelectItem key={temp} value={temp.toString()}>
-                <div className="flex justify-between items-center w-full">
-                  <span>{temp}°C</span>
-                </div>
-              </SelectItem>
-            ))}
+            {getAvailableTemperatures().map((temp) => {
+              const surcharge = getSurcharge(temp);
+              return (
+                <SelectItem key={temp} value={temp.toString()}>
+                  <div className="flex justify-between items-center w-full">
+                    <span>{temp}°C</span>
+                    {surcharge > 0 && (
+                      <span className="text-sm text-muted-foreground ml-2">
+                        (+¥{surcharge.toLocaleString()})
+                      </span>
+                    )}
+                  </div>
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
       </div>

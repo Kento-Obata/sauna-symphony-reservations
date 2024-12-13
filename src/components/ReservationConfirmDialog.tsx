@@ -11,6 +11,12 @@ const timeSlotLabels: Record<TimeSlot, string> = {
   evening: "夜",
 };
 
+const getSurcharge = (temp: number): number => {
+  if (temp <= 7) return 5000;
+  if (temp <= 10) return 3000;
+  return 0;
+};
+
 interface ReservationConfirmDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -35,6 +41,9 @@ export const ReservationConfirmDialog = ({
         locale: ja,
       })
     : "";
+
+  const surcharge = getSurcharge(reservation.water_temperature);
+  const totalPrice = 40000 + surcharge;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -72,7 +81,19 @@ export const ReservationConfirmDialog = ({
 
           <div className="text-center text-sm text-muted-foreground">
             <p>上記の内容で予約を確定しますか？</p>
-            <p className="mt-2">料金: ¥40,000 (税込)</p>
+            {reservation.water_temperature <= 10 && (
+              <p className="mt-2 text-red-500">
+                ※ 10℃以下は本当に冷たいです。入ったことのない方はご注意ください。
+              </p>
+            )}
+            <p className="mt-2">
+              料金: ¥{totalPrice.toLocaleString()} (税込)
+              {surcharge > 0 && (
+                <span className="block text-xs">
+                  ※ 水温オプション料金 +¥{surcharge.toLocaleString()} を含む
+                </span>
+              )}
+            </p>
             <p className="mt-2">受付時間: 予約時間の15分前からご案内いたします。</p>
             <p className="mt-2 text-yellow-600 font-bold">
               ※ 本予約用のSMSとメールが送信されます。
