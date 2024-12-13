@@ -35,8 +35,8 @@ export const ShopClosureManager = () => {
   };
 
   return (
-    <div className="space-y-6 bg-white dark:bg-sauna-charcoal rounded-lg p-6">
-      <h2 className="text-xl font-semibold mb-4">休業日管理</h2>
+    <div className="space-y-6 glass-card p-6">
+      <h2 className="text-xl font-semibold mb-4 text-foreground">休業日管理</h2>
       
       <div className="grid md:grid-cols-2 gap-6">
         <div>
@@ -71,20 +71,20 @@ export const ShopClosureManager = () => {
           </div>
 
           <div className="space-y-2">
-            <h3 className="font-medium">休業日一覧</h3>
+            <h3 className="font-medium text-foreground">休業日一覧</h3>
             {closures?.map((closure) => (
               <div
                 key={closure.id}
-                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg"
               >
                 <div>
-                  <div>
+                  <div className="text-foreground">
                     {format(new Date(closure.date), "yyyy年MM月dd日(E)", {
                       locale: ja,
                     })}
                   </div>
                   {closure.reason && (
-                    <div className="text-sm text-gray-500">
+                    <div className="text-sm text-muted-foreground">
                       {closure.reason}
                     </div>
                   )}
