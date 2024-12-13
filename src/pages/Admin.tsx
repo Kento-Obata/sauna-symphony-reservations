@@ -11,6 +11,7 @@ import { AdminCalendar } from "@/components/admin/AdminCalendar";
 import { AdminUpcomingReservations } from "@/components/admin/AdminUpcomingReservations";
 import { AdminSearchResults } from "@/components/admin/AdminSearchResults";
 import { ShopClosureManager } from "@/components/admin/ShopClosureManager";
+import { useReservations } from "@/hooks/useReservations";
 
 const Admin = () => {
   const [showNewReservationDialog, setShowNewReservationDialog] = useState(false);

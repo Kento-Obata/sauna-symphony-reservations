@@ -17,6 +17,16 @@ export interface Reservation {
   expires_at: string | null;
 }
 
+export interface ReservationFormData {
+  date: string;
+  time_slot: TimeSlot;
+  guest_name: string;
+  guest_count: number;
+  email: string | null;
+  phone: string;
+  water_temperature: number;
+}
+
 export interface ShopClosure {
   id: string;
   date: string;
