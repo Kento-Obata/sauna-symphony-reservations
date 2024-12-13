@@ -178,7 +178,12 @@ export const ReservationDetails = ({
           <SelectContent>
             {Array.from({ length: 13 }, (_, i) => i + 5).map((temp) => (
               <SelectItem key={temp} value={temp.toString()}>
-                {temp}°C {getTemperatureDescription(temp) && `- ${getTemperatureDescription(temp)}`}
+                <div className="flex justify-between items-center w-full">
+                  <span>{temp}°C</span>
+                  <span className="text-sm text-muted-foreground ml-2">
+                    {getTemperatureDescription(temp)}
+                  </span>
+                </div>
               </SelectItem>
             ))}
           </SelectContent>
