@@ -1,6 +1,5 @@
 export const getSurcharge = (temp: number): number => {
   if (temp <= 7) return 5000;
-  if (temp <= 10) return 3000;
   return 0;
 };
 
