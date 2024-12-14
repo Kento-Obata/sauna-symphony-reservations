@@ -4,7 +4,7 @@ import Map from "@/components/Map";
 
 const Index = () => {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col">
       <Header />
       <div id="reservation-section" className="mt-4 md:mt-[-10vh] text-center">
         <ReservationForm />
@@ -47,6 +47,14 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      <footer className="mt-auto py-8 px-4 border-t border-sauna-stone/10">
+        <div className="max-w-4xl mx-auto text-center">
+          <p className="text-sm text-sauna-stone/70">
+            © 2024 株式会社sync All rights reserved.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 };
