@@ -53,6 +53,9 @@ const Index = () => {
           <p className="text-sm text-sauna-stone/70">
             © 2024 株式会社sync All rights reserved.
           </p>
+          <p className="text-xs text-sauna-stone/50 mt-2">
+            プレオープン: 2025年2月10日
+          </p>
         </div>
       </footer>
     </div>
