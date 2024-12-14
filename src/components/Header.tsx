@@ -100,6 +100,9 @@ export const Header = () => {
             <p className="text-sm text-sauna-stone/90 font-light tracking-wide">
               福岡から車で30分、五感を刺激するサウナ
             </p>
+            <p className="text-xs text-sauna-stone/70 mt-2">
+              プレオープン: 2025年2月10日
+            </p>
           </div>
 
           <div className="glass-card p-4 space-y-3 w-full max-w-2xl hover-lift">
