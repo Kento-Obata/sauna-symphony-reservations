@@ -96,7 +96,7 @@ export const Header = () => {
       <div className="relative z-10 w-full mx-auto text-center pt-8">
         <div className="flex flex-col items-center space-y-4 px-4 md:px-0">
           <div className="space-y-1">
-            <h1 className="text-4xl font-light text-gradient">Sauna U</h1>
+            <h1 className="text-4xl font-light text-gradient">U</h1>
             <p className="text-sm text-sauna-stone/90 font-light tracking-wide">
               福岡から車で30分、五感を刺激するサウナ
             </p>
