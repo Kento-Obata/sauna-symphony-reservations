@@ -20,11 +20,11 @@ export default {
     extend: {
       colors: {
         sauna: {
-          charcoal: "#1A1F2C",
-          copper: "#B87333",
-          stone: "#8E9196",
-          wood: "#4A3B2F",
-          iron: "#48494B",
+          charcoal: "#221F26", // より深みのある暗色
+          copper: "#D4A574", // より柔らかい銅色
+          stone: "#9F9EA1", // より明るいグレー
+          wood: "#5A4B3F", // より温かみのある茶色
+          iron: "#403E43", // より深みのある鉄色
         },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
