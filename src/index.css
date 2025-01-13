@@ -4,33 +4,33 @@
  
 @layer base {
   :root {
-    --background: 260 15% 10%;
-    --foreground: 220 20% 98%;
+    --background: 72 6% 17%;
+    --foreground: 72 4% 95%;
     
-    --card: 260 15% 10%;
-    --card-foreground: 220 20% 98%;
+    --card: 72 6% 17%;
+    --card-foreground: 72 4% 95%;
  
-    --popover: 260 15% 10%;
-    --popover-foreground: 220 20% 98%;
+    --popover: 72 6% 17%;
+    --popover-foreground: 72 4% 95%;
  
-    --primary: 35 45% 64%;
-    --primary-foreground: 220 20% 98%;
+    --primary: 72 5% 65%;
+    --primary-foreground: 72 4% 95%;
  
-    --secondary: 260 10% 20%;
-    --secondary-foreground: 220 20% 98%;
+    --secondary: 72 4% 25%;
+    --secondary-foreground: 72 4% 95%;
  
-    --muted: 260 10% 20%;
-    --muted-foreground: 220 10% 70%;
+    --muted: 72 4% 25%;
+    --muted-foreground: 72 4% 75%;
  
-    --accent: 260 10% 20%;
-    --accent-foreground: 220 20% 98%;
+    --accent: 72 4% 25%;
+    --accent-foreground: 72 4% 95%;
  
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 220 20% 98%;
+    --destructive-foreground: 72 4% 95%;
  
-    --border: 260 10% 20%;
-    --input: 260 10% 20%;
-    --ring: 35 45% 64%;
+    --border: 72 4% 25%;
+    --input: 72 4% 25%;
+    --ring: 72 5% 65%;
  
     --radius: 0.5rem;
   }
@@ -55,5 +55,5 @@
 }
 
 .text-gradient {
-  @apply bg-clip-text text-transparent bg-gradient-to-r from-sauna-copper via-sauna-copper to-[#E5B78C];
+  @apply bg-clip-text text-transparent bg-gradient-to-b from-sauna-base via-sauna-stone to-sauna-muted;
 }

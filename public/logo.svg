@@ -1,0 +1,4 @@
+<svg width="1200" height="900" viewBox="0 0 1200 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M200 100H1000L900 200H300L200 100ZM300 300H900L800 400H400L300 300ZM400 500H800L700 600H500L400 500ZM500 700H700L650 750H550L500 700Z" fill="#A4A99D"/>
+  <path d="M1000 800H200" stroke="#A4A99D" stroke-width="40"/>
+</svg>

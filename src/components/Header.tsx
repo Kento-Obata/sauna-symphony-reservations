@@ -21,13 +21,11 @@ export const Header = () => {
 
     setIsLoading(true);
     try {
-      // Check if input is a reservation code (alphanumeric, 8 characters)
       if (/^[A-Z0-9]{8}$/.test(searchInput.trim().toUpperCase())) {
         navigate(`/reservation/${searchInput.trim().toUpperCase()}`);
         return;
       }
 
-      // If not a reservation code, treat as phone number
       const { error } = await supabase.functions.invoke('lookup-reservation', {
         body: { phone: searchInput.trim() },
       });
@@ -73,7 +71,7 @@ export const Header = () => {
       <div className="absolute top-4 right-4 z-20 flex items-center gap-4">
         <button
           onClick={() => setShowForm(!showForm)}
-          className="text-white/60 hover:text-sauna-copper transition-colors text-xs"
+          className="text-sauna-muted hover:text-sauna-base transition-colors text-xs"
         >
           予約確認
         </button>
@@ -96,7 +94,7 @@ export const Header = () => {
       <div className="relative z-10 w-full mx-auto text-center pt-8">
         <div className="flex flex-col items-center space-y-4 px-4 md:px-0">
           <div className="space-y-1">
-            <h1 className="text-4xl font-light text-gradient">U</h1>
+            <img src="/logo.svg" alt="U" className="h-16 w-auto mx-auto mb-4" />
             <p className="text-sm text-sauna-stone/90 font-light tracking-wide">
               福岡から車で30分、五感を刺激するサウナ
             </p>
