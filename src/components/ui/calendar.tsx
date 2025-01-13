@@ -12,7 +12,7 @@ export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 function Calendar({
   className,
   classNames,
-  showOutsideDays = false, // Changed default to false
+  showOutsideDays = false,
   ...props
 }: CalendarProps) {
   return (
@@ -22,7 +22,7 @@ function Calendar({
       locale={ja}
       formatters={{
         formatCaption: (date, options) => {
-          return format(date, 'yyyy年MM月', { locale: options?.locale });
+          return format(date, 'yyyy.MM', { locale: options?.locale });
         }
       }}
       classNames={{
