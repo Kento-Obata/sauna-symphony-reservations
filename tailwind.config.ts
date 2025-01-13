@@ -60,6 +60,10 @@ export default {
           foreground: "hsl(var(--card-foreground))",
         },
       },
+      fontFamily: {
+        sans: ["Noto Sans JP", "Hiragino Sans", "Meiryo", "sans-serif"],
+        display: ["Helvetica Neue", "Arial", "sans-serif"],
+      },
       keyframes: {
         "fade-up": {
           "0%": {
