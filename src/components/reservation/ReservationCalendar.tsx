@@ -1,10 +1,9 @@
 import { Calendar } from "@/components/ui/calendar";
-import { isBefore, isAfter, addMonths, format, startOfMonth, endOfMonth, parseISO } from "date-fns";
+import { isBefore, isAfter, addMonths, format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { ReservationStatus } from "@/components/ReservationStatus";
 import { Reservation } from "@/types/reservation";
 import { useCalendarDates } from "@/hooks/useCalendarDates";
-import { DayOfWeek } from "react-day-picker";
 
 interface ReservationCalendarProps {
   date: Date | undefined;
@@ -49,17 +48,6 @@ export const ReservationCalendar = ({
 
   if (!calendarDates) return null;
 
-  // カレンダーデータから曜日の配置を設定
-  const modifiers = {
-    sunday: { dayOfWeek: [0] } as DayOfWeek,
-    monday: { dayOfWeek: [1] } as DayOfWeek,
-    tuesday: { dayOfWeek: [2] } as DayOfWeek,
-    wednesday: { dayOfWeek: [3] } as DayOfWeek,
-    thursday: { dayOfWeek: [4] } as DayOfWeek,
-    friday: { dayOfWeek: [5] } as DayOfWeek,
-    saturday: { dayOfWeek: [6] } as DayOfWeek,
-  };
-
   return (
     <Calendar
       mode="single"
@@ -71,7 +59,6 @@ export const ReservationCalendar = ({
       }
       locale={ja}
       className="rounded-md bg-sauna-stone/10"
-      modifiers={modifiers}
       classNames={{
         months: "space-y-4",
         month: "space-y-4",
