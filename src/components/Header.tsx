@@ -82,10 +82,10 @@ export const Header = () => {
               xmlnsXlink="http://www.w3.org/1999/xlink"
               x="0px"
               y="0px"
-              width="120"
+              width="80"
               viewBox="0 0 768 256"
               enableBackground="new 0 0 768 256"
-              className="mx-auto mb-4 h-8"
+              className="mx-auto mb-4 h-4"
             >
               <path
                 fill="#000000"
