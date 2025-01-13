@@ -32,11 +32,9 @@ export const ReservationCalendar = ({
     const reservationCount = dateReservations.length;
     
     return (
-      <div className="w-full h-full flex flex-col items-center justify-start pt-0.5 border-b-[1px] border-sauna-stone/50">
+      <div className="w-full h-full flex flex-col items-center justify-start pt-0.5">
         <span>{day.getDate()}</span>
-        <div className="text-xs translate-y-[-2px]">
-          <ReservationStatus reservationCount={reservationCount} />
-        </div>
+        <ReservationStatus reservationCount={reservationCount} />
       </div>
     );
   };
@@ -72,6 +70,9 @@ export const ReservationCalendar = ({
         day_disabled: "text-sauna-stone/30 opacity-50 hover:bg-transparent",
         day_range_middle: "aria-selected:bg-sauna-stone/20 aria-selected:text-sauna-charcoal",
         day_hidden: "invisible",
+      }}
+      components={{
+        DayContent: ({ date }) => getDayContent(date)
       }}
     />
   );
