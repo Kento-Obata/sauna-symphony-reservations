@@ -7,6 +7,8 @@ import {
   addWeeks,
   subWeeks,
   isSameDay,
+  startOfMonth,
+  endOfMonth,
 } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -32,9 +34,13 @@ export const AdminCalendar = ({
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
 
-  // 日曜日始まりに修正
-  const start = startOfWeek(currentDate, { locale: ja });
-  const end = endOfWeek(currentDate, { locale: ja });
+  // 月の最初の日から最後の日までの期間を取得
+  const monthStart = startOfMonth(currentDate);
+  const monthEnd = endOfMonth(currentDate);
+  
+  // その月の最初の週の開始日と最後の週の終了日を取得
+  const start = startOfWeek(monthStart, { locale: ja });
+  const end = endOfWeek(monthEnd, { locale: ja });
   const days = eachDayOfInterval({ start, end });
 
   const handlePrevWeek = () => setCurrentDate(subWeeks(currentDate, 1));
