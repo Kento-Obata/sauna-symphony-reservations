@@ -4,6 +4,7 @@ import { ja } from "date-fns/locale";
 import { ReservationStatus } from "@/components/ReservationStatus";
 import { Reservation } from "@/types/reservation";
 import { useCalendarDates } from "@/hooks/useCalendarDates";
+import { DayOfWeek } from "react-day-picker";
 
 interface ReservationCalendarProps {
   date: Date | undefined;
@@ -50,10 +51,13 @@ export const ReservationCalendar = ({
 
   // カレンダーデータから曜日の配置を設定
   const modifiers = {
-    ...calendarDates.reduce((acc, { date, day_of_week }) => {
-      acc[date] = { dayOfWeek: day_of_week };
-      return acc;
-    }, {} as Record<string, { dayOfWeek: number }>)
+    sunday: { dayOfWeek: [0] } as DayOfWeek,
+    monday: { dayOfWeek: [1] } as DayOfWeek,
+    tuesday: { dayOfWeek: [2] } as DayOfWeek,
+    wednesday: { dayOfWeek: [3] } as DayOfWeek,
+    thursday: { dayOfWeek: [4] } as DayOfWeek,
+    friday: { dayOfWeek: [5] } as DayOfWeek,
+    saturday: { dayOfWeek: [6] } as DayOfWeek,
   };
 
   return (
