@@ -4,33 +4,33 @@
  
 @layer base {
   :root {
-    --background: 72 6% 64%;
-    --foreground: 0 0% 0%;
+    --background: 220 33% 10%;
+    --foreground: 210 40% 98%;
     
-    --card: 72 6% 64%;
-    --card-foreground: 0 0% 0%;
+    --card: 220 33% 10%;
+    --card-foreground: 210 40% 98%;
  
-    --popover: 72 6% 64%;
-    --popover-foreground: 0 0% 0%;
+    --popover: 220 33% 10%;
+    --popover-foreground: 210 40% 98%;
  
-    --primary: 72 5% 65%;
-    --primary-foreground: 0 0% 0%;
+    --primary: 34 57% 46%;
+    --primary-foreground: 210 40% 98%;
  
-    --secondary: 72 4% 25%;
-    --secondary-foreground: 0 0% 0%;
+    --secondary: 215 25% 27%;
+    --secondary-foreground: 210 40% 98%;
  
-    --muted: 72 4% 25%;
-    --muted-foreground: 0 0% 0%;
+    --muted: 215 25% 27%;
+    --muted-foreground: 217.9 10.6% 64.9%;
  
-    --accent: 72 4% 25%;
-    --accent-foreground: 0 0% 0%;
+    --accent: 215 25% 27%;
+    --accent-foreground: 210 40% 98%;
  
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 0%;
+    --destructive-foreground: 210 40% 98%;
  
-    --border: 72 4% 25%;
-    --input: 72 4% 25%;
-    --ring: 72 5% 65%;
+    --border: 215 25% 27%;
+    --input: 215 25% 27%;
+    --ring: 34 57% 46%;
  
     --radius: 0.5rem;
   }
@@ -41,16 +41,13 @@
     @apply border-border;
   }
   body {
-    @apply bg-sauna-base text-foreground font-sans;
+    @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
-  }
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-display font-bold;
   }
 }
 
 .glass-card {
-  @apply bg-white/30 backdrop-blur-sm border border-white/50 rounded-lg;
+  @apply bg-secondary/30 backdrop-blur-sm border border-secondary/50 rounded-lg;
 }
 
 .hover-lift {
@@ -58,5 +55,5 @@
 }
 
 .text-gradient {
-  @apply bg-clip-text text-transparent bg-gradient-to-b from-sauna-base via-sauna-stone to-sauna-muted;
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-sauna-copper via-sauna-copper to-[#D4A574];
 }

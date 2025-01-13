@@ -9,27 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      calendar_dates: {
-        Row: {
-          created_at: string
-          date: string
-          day_of_week: number
-          is_holiday: boolean | null
-        }
-        Insert: {
-          created_at?: string
-          date: string
-          day_of_week: number
-          is_holiday?: boolean | null
-        }
-        Update: {
-          created_at?: string
-          date?: string
-          day_of_week?: number
-          is_holiday?: boolean | null
-        }
-        Relationships: []
-      }
       profiles: {
         Row: {
           avatar_url: string | null

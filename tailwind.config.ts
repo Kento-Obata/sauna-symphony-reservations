@@ -20,11 +20,11 @@ export default {
     extend: {
       colors: {
         sauna: {
-          base: "#A4A99D",
-          charcoal: "#2C2D29",
-          stone: "#C5C7BE",
-          accent: "#8B8F84",
-          muted: "#D8DAD3",
+          charcoal: "#1A1F2C",
+          copper: "#B87333",
+          stone: "#8E9196",
+          wood: "#4A3B2F",
+          iron: "#48494B",
         },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -59,10 +59,6 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-      },
-      fontFamily: {
-        sans: ["Noto Sans JP", "Hiragino Sans", "Meiryo", "sans-serif"],
-        display: ["Helvetica Neue", "Arial", "sans-serif"],
       },
       keyframes: {
         "fade-up": {
