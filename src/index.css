@@ -50,7 +50,7 @@
 }
 
 .glass-card {
-  @apply bg-secondary/30 backdrop-blur-sm border border-secondary/50 rounded-lg;
+  @apply bg-white/30 backdrop-blur-sm border border-white/50 rounded-lg;
 }
 
 .hover-lift {
