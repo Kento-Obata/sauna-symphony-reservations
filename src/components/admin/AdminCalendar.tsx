@@ -1,14 +1,12 @@
 import { useState } from "react";
 import {
-  startOfWeek,
-  endOfWeek,
-  eachDayOfInterval,
-  format,
-  addWeeks,
-  subWeeks,
-  isSameDay,
   startOfMonth,
   endOfMonth,
+  format,
+  addMonths,
+  subMonths,
+  isSameDay,
+  parseISO,
 } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -17,6 +15,7 @@ import { TIME_SLOTS } from "@/components/TimeSlotSelect";
 import { Reservation } from "@/types/reservation";
 import { AdminReservationDialog } from "./AdminReservationDialog";
 import { AdminReservationDetailsDialog } from "./AdminReservationDetailsDialog";
+import { useCalendarDates } from "@/hooks/useCalendarDates";
 
 interface AdminCalendarProps {
   reservations?: Reservation[];
@@ -34,24 +33,22 @@ export const AdminCalendar = ({
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
 
-  // 月の最初の日から最後の日までの期間を取得
+  // 月の最初の日と最後の日を取得
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
-  
-  // その月の最初の週の開始日と最後の週の終了日を取得
-  const start = startOfWeek(monthStart, { locale: ja });
-  const end = endOfWeek(monthEnd, { locale: ja });
-  const days = eachDayOfInterval({ start, end });
 
-  const handlePrevWeek = () => setCurrentDate(subWeeks(currentDate, 1));
-  const handleNextWeek = () => setCurrentDate(addWeeks(currentDate, 1));
+  // カレンダーデータを取得
+  const { data: calendarDates } = useCalendarDates(monthStart, monthEnd);
+
+  const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
+  const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
 
   const getReservationsForDateAndSlot = (date: Date, timeSlot: string) => {
     return reservations.filter(
       (r) => 
         r.date === format(date, "yyyy-MM-dd") && 
         r.time_slot === timeSlot &&
-        (r.status === "confirmed" || r.status === "pending") // Include both confirmed and pending reservations
+        (r.status === "confirmed" || r.status === "pending")
     );
   };
 
@@ -109,35 +106,61 @@ export const AdminCalendar = ({
     return "text-red-500";
   };
 
+  if (!calendarDates) return null;
+
   return (
     <div className="bg-white dark:bg-sauna-charcoal rounded-lg shadow p-4">
       <div className="flex justify-between items-center mb-4">
-        <Button variant="outline" size="icon" onClick={handlePrevWeek}>
+        <Button variant="outline" size="icon" onClick={handlePrevMonth}>
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <h2 className="text-lg font-semibold text-black dark:text-white">
-          {format(start, "yyyy年MM月dd日", { locale: ja })} -{" "}
-          {format(end, "MM月dd日", { locale: ja })}
+          {format(currentDate, "yyyy年MM月", { locale: ja })}
         </h2>
-        <Button variant="outline" size="icon" onClick={handleNextWeek}>
+        <Button variant="outline" size="icon" onClick={handleNextMonth}>
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
 
       <div className="grid grid-cols-8 gap-2">
         <div className="col-span-1"></div>
-        {days.map((day) => (
-          <button
-            key={day.toString()}
-            onClick={() => handleDayClick(day)}
-            className="col-span-1 text-center font-medium p-2 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
-          >
-            {format(day, "M/d")}
-            <div className="text-sm text-gray-600 dark:text-gray-300">
-              {format(day, "E", { locale: ja })}
-            </div>
-          </button>
+        {["日", "月", "火", "水", "木", "金", "土"].map((day) => (
+          <div key={day} className="col-span-1 text-center font-medium p-2">
+            {day}
+          </div>
         ))}
+
+        {calendarDates.map((calendarDate) => {
+          const date = parseISO(calendarDate.date);
+          const dayOfWeek = calendarDate.day_of_week;
+          
+          // 最初の日の前に必要な空のセルを追加
+          if (date.getDate() === 1) {
+            const emptyCells = Array(dayOfWeek).fill(null);
+            return [
+              ...emptyCells.map((_, index) => (
+                <div key={`empty-${index}`} className="col-span-1" />
+              )),
+              <button
+                key={calendarDate.date}
+                onClick={() => handleDayClick(date)}
+                className="col-span-1 text-center font-medium p-2 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+              >
+                {format(date, "d")}
+              </button>
+            ];
+          }
+
+          return (
+            <button
+              key={calendarDate.date}
+              onClick={() => handleDayClick(date)}
+              className="col-span-1 text-center font-medium p-2 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+            >
+              {format(date, "d")}
+            </button>
+          );
+        })}
 
         {Object.entries(TIME_SLOTS).map(([slot, time]) => (
           <>
@@ -147,15 +170,16 @@ export const AdminCalendar = ({
             >
               {time.start}
             </div>
-            {days.map((day) => {
-              const slotReservations = getReservationsForDateAndSlot(day, slot);
+            {calendarDates.map((calendarDate) => {
+              const date = parseISO(calendarDate.date);
+              const slotReservations = getReservationsForDateAndSlot(date, slot);
               return (
                 <button
-                  key={`${day}-${slot}`}
-                  onClick={() => handleCellClick(day, slot)}
+                  key={`${calendarDate.date}-${slot}`}
+                  onClick={() => handleCellClick(date, slot)}
                   className={`col-span-1 p-2 border rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors
                     ${
-                      isSameDay(day, selectedDate) && selectedTimeSlot === slot
+                      selectedDate && isSameDay(date, selectedDate) && selectedTimeSlot === slot
                         ? "ring-2 ring-primary"
                         : ""
                     }

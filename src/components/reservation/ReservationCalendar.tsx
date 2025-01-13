@@ -1,8 +1,9 @@
 import { Calendar } from "@/components/ui/calendar";
-import { isBefore, isAfter, addMonths, format, startOfMonth, endOfMonth } from "date-fns";
+import { isBefore, isAfter, addMonths, format, startOfMonth, endOfMonth, parseISO } from "date-fns";
 import { ja } from "date-fns/locale";
 import { ReservationStatus } from "@/components/ReservationStatus";
 import { Reservation } from "@/types/reservation";
+import { useCalendarDates } from "@/hooks/useCalendarDates";
 
 interface ReservationCalendarProps {
   date: Date | undefined;
@@ -17,6 +18,9 @@ export const ReservationCalendar = ({
 }: ReservationCalendarProps) => {
   const today = new Date();
   const threeMonthsFromNow = addMonths(today, 3);
+
+  // カレンダーデータを取得
+  const { data: calendarDates } = useCalendarDates(today, threeMonthsFromNow);
 
   const getDayContent = (day: Date) => {
     if (
@@ -42,6 +46,16 @@ export const ReservationCalendar = ({
     );
   };
 
+  if (!calendarDates) return null;
+
+  // カレンダーデータから曜日の配置を設定
+  const modifiers = {
+    ...calendarDates.reduce((acc, { date, day_of_week }) => {
+      acc[date] = { dayOfWeek: day_of_week };
+      return acc;
+    }, {} as Record<string, { dayOfWeek: number }>)
+  };
+
   return (
     <Calendar
       mode="single"
@@ -53,6 +67,7 @@ export const ReservationCalendar = ({
       }
       locale={ja}
       className="rounded-md bg-sauna-stone/10"
+      modifiers={modifiers}
       classNames={{
         months: "space-y-4",
         month: "space-y-4",
