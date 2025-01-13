@@ -32,8 +32,9 @@ export const AdminCalendar = ({
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
 
-  const start = startOfWeek(currentDate, { weekStartsOn: 1 });
-  const end = endOfWeek(currentDate, { weekStartsOn: 1 });
+  // 日曜日始まりに修正
+  const start = startOfWeek(currentDate, { locale: ja });
+  const end = endOfWeek(currentDate, { locale: ja });
   const days = eachDayOfInterval({ start, end });
 
   const handlePrevWeek = () => setCurrentDate(subWeeks(currentDate, 1));
@@ -161,8 +162,6 @@ export const AdminCalendar = ({
           </>
         ))}
       </div>
-
-      {/* Removed the legend div as per user request */}
 
       <AdminReservationDialog
         open={showReservationDialog}

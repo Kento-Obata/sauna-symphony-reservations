@@ -35,7 +35,9 @@ export const ReservationCalendar = ({
     return (
       <div className="w-full h-full flex flex-col items-center justify-start pt-0.5">
         <span>{day.getDate()}</span>
-        <ReservationStatus reservationCount={reservationCount} />
+        <div className="text-xs translate-y-[-2px]">
+          <ReservationStatus reservationCount={reservationCount} />
+        </div>
       </div>
     );
   };
@@ -50,7 +52,6 @@ export const ReservationCalendar = ({
         isAfter(date, threeMonthsFromNow)
       }
       locale={ja}
-      weekStartsOn={1}
       className="rounded-md bg-sauna-stone/10"
       classNames={{
         months: "space-y-4",
