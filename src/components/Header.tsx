@@ -98,7 +98,8 @@ export const Header = () => {
           <div className="space-y-1">
             <h1 className="text-4xl font-light text-gradient">U</h1>
             <p className="text-xs text-sauna-stone/70 mt-2">
-              pre-opening: 2025.02.20
+              pre-opening<br />
+              2025.02.20
             </p>
           </div>
 
