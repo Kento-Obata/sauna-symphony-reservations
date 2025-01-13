@@ -51,7 +51,7 @@ export const ReservationCalendar = ({
         isBefore(date, today) || 
         isAfter(date, threeMonthsFromNow)
       }
-      className="rounded-md bg-white/30"
+      className="rounded-md bg-sauna-stone/10"
       components={{
         DayContent: ({ date }) => getDayContent(date)
       }}
