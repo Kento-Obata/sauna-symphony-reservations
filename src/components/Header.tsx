@@ -48,30 +48,11 @@ export const Header = () => {
   };
 
   return (
-    <header className="relative h-[60vh] flex items-center justify-center overflow-hidden">
-      <div 
-        className="absolute inset-0 transition-opacity duration-1000"
-      >
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: `url('https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=80')`,
-            willChange: 'transform',
-          }}
-        />
-      </div>
-      
-      <div 
-        className="absolute inset-0 bg-gradient-to-b from-sauna-charcoal/90 to-sauna-charcoal/70 backdrop-blur-sm z-0"
-        style={{
-          willChange: 'opacity',
-        }}
-      />
-      
+    <header className="relative h-[60vh] flex items-center justify-center overflow-hidden bg-sauna-base">
       <div className="absolute top-4 right-4 z-20 flex items-center gap-4">
         <button
           onClick={() => setShowForm(!showForm)}
-          className="text-sauna-muted hover:text-sauna-base transition-colors text-xs"
+          className="text-sauna-muted hover:text-sauna-stone transition-colors text-xs"
         >
           予約確認
         </button>
