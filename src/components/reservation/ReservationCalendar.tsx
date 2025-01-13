@@ -1,5 +1,6 @@
 import { Calendar } from "@/components/ui/calendar";
 import { isBefore, isAfter, addMonths, format } from "date-fns";
+import { ja } from "date-fns/locale";
 import { ReservationStatus } from "@/components/ReservationStatus";
 import { Reservation } from "@/types/reservation";
 
@@ -48,6 +49,8 @@ export const ReservationCalendar = ({
         isBefore(date, today) || 
         isAfter(date, threeMonthsFromNow)
       }
+      locale={ja}
+      weekStartsOn={1}
       className="rounded-md bg-sauna-stone/10"
       classNames={{
         months: "space-y-4",
