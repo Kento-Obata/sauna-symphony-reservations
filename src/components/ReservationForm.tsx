@@ -107,7 +107,7 @@ const ReservationForm = () => {
   return (
     <div className="p-4 sm:p-8 animate-fade-in w-full max-w-4xl mx-auto">
       <h2 className="text-xl font-thin mb-8 text-center text-black">
-        ご予約
+        Reservation
       </h2>
       
       <form onSubmit={handleFormSubmit} className="space-y-6">
