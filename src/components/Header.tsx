@@ -5,7 +5,6 @@ import { Input } from './ui/input';
 import { Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import Logo from './ui/logo';
 
 export const Header = () => {
   const [searchInput, setSearchInput] = useState('');
@@ -97,7 +96,7 @@ export const Header = () => {
       <div className="relative z-10 w-full mx-auto text-center pt-8">
         <div className="flex flex-col items-center space-y-4 px-4 md:px-0">
           <div className="space-y-1">
-            <Logo />
+            <h1 className="text-4xl font-light text-gradient">U</h1>
             <p className="text-xs text-sauna-stone/70 mt-2">
               pre-opening<br />
               2025.02.20
