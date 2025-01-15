@@ -51,24 +51,7 @@ export const Header = () => {
   
   return (
     <header className="relative h-[60vh] flex items-center justify-center overflow-hidden">
-      <div 
-        className="absolute inset-0 transition-opacity duration-1000"
-      >
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: `url('https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=80')`,
-            willChange: 'transform',
-          }}
-        />
-      </div>
-      
-      <div 
-        className="absolute inset-0 bg-gradient-to-b from-sauna-base/90 to-sauna-base/70 backdrop-blur-sm z-0"
-        style={{
-          willChange: 'opacity',
-        }}
-      />
+      <div className="absolute inset-0 bg-sauna-base" />
       
       <div className="absolute top-4 right-4 z-20 flex items-center gap-4">
         <button
@@ -106,6 +89,11 @@ export const Header = () => {
               pre-opening<br />
               2025.02.20
             </p>
+            <img 
+              src="/lovable-uploads/adc06852-e125-49c2-9a1e-af6188544613.png"
+              alt="Rock formation"
+              className="w-48 h-auto mx-auto mt-4"
+            />
           </div>
 
           <div className="glass-card p-4 space-y-3 w-full max-w-2xl hover-lift">
