@@ -96,7 +96,11 @@ export const Header = () => {
       <div className="relative z-10 w-full mx-auto text-center pt-8">
         <div className="flex flex-col items-center space-y-4 px-4 md:px-0">
           <div className="space-y-1">
-            <h1 className="text-4xl font-light text-gradient">U</h1>
+            <img 
+              src="/lovable-uploads/894a74ce-8ce3-4d60-b0fb-1f4e1794ab78.png" 
+              alt="U" 
+              className="h-24 w-auto mx-auto"
+            />
             <p className="text-xs text-sauna-stone/70 mt-2">
               pre-opening<br />
               2025.02.20
