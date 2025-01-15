@@ -6,7 +6,7 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <div className="h-[60vh] relative bg-sauna-base">
+      <div className="h-[85vh] relative bg-sauna-base">
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="glass-card p-4 space-y-3 w-full max-w-2xl hover-lift">
             <div className="text-lg font-mplus font-extralight tracking-[0.2em] text-black">
