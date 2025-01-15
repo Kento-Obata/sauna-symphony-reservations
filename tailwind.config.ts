@@ -24,11 +24,11 @@ export default {
       colors: {
         sauna: {
           base: "#A4A99D",
-          charcoal: "#1A1F2C",
-          copper: "#B87333",
-          stone: "#8E9196",
-          wood: "#4A3B2F",
-          iron: "#48494B",
+          charcoal: "#A4A99D",
+          copper: "#A4A99D",
+          stone: "#A4A99D",
+          wood: "#A4A99D",
+          iron: "#A4A99D",
         },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

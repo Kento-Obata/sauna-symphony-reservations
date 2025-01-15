@@ -50,26 +50,7 @@ export const Header = () => {
   };
   
   return (
-    <header className="relative h-[60vh] flex items-center justify-center overflow-hidden">
-      <div 
-        className="absolute inset-0 transition-opacity duration-1000"
-      >
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: `url('https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=80')`,
-            willChange: 'transform',
-          }}
-        />
-      </div>
-      
-      <div 
-        className="absolute inset-0 bg-gradient-to-b from-sauna-base/90 to-sauna-base/70 backdrop-blur-sm z-0"
-        style={{
-          willChange: 'opacity',
-        }}
-      />
-      
+    <header className="relative h-[60vh] flex items-center justify-center overflow-hidden bg-sauna-base">
       <div className="absolute top-4 right-4 z-20 flex items-center gap-4">
         <button
           onClick={() => setShowForm(!showForm)}
@@ -93,13 +74,13 @@ export const Header = () => {
         )}
       </div>
       
-      <div className="relative z-10 w-full mx-auto text-center pt-8">
+      <div className="relative z-10 w-full mx-auto text-center pt-4">
         <div className="flex flex-col items-center space-y-4 px-4 md:px-0">
           <div className="space-y-1">
             <img 
               src="/lovable-uploads/d93f7f54-86d7-402a-849a-848e81f06830.png" 
               alt="U" 
-              className="h-24 w-auto mx-auto"
+              className="h-32 w-auto mx-auto"
             />
             <h2 className="text-base md:text-lg font-mplus font-extralight tracking-widest text-black mt-1">ユー</h2>
             <p className="text-xs text-black/90 mt-2 font-mplus font-extralight">
