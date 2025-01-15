@@ -49,9 +49,6 @@ export const TimeSlotSelect = ({
           <SelectValue placeholder="時間帯を選択" />
         </SelectTrigger>
         <SelectContent>
-          <div className="p-2 text-sm text-yellow-600 dark:text-yellow-500 border-b mb-2">
-            ※ まだオープンしていません。予約受付開始までお待ちください。
-          </div>
           {[
             { 
               value: 'morning', 
@@ -62,6 +59,10 @@ export const TimeSlotSelect = ({
             { value: 'evening', label: '夕方 17:00-19:30' }
           ].map(({ value, label, description }) => {
             const reservationCount = timeSlotReservations[value as TimeSlot];
+            const isDisabled = selectedDate 
+              ? (isTimeSlotDisabled(value as TimeSlot, selectedDate) || 
+                 reservationCount >= MAX_RESERVATIONS)
+              : true;
             const statusLabel = reservationCount > 0 
               ? `(予約済み: ${reservationCount}件)`
               : '';
@@ -70,7 +71,7 @@ export const TimeSlotSelect = ({
               <SelectItem 
                 key={value} 
                 value={value}
-                disabled={true} // Temporarily disable all slots
+                disabled={isDisabled}
               >
                 <div>
                   <div>{label} {statusLabel}</div>
