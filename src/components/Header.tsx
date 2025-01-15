@@ -89,12 +89,13 @@ export const Header = () => {
               pre-opening<br />
               2025.02.20
             </p>
-            <img 
-              src="/lovable-uploads/adc06852-e125-49c2-9a1e-af6188544613.png"
-              alt="Rock formation"
-              className="w-48 h-auto mx-auto mt-4"
-            />
           </div>
+          
+          <img 
+            src="/lovable-uploads/adc06852-e125-49c2-9a1e-af6188544613.png"
+            alt="Rock formation"
+            className="w-48 h-auto mx-auto"
+          />
 
           <div className="glass-card p-4 space-y-3 w-full max-w-2xl hover-lift">
             <div className="space-y-2">
