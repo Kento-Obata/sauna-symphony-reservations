@@ -74,7 +74,7 @@ export const Header = () => {
         )}
       </div>
       
-      <div className="relative z-10 w-full mx-auto text-center pt-4">
+      <div className="relative z-10 w-full mx-auto text-center pt-12">
         <div className="flex flex-col items-center space-y-4 px-4 md:px-0">
           <div className="space-y-1">
             <img 
