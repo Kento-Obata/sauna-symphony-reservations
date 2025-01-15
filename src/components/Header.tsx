@@ -84,18 +84,19 @@ export const Header = () => {
               alt="U" 
               className="h-24 w-auto mx-auto"
             />
+            
+            <img 
+              src="/lovable-uploads/adc06852-e125-49c2-9a1e-af6188544613.png"
+              alt="Rock formation"
+              className="w-48 h-auto mx-auto"
+            />
+            
             <h2 className="text-base md:text-lg font-mplus font-extralight tracking-widest text-black mt-1">ユー</h2>
             <p className="text-xs text-black/90 mt-2 font-mplus font-extralight">
               pre-opening<br />
               2025.02.20
             </p>
           </div>
-          
-          <img 
-            src="/lovable-uploads/adc06852-e125-49c2-9a1e-af6188544613.png"
-            alt="Rock formation"
-            className="w-48 h-auto mx-auto"
-          />
 
           <div className="glass-card p-4 space-y-3 w-full max-w-2xl hover-lift">
             <div className="space-y-2">
