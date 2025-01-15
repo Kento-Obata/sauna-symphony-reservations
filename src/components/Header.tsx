@@ -101,8 +101,8 @@ export const Header = () => {
               alt="U" 
               className="h-24 w-auto mx-auto"
             />
-            <h2 className="text-sm font-mplus font-extralight tracking-widest text-[#D38248] mt-1">ユー</h2>
-            <p className="text-xs text-sauna-stone/70 mt-2 font-mplus font-extralight">
+            <h2 className="text-base md:text-lg font-mplus font-extralight tracking-widest text-[#D38248] mt-1">ユー</h2>
+            <p className="text-xs text-white/90 mt-2 font-mplus font-extralight">
               pre-opening<br />
               2025.02.20
             </p>
