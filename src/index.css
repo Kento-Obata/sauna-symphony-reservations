@@ -1,71 +1,24 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
- 
-@layer base {
-  :root {
-    --background: 220 33% 10%;
-    --foreground: 210 40% 98%;
-    
-    --card: 220 33% 10%;
-    --card-foreground: 210 40% 98%;
- 
-    --popover: 220 33% 10%;
-    --popover-foreground: 210 40% 98%;
- 
-    --primary: 34 57% 46%;
-    --primary-foreground: 210 40% 98%;
- 
-    --secondary: 215 25% 27%;
-    --secondary-foreground: 210 40% 98%;
- 
-    --muted: 215 25% 27%;
-    --muted-foreground: 217.9 10.6% 64.9%;
- 
-    --accent: 215 25% 27%;
-    --accent-foreground: 210 40% 98%;
- 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
- 
-    --border: 215 25% 27%;
-    --input: 215 25% 27%;
-    --ring: 34 57% 46%;
- 
-    --radius: 0.5rem;
-  }
-}
- 
-@layer base {
-  * {
-    @apply border-border font-mplus font-extralight;
-  }
-  body {
-    @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
-  }
-}
-
-.glass-card {
-  @apply bg-secondary/30 backdrop-blur-sm border border-secondary/50 rounded-lg;
-}
-
-.hover-lift {
-  @apply transition-transform duration-300 hover:-translate-y-1;
-}
-
-.text-gradient {
-  @apply bg-clip-text text-transparent bg-gradient-to-r from-sauna-copper via-sauna-copper to-[#D4A574];
-}
 
 @keyframes drawLine {
   from {
     opacity: 0;
-    transform: scaleX(0);
+    transform: scaleX(0) rotate(var(--rotation));
   }
   to {
     opacity: 1;
-    transform: scaleX(1);
+    transform: scaleX(1) rotate(var(--rotation));
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 
