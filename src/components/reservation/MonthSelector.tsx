@@ -49,7 +49,7 @@ export const MonthSelector = ({ date, onMonthSelect }: MonthSelectorProps) => {
               key={format(month, "yyyy-MM")}
               value={format(month, "yyyy-MM")}
             >
-              {format(month, "yyyy年MM月", { locale: ja })}
+              {format(month, "yyyy.MM")}
             </SelectItem>
           ))}
         </SelectContent>
