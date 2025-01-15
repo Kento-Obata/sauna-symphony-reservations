@@ -1,27 +1,33 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Index from "@/pages/Index";
-import Admin from "@/pages/Admin";
-import AdminLogin from "@/pages/AdminLogin";
-import { ReservationDetail } from "@/pages/ReservationDetail";
-import ReservationPending from "@/pages/ReservationPending";
-import ReservationConfirm from "@/pages/ReservationConfirm";
-import ReservationComplete from "@/pages/ReservationComplete";
-import { Toaster } from "@/components/ui/sonner";
+import { useEffect } from 'react';
+import { RouterProvider } from "react-router-dom";
+import { router } from "./router";
+import { Toaster } from "sonner";
 
 function App() {
+  useEffect(() => {
+    const loadFont = async () => {
+      const font = new FontFace(
+        'Zen Kaku Gothic New',
+        'url(https://fonts.gstatic.com/s/zenkakugothicnew/v7/gNMVW2drQpDw0GjzrVNFf_vQPVMC9LJ2GkcbQGjcNWaKbA.woff2)'
+      );
+
+      try {
+        await font.load();
+        document.fonts.add(font);
+        console.log('Zen Kaku Gothic New font loaded successfully');
+      } catch (error) {
+        console.error('Error loading Zen Kaku Gothic New font:', error);
+      }
+    };
+
+    loadFont();
+  }, []);
+
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/admin" element={<Admin />} />
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/reservation/:code" element={<ReservationDetail />} />
-        <Route path="/reservation/pending" element={<ReservationPending />} />
-        <Route path="/reservation/confirm/:token" element={<ReservationConfirm />} />
-        <Route path="/reservation/complete" element={<ReservationComplete />} />
-      </Routes>
-      <Toaster />
-    </Router>
+    <>
+      <RouterProvider router={router} />
+      <Toaster position="top-center" />
+    </>
   );
 }
 

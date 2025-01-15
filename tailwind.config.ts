@@ -19,7 +19,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        mplus: ["'M PLUS 1p'", 'sans-serif'],
+        mplus: ["'Zen Kaku Gothic New'", 'sans-serif'],
       },
       colors: {
         sauna: {
