@@ -1,10 +1,80 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+
+const BackgroundLines = () => {
+  const [lines, setLines] = useState<Array<{
+    id: number;
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+    delay: number;
+  }>>([]);
+
+  useEffect(() => {
+    const generateLine = (index: number) => {
+      const angle = Math.random() * Math.PI * 2;
+      const length = 50 + Math.random() * 150;
+      const x1 = Math.random() * window.innerWidth;
+      const y1 = Math.random() * window.innerHeight;
+      const x2 = x1 + Math.cos(angle) * length;
+      const y2 = y1 + Math.sin(angle) * length;
+      
+      return {
+        id: index,
+        x1,
+        y1,
+        x2,
+        y2,
+        delay: index * 100
+      };
+    };
+
+    const totalLines = 50;
+    const initialLines = Array.from({ length: totalLines }, (_, i) => generateLine(i));
+    
+    let currentIndex = 0;
+    const interval = setInterval(() => {
+      if (currentIndex >= totalLines) {
+        clearInterval(interval);
+        return;
+      }
+      
+      setLines(prev => [...prev, initialLines[currentIndex]]);
+      currentIndex++;
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <svg 
+      className="absolute inset-0 w-full h-full pointer-events-none"
+      style={{ zIndex: 1 }}
+    >
+      {lines.map(line => (
+        <line
+          key={line.id}
+          x1={line.x1}
+          y1={line.y1}
+          x2={line.x2}
+          y2={line.y2}
+          stroke="rgba(211, 130, 72, 0.1)"
+          strokeWidth="1"
+          className="animate-fade-in"
+          style={{
+            animationDelay: `${line.delay}ms`,
+          }}
+        />
+      ))}
+    </svg>
+  );
+};
 
 export const Header = () => {
   const [searchInput, setSearchInput] = useState('');
@@ -51,6 +121,8 @@ export const Header = () => {
 
   return (
     <header className="relative h-[60vh] flex items-center justify-center overflow-hidden">
+      <BackgroundLines />
+      
       <div className="absolute inset-0 transition-opacity duration-1000">
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
