@@ -106,13 +106,8 @@ export const Header = () => {
           <div className="glass-card p-4 space-y-3 w-full max-w-2xl hover-lift">
             <div className="space-y-2">
               <h2 className="text-lg font-light text-white whitespace-normal">
-                1日3組限定<br />プライベート
+                1日3組限定
               </h2>
-              <div className="space-y-2">
-                <p className="text-xs text-sauna-stone/90 font-light whitespace-nowrap">
-                  薪、地下水、山の風
-                </p>
-              </div>
             </div>
           </div>
         </div>
