@@ -18,6 +18,9 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        mplus: ["'M PLUS 1p'", 'sans-serif'],
+      },
       colors: {
         sauna: {
           charcoal: "#1A1F2C",
