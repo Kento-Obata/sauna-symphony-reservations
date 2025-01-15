@@ -64,7 +64,7 @@ export const Header = () => {
       </div>
       
       <div 
-        className="absolute inset-0 bg-gradient-to-b from-sauna-charcoal/90 to-sauna-charcoal/70 backdrop-blur-sm z-0"
+        className="absolute inset-0 bg-gradient-to-b from-sauna-base/90 to-sauna-base/70 backdrop-blur-sm z-0"
         style={{
           willChange: 'opacity',
         }}
@@ -73,7 +73,7 @@ export const Header = () => {
       <div className="absolute top-4 right-4 z-20 flex items-center gap-4">
         <button
           onClick={() => setShowForm(!showForm)}
-          className="text-white/60 hover:text-sauna-copper transition-colors text-xs font-mplus font-extralight"
+          className="text-black/80 hover:text-black transition-colors text-xs font-mplus font-extralight"
         >
           予約確認
         </button>
@@ -84,7 +84,7 @@ export const Header = () => {
               placeholder="予約コード or 電話番号"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              className="w-48 bg-sauna-charcoal/50 border-sauna-stone/30 text-white placeholder:text-sauna-stone/50 font-mplus font-extralight"
+              className="w-48 bg-sauna-base/50 border-black/30 text-black placeholder:text-black/50 font-mplus font-extralight"
             />
             <Button type="submit" variant="secondary" size="icon" disabled={isLoading}>
               <Search className="h-4 w-4" />
@@ -101,8 +101,8 @@ export const Header = () => {
               alt="U" 
               className="h-24 w-auto mx-auto"
             />
-            <h2 className="text-base md:text-lg font-mplus font-extralight tracking-widest text-[#D38248] mt-1">ユー</h2>
-            <p className="text-xs text-white/90 mt-2 font-mplus font-extralight">
+            <h2 className="text-base md:text-lg font-mplus font-extralight tracking-widest text-black mt-1">ユー</h2>
+            <p className="text-xs text-black/90 mt-2 font-mplus font-extralight">
               pre-opening<br />
               2025.02.20
             </p>
@@ -111,10 +111,10 @@ export const Header = () => {
           <div className="glass-card p-4 space-y-3 w-full max-w-2xl hover-lift">
             <div className="space-y-2">
               <div className="space-y-1">
-                <div className="text-lg font-mplus font-extralight tracking-[0.2em] text-white">
+                <div className="text-lg font-mplus font-extralight tracking-[0.2em] text-black">
                   1日3組限定
                 </div>
-                <div className="text-sm font-mplus font-extralight tracking-[0.15em] text-white/80">
+                <div className="text-sm font-mplus font-extralight tracking-[0.15em] text-black/80">
                   詳細非公開体験型サウナ
                 </div>
               </div>

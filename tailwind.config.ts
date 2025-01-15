@@ -23,6 +23,7 @@ export default {
       },
       colors: {
         sauna: {
+          base: "#A4A99D",
           charcoal: "#1A1F2C",
           copper: "#B87333",
           stone: "#8E9196",
