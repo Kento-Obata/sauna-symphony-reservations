@@ -6,7 +6,7 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <div id="reservation-section" className="mt-40 md:mt-40 text-center"> {/* Changed from mt-20 to mt-40 to move the section further down */}
+      <div id="reservation-section" className="mt-4 md:mt-[-10vh] text-center">
         <ReservationForm />
       </div>
       
