@@ -48,7 +48,7 @@ export const Header = () => {
       setIsLoading(false);
     }
   };
-
+  
   return (
     <header className="relative h-[60vh] flex items-center justify-center overflow-hidden">
       <div 
@@ -97,7 +97,7 @@ export const Header = () => {
         <div className="flex flex-col items-center space-y-4 px-4 md:px-0">
           <div className="space-y-1">
             <img 
-              src="/lovable-uploads/894a74ce-8ce3-4d60-b0fb-1f4e1794ab78.png" 
+              src="/lovable-uploads/d93f7f54-86d7-402a-849a-848e81f06830.png" 
               alt="U" 
               className="h-24 w-auto mx-auto"
             />
