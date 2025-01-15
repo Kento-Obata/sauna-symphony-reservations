@@ -73,7 +73,7 @@ export const Header = () => {
       <div className="absolute top-4 right-4 z-20 flex items-center gap-4">
         <button
           onClick={() => setShowForm(!showForm)}
-          className="text-white/60 hover:text-sauna-copper transition-colors text-xs font-mplus font-thin"
+          className="text-white/60 hover:text-sauna-copper transition-colors text-xs font-mplus font-extralight"
         >
           予約確認
         </button>
@@ -84,7 +84,7 @@ export const Header = () => {
               placeholder="予約コード or 電話番号"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              className="w-48 bg-sauna-charcoal/50 border-sauna-stone/30 text-white placeholder:text-sauna-stone/50 font-mplus font-thin"
+              className="w-48 bg-sauna-charcoal/50 border-sauna-stone/30 text-white placeholder:text-sauna-stone/50 font-mplus font-extralight"
             />
             <Button type="submit" variant="secondary" size="icon" disabled={isLoading}>
               <Search className="h-4 w-4" />
@@ -101,8 +101,8 @@ export const Header = () => {
               alt="U" 
               className="h-24 w-auto mx-auto"
             />
-            <h2 className="text-sm font-mplus font-thin tracking-widest text-[#D38248] mt-1">ユー</h2>
-            <p className="text-xs text-sauna-stone/70 mt-2 font-mplus font-thin">
+            <h2 className="text-sm font-mplus font-extralight tracking-widest text-[#D38248] mt-1">ユー</h2>
+            <p className="text-xs text-sauna-stone/70 mt-2 font-mplus font-extralight">
               pre-opening<br />
               2025.02.20
             </p>
@@ -111,10 +111,10 @@ export const Header = () => {
           <div className="glass-card p-4 space-y-3 w-full max-w-2xl hover-lift">
             <div className="space-y-2">
               <div className="space-y-1">
-                <div className="text-lg font-mplus font-thin tracking-[0.2em] text-white">
+                <div className="text-lg font-mplus font-extralight tracking-[0.2em] text-white">
                   1日3組限定
                 </div>
-                <div className="text-sm font-mplus font-thin tracking-[0.15em] text-white/80">
+                <div className="text-sm font-mplus font-extralight tracking-[0.15em] text-white/80">
                   詳細非公開体験型サウナ
                 </div>
               </div>

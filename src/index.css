@@ -38,7 +38,7 @@
  
 @layer base {
   * {
-    @apply border-border font-mplus font-thin;
+    @apply border-border font-mplus font-extralight;
   }
   body {
     @apply bg-background text-foreground;
