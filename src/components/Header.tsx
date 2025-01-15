@@ -78,7 +78,7 @@ export const Header = () => {
         <div className="flex flex-col items-center space-y-4 px-4 md:px-0">
           <div className="space-y-1">
             <img 
-              src="/lovable-uploads/d93f7f54-86d7-402a-849a-848e81f06830.png" 
+              src="/lovable-uploads/1aa72bce-66cd-4327-8168-efd559ff3e6e.png" 
               alt="U" 
               className="h-32 w-auto mx-auto"
             />
