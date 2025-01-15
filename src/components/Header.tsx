@@ -1,122 +1,113 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Search } from 'lucide-react';
-import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { Link } from "react-router-dom";
+import { Button } from "./ui/button";
+import { useNavigate } from "react-router-dom";
+import { Menu } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
-export const Header = () => {
-  const [searchInput, setSearchInput] = useState('');
-  const [showForm, setShowForm] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+export function Header() {
   const navigate = useNavigate();
 
-  const handleReservationLookup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!searchInput.trim()) {
-      toast.error('予約コードまたは電話番号を入力してください');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      // Check if input is a reservation code (alphanumeric, 8 characters)
-      if (/^[A-Z0-9]{8}$/.test(searchInput.trim().toUpperCase())) {
-        navigate(`/reservation/${searchInput.trim().toUpperCase()}`);
-        return;
-      }
-
-      // If not a reservation code, treat as phone number
-      const { error } = await supabase.functions.invoke('lookup-reservation', {
-        body: { phone: searchInput.trim() },
-      });
-
-      if (error) {
-        console.error('Lookup error:', error);
-        toast.error('予約の検索に失敗しました');
-        return;
-      }
-
-      toast.success('予約詳細のリンクをSMSで送信しました');
-      setSearchInput('');
-      setShowForm(false);
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('予約の検索に失敗しました');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
-    <header className="relative h-[60vh] flex items-center justify-center overflow-hidden">
-      <div 
-        className="absolute inset-0 transition-opacity duration-1000"
-      >
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: `url('https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=80')`,
-            willChange: 'transform',
-          }}
-        />
-      </div>
-      
-      <div 
-        className="absolute inset-0 bg-gradient-to-b from-sauna-charcoal/90 to-sauna-charcoal/70 backdrop-blur-sm z-0"
-        style={{
-          willChange: 'opacity',
-        }}
-      />
-      
-      <div className="absolute top-4 right-4 z-20 flex items-center gap-4">
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="text-white/60 hover:text-sauna-copper transition-colors text-xs"
-        >
-          予約確認
-        </button>
-        {showForm && (
-          <form onSubmit={handleReservationLookup} className="flex gap-2">
-            <Input
-              type="text"
-              placeholder="予約コード or 電話番号"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              className="w-48 bg-sauna-charcoal/50 border-sauna-stone/30 text-white placeholder:text-sauna-stone/50"
-            />
-            <Button type="submit" variant="secondary" size="icon" disabled={isLoading}>
-              <Search className="h-4 w-4" />
+    <header className="w-full">
+      <div className="container px-4 py-3">
+        <nav className="flex justify-between items-center">
+          <div className="flex items-center gap-6">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="-ml-4">
+                  <Menu className="h-6 w-6" />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left">
+                <SheetHeader className="text-left">
+                  <SheetTitle>Menu</SheetTitle>
+                </SheetHeader>
+                <div className="grid gap-4 py-4">
+                  <Link
+                    to="/"
+                    className="text-sm font-light px-2 py-1 hover:text-sauna-copper transition-colors"
+                  >
+                    Home
+                  </Link>
+                  <Link
+                    to="/reservation/lookup"
+                    className="text-sm font-light px-2 py-1 hover:text-sauna-copper transition-colors"
+                  >
+                    予約照会
+                  </Link>
+                  <Link
+                    to="/admin"
+                    className="text-sm font-light px-2 py-1 hover:text-sauna-copper transition-colors"
+                  >
+                    Admin
+                  </Link>
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              className="text-sm font-light hover:text-sauna-copper transition-colors"
+              onClick={() => navigate("/reservation/lookup")}
+            >
+              予約照会
             </Button>
-          </form>
-        )}
+          </div>
+        </nav>
       </div>
-      
-      <div className="relative z-10 w-full mx-auto text-center pt-8">
-        <div className="flex flex-col items-center space-y-4 px-4 md:px-0">
-          <div className="space-y-1">
-            <img 
-              src="/lovable-uploads/894a74ce-8ce3-4d60-b0fb-1f4e1794ab78.png" 
+
+      <div className="container px-4 py-12 md:py-24 text-center">
+        <div className="max-w-[800px] mx-auto">
+          <div className="relative inline-block">
+            <img
+              src="/lovable-uploads/894a74ce-8ce3-4d60-b0fb-1f4e1794ab78.png"
               alt="U" 
               className="h-24 w-auto mx-auto"
             />
             <h2 className="text-sm font-extralight tracking-widest text-[#D38248] mt-1">ユー</h2>
+            <div className="space-y-1">
+              <p className="text-xs font-extralight tracking-widest">1日3組限定</p>
+              <p className="text-xs font-extralight tracking-wider">all inclusive private sauna</p>
+            </div>
             <p className="text-xs text-sauna-stone/70 mt-2">
               pre-opening<br />
               2025.02.20
             </p>
           </div>
 
-          <div className="glass-card p-4 space-y-3 w-full max-w-2xl hover-lift">
-            <div className="space-y-2">
-              <h2 className="text-lg font-light text-white whitespace-normal">
-                1日3組限定
-              </h2>
-            </div>
+          <div className="mt-8 space-y-4">
+            <h1 className="text-4xl font-light">
+              Experience the Ultimate
+              <br />
+              Private Sauna
+            </h1>
+            <p className="text-lg text-sauna-stone/90 font-light">
+              Discover tranquility in our exclusive private sauna experience
+            </p>
+          </div>
+
+          <div className="mt-8">
+            <Button
+              size="lg"
+              onClick={() => {
+                const element = document.getElementById("reservation-section");
+                element?.scrollIntoView({ behavior: "smooth" });
+              }}
+            >
+              Reserve Now
+            </Button>
           </div>
         </div>
       </div>
     </header>
   );
-};
+}
