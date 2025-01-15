@@ -6,7 +6,10 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <div id="reservation-section" className="mt-4 md:mt-[-10vh] text-center">
+      <div className="h-[60vh] relative">
+        {/* This empty div creates space for the header content */}
+      </div>
+      <div id="reservation-section" className="relative z-10 text-center">
         <ReservationForm />
       </div>
       
