@@ -57,3 +57,19 @@
 .text-gradient {
   @apply bg-clip-text text-transparent bg-gradient-to-r from-sauna-copper via-sauna-copper to-[#D4A574];
 }
+
+@keyframes drawLine {
+  from {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+.logo-line {
+  transform-origin: left;
+  opacity: 0;
+}

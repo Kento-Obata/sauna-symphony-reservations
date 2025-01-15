@@ -5,6 +5,7 @@ import { Input } from './ui/input';
 import { Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { AnimatedLogo } from './AnimatedLogo';
 
 export const Header = () => {
   const [searchInput, setSearchInput] = useState('');
@@ -96,13 +97,9 @@ export const Header = () => {
       <div className="relative z-10 w-full mx-auto text-center pt-8">
         <div className="flex flex-col items-center space-y-4 px-4 md:px-0">
           <div className="space-y-1">
-            <img 
-              src="/lovable-uploads/894a74ce-8ce3-4d60-b0fb-1f4e1794ab78.png" 
-              alt="U" 
-              className="h-24 w-auto mx-auto"
-            />
-            <h2 className="text-base md:text-lg font-mplus font-extralight tracking-widest text-[#D38248] mt-1">ユー</h2>
-            <p className="text-xs text-white/90 mt-2 font-mplus font-extralight">
+            <AnimatedLogo />
+            <h2 className="text-lg md:text-xl font-mplus font-extralight tracking-widest text-[#D38248] mt-1">ユー</h2>
+            <p className="text-xs text-white mt-2 font-mplus font-extralight">
               pre-opening<br />
               2025.02.20
             </p>
