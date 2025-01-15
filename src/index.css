@@ -47,7 +47,7 @@
 }
 
 .glass-card {
-  @apply bg-sauna-base/30 backdrop-blur-sm border border-sauna-base/50 rounded-lg;
+  @apply bg-sauna-base backdrop-blur-sm border border-sauna-base/50 rounded-lg;
 }
 
 .hover-lift {
