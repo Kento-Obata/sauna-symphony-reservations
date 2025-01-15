@@ -74,13 +74,13 @@ export const Header = () => {
         )}
       </div>
       
-      <div className="relative z-10 w-full mx-auto text-center pt-4">
+      <div className="relative z-10 w-full mx-auto text-center pt-20"> {/* Changed from pt-4 to pt-20 to add more space at the top */}
         <div className="flex flex-col items-center space-y-4 px-4 md:px-0">
           <div className="space-y-1">
             <img 
               src="/lovable-uploads/1aa72bce-66cd-4327-8168-efd559ff3e6e.png" 
               alt="U" 
-              className="h-64 w-auto mx-auto" // Changed from h-48 to h-64 to make the image even larger
+              className="h-64 w-auto mx-auto"
             />
             <p className="text-xs text-black/90 mt-2 font-mplus font-extralight">
               pre-opening<br />
