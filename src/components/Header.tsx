@@ -84,9 +84,9 @@ export const Header = () => {
             />
           </div>
 
-          <div className="glass-card p-4 space-y-3 w-full max-w-2xl hover-lift">
-            <div className="space-y-2">
-              <div className="space-y-1">
+          <div className="space-y-2">
+            <div className="space-y-1">
+              <div className="glass-card p-4 space-y-3 w-full max-w-2xl hover-lift">
                 <div className="text-lg font-mplus font-extralight tracking-[0.2em] text-black">
                   1日3組限定
                 </div>
