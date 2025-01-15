@@ -7,7 +7,20 @@ const Index = () => {
     <div className="min-h-screen flex flex-col">
       <Header />
       <div className="h-[60vh] relative bg-sauna-base">
-        {/* This empty div creates space for the header content */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="glass-card p-4 space-y-3 w-full max-w-2xl hover-lift">
+            <div className="text-lg font-mplus font-extralight tracking-[0.2em] text-black">
+              1日3組限定
+            </div>
+            <div className="text-sm font-mplus font-extralight tracking-[0.15em] text-black/80">
+              詳細非公開体験型サウナ
+            </div>
+            <p className="text-xs text-black/90 mt-2 font-mplus font-extralight">
+              pre-opening<br />
+              2025.02.20
+            </p>
+          </div>
+        </div>
       </div>
       <div id="reservation-section" className="relative z-10 text-center">
         <ReservationForm />

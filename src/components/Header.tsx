@@ -83,23 +83,6 @@ export const Header = () => {
               className="h-32 w-auto mx-auto"
             />
           </div>
-
-          <div className="space-y-2">
-            <div className="space-y-1">
-              <div className="glass-card p-4 space-y-3 w-full max-w-2xl hover-lift">
-                <div className="text-lg font-mplus font-extralight tracking-[0.2em] text-black">
-                  1日3組限定
-                </div>
-                <div className="text-sm font-mplus font-extralight tracking-[0.15em] text-black/80">
-                  詳細非公開体験型サウナ
-                </div>
-                <p className="text-xs text-black/90 mt-2 font-mplus font-extralight">
-                  pre-opening<br />
-                  2025.02.20
-                </p>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </header>
