@@ -101,7 +101,7 @@ export const Header = () => {
               alt="U" 
               className="h-24 w-auto mx-auto"
             />
-            <h2 className="text-xl font-light text-white mt-2">ユー</h2>
+            <h2 className="text-sm font-extralight tracking-widest text-[#9b87f5] mt-1">ユー</h2>
             <p className="text-xs text-sauna-stone/70 mt-2">
               pre-opening<br />
               2025.02.20
