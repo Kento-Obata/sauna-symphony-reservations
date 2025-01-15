@@ -51,7 +51,9 @@ export const Header = () => {
 
   return (
     <header className="relative h-[60vh] flex items-center justify-center overflow-hidden">
-      <div className="absolute inset-0 transition-opacity duration-1000">
+      <div 
+        className="absolute inset-0 transition-opacity duration-1000"
+      >
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
@@ -93,49 +95,17 @@ export const Header = () => {
       
       <div className="relative z-10 w-full mx-auto text-center pt-8">
         <div className="flex flex-col items-center space-y-4 px-4 md:px-0">
-          <div className="space-y-1 relative group">
-            {/* Decorative SVG circles */}
-            <svg
-              className="absolute -inset-4 opacity-70 group-hover:opacity-100 transition-opacity duration-500"
-              width="200"
-              height="200"
-              viewBox="0 0 200 200"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <circle
-                cx="100"
-                cy="100"
-                r="80"
-                stroke="#D38248"
-                strokeWidth="0.5"
-                className="animate-[spin_10s_linear_infinite]"
-              />
-              <circle
-                cx="100"
-                cy="100"
-                r="60"
-                stroke="#D38248"
-                strokeWidth="0.5"
-                strokeDasharray="4 4"
-                className="animate-[spin_15s_linear_infinite_reverse]"
-              />
-            </svg>
-            
-            <div className="relative transform transition-transform duration-500 group-hover:scale-105">
-              <img 
-                src="/lovable-uploads/894a74ce-8ce3-4d60-b0fb-1f4e1794ab78.png" 
-                alt="U" 
-                className="h-24 w-auto mx-auto animate-fade-in"
-              />
-              <h2 className="text-base md:text-lg font-mplus font-extralight tracking-widest text-[#D38248] mt-1 animate-fade-up">
-                ユー
-              </h2>
-              <p className="text-xs text-white/90 mt-2 font-mplus font-extralight animate-fade-up" style={{ animationDelay: '200ms' }}>
-                pre-opening<br />
-                2025.02.20
-              </p>
-            </div>
+          <div className="space-y-1">
+            <img 
+              src="/lovable-uploads/894a74ce-8ce3-4d60-b0fb-1f4e1794ab78.png" 
+              alt="U" 
+              className="h-24 w-auto mx-auto"
+            />
+            <h2 className="text-base md:text-lg font-mplus font-extralight tracking-widest text-[#D38248] mt-1">ユー</h2>
+            <p className="text-xs text-white/90 mt-2 font-mplus font-extralight">
+              pre-opening<br />
+              2025.02.20
+            </p>
           </div>
 
           <div className="glass-card p-4 space-y-3 w-full max-w-2xl hover-lift">
