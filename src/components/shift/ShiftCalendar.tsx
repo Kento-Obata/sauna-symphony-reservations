@@ -175,7 +175,7 @@ export const ShiftCalendar = () => {
               <SelectValue placeholder="スタッフで絞り込み" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">全て表示</SelectItem>
+              <SelectItem value="all">全て表示</SelectItem>
               {staffMembers?.map((staff) => (
                 <SelectItem key={staff.id} value={staff.id}>
                   {staff.username}
