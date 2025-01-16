@@ -9,6 +9,7 @@ import ReservationComplete from "@/pages/ReservationComplete";
 import Shift from "@/pages/Shift";
 import ShiftLogin from "@/pages/ShiftLogin";
 import { ShiftGuard } from "@/components/shift/ShiftGuard";
+import { AdminGuard } from "@/components/admin/AdminGuard";
 
 export const router = createBrowserRouter([
   {
@@ -17,7 +18,11 @@ export const router = createBrowserRouter([
   },
   {
     path: "/admin",
-    element: <Admin />,
+    element: (
+      <AdminGuard>
+        <Admin />
+      </AdminGuard>
+    ),
   },
   {
     path: "/admin/login",

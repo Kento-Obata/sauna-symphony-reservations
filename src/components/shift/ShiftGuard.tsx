@@ -13,7 +13,8 @@ export const ShiftGuard = ({ children }: { children: React.ReactNode }) => {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!session) {
-          navigate("/shift/login");
+          await supabase.auth.signOut();
+          navigate("/shift/login", { replace: true });
           return;
         }
 
@@ -23,34 +24,28 @@ export const ShiftGuard = ({ children }: { children: React.ReactNode }) => {
           .eq('id', session.user.id)
           .single();
 
-        if (profileError) {
-          console.error("Profile fetch error:", profileError);
-          toast.error("プロフィールの取得に失敗しました");
-          await supabase.auth.signOut();
-          navigate("/shift/login");
-          return;
-        }
-
-        if (!profile || !['viewer', 'staff', 'admin'].includes(profile.role)) {
+        if (profileError || !profile || !['viewer', 'staff', 'admin'].includes(profile.role)) {
+          console.error("Profile error or insufficient permissions:", profileError);
           toast.error("アクセス権限がありません");
           await supabase.auth.signOut();
-          navigate("/shift/login");
+          navigate("/shift/login", { replace: true });
           return;
         }
 
         setIsLoading(false);
       } catch (error) {
         console.error("Auth check error:", error);
-        navigate("/shift/login");
+        await supabase.auth.signOut();
+        navigate("/shift/login", { replace: true });
       }
     };
 
     checkAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
-      if (event === "SIGNED_OUT") {
-        navigate("/shift/login");
-      } else if (event === "SIGNED_IN") {
+      if (event === 'SIGNED_OUT') {
+        navigate("/shift/login", { replace: true });
+      } else if (event === 'SIGNED_IN') {
         checkAuth();
       }
     });

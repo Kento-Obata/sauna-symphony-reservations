@@ -17,8 +17,8 @@ export const AdminGuard = ({ children }: AdminGuardProps) => {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!session) {
-          toast.error("ログインが必要です");
-          navigate("/admin/login");
+          await supabase.auth.signOut();
+          navigate("/admin/login", { replace: true });
           return;
         }
 
@@ -28,34 +28,27 @@ export const AdminGuard = ({ children }: AdminGuardProps) => {
           .eq('id', session.user.id)
           .single();
 
-        if (profileError) {
-          console.error("Error fetching profile:", profileError);
-          toast.error("プロフィールの取得に失敗しました");
-          await supabase.auth.signOut();
-          navigate("/admin/login");
-          return;
-        }
-
-        if (!profile || profile.role !== 'admin') {
+        if (profileError || !profile || profile.role !== 'admin') {
+          console.error("Profile error or insufficient permissions:", profileError);
           toast.error("管理者権限がありません");
           await supabase.auth.signOut();
-          navigate("/admin/login");
+          navigate("/admin/login", { replace: true });
           return;
         }
 
         setIsLoading(false);
       } catch (error) {
-        console.error("Error checking auth:", error);
-        toast.error("認証エラーが発生しました");
-        navigate("/admin/login");
+        console.error("Auth check error:", error);
+        await supabase.auth.signOut();
+        navigate("/admin/login", { replace: true });
       }
     };
 
     checkAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
       if (event === 'SIGNED_OUT') {
-        navigate("/admin/login");
+        navigate("/admin/login", { replace: true });
       } else if (event === 'SIGNED_IN') {
         checkAuth();
       }
