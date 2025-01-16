@@ -32,6 +32,23 @@ interface ShiftEditorDialogProps {
   shiftId?: string;
 }
 
+// Generate time options from 8:00 to 22:00 in 30-minute increments
+const generateTimeOptions = () => {
+  const options = [];
+  for (let hour = 8; hour <= 22; hour++) {
+    for (let minute = 0; minute < 60; minute += 30) {
+      // Skip 22:30 as it's past our end time
+      if (hour === 22 && minute === 30) continue;
+      
+      const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+      options.push(timeString);
+    }
+  }
+  return options;
+};
+
+const TIME_OPTIONS = generateTimeOptions();
+
 export const ShiftEditorDialog = ({
   date,
   staffId,
@@ -152,25 +169,39 @@ export const ShiftEditorDialog = ({
             <Label htmlFor="start" className="text-right">
               開始時間
             </Label>
-            <Input
-              id="start"
-              type="time"
-              value={start}
-              onChange={(e) => setStart(e.target.value)}
-              className="col-span-3"
-            />
+            <Select value={start} onValueChange={setStart}>
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="開始時間を選択" />
+              </SelectTrigger>
+              <SelectContent>
+                {TIME_OPTIONS.map((time) => (
+                  <SelectItem key={time} value={time}>
+                    {time}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="end" className="text-right">
               終了時間
             </Label>
-            <Input
-              id="end"
-              type="time"
-              value={end}
-              onChange={(e) => setEnd(e.target.value)}
-              className="col-span-3"
-            />
+            <Select value={end} onValueChange={setEnd}>
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="終了時間を選択" />
+              </SelectTrigger>
+              <SelectContent>
+                {TIME_OPTIONS.map((time) => (
+                  <SelectItem 
+                    key={time} 
+                    value={time}
+                    disabled={time <= start} // Disable times before or equal to start time
+                  >
+                    {time}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
         <div className="flex justify-end gap-2">
