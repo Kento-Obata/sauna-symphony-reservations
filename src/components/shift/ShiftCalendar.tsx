@@ -185,12 +185,13 @@ export const ShiftCalendar = () => {
   const handleShiftClick = (e: React.MouseEvent, shift: any) => {
     e.stopPropagation();
     const startTime = parseISO(shift.start_time);
+    const endTime = parseISO(shift.end_time);
     setSelectedDate(startTime);
     setSelectedShift({
       id: shift.id,
       staffId: shift.staff_id,
       startTime: format(startTime, "HH:mm"),
-      endTime: format(parseISO(shift.end_time), "HH:mm"),
+      endTime: format(endTime, "HH:mm"),
     });
     setIsEditorOpen(true);
   };

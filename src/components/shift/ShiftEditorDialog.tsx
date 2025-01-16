@@ -25,7 +25,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format, parseISO, setHours, setMinutes } from "date-fns";
 import { ja } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -186,6 +186,15 @@ export const ShiftEditorDialog = ({
     queryClient.invalidateQueries({ queryKey: ["shifts"] });
     onOpenChange(false);
   };
+
+  // Reset form values when dialog opens with new data
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedStaff(staffId || "");
+      setStart(startTime || "");
+      setEnd(endTime || "");
+    }
+  }, [isOpen, staffId, startTime, endTime]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
