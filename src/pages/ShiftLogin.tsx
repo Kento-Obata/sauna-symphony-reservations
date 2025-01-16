@@ -22,9 +22,6 @@ const ShiftLogin = () => {
     setIsLoading(true);
     
     try {
-      // Clear any existing session before attempting to log in
-      await supabase.auth.signOut();
-
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -58,10 +55,9 @@ const ShiftLogin = () => {
         return;
       }
 
-      // Check if user has appropriate role for shift access
-      if (!['viewer', 'staff', 'admin'].includes(profile.role)) {
+      if (profile.role !== 'staff') {
         await supabase.auth.signOut();
-        toast.error("アクセス権限がありません");
+        toast.error("シフト管理権限がありません");
         return;
       }
 
