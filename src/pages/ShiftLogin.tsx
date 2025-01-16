@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const ShiftLogin = () => {
   const navigate = useNavigate();
@@ -44,6 +44,8 @@ const ShiftLogin = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(""); // Clear any previous error messages
+
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: `${username}@example.com`,
@@ -51,14 +53,24 @@ const ShiftLogin = () => {
       });
 
       if (error) {
+        console.error("Login error:", error);
         setErrorMessage("ログインに失敗しました。ユーザー名とパスワードを確認してください。");
         toast({
           variant: "destructive",
           title: "エラー",
           description: "ログインに失敗しました。",
         });
+        return;
       }
+
+      if (!data.user) {
+        setErrorMessage("ログインに失敗しました。");
+        return;
+      }
+
+      // Success case is handled by the onAuthStateChange listener
     } catch (error) {
+      console.error("Unexpected error:", error);
       setErrorMessage("ログインに失敗しました。");
     }
   };
