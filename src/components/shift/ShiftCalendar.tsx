@@ -201,10 +201,10 @@ export const ShiftCalendar = () => {
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <div className="flex items-center gap-4">
-          <h2 className="text-lg font-semibold">
+          <div className="text-base">
             {format(start, "yyyy年MM月dd日", { locale: ja })} -{" "}
             {format(end, "MM月dd日", { locale: ja })}
-          </h2>
+          </div>
           <Select value={selectedStaffId} onValueChange={setSelectedStaffId}>
             <SelectTrigger className="w-[200px]">
               <SelectValue placeholder="スタッフで絞り込み" />
