@@ -24,6 +24,18 @@ import { ShiftEditorDialog } from "./ShiftEditorDialog";
 const HOURS = Array.from({ length: 15 }, (_, i) => i + 8);
 const MINUTES = [0, 30];
 
+// 各スタッフメンバーに割り当てる色の配列
+const STAFF_COLORS = [
+  'bg-purple-100 dark:bg-purple-900',
+  'bg-blue-100 dark:bg-blue-900',
+  'bg-green-100 dark:bg-green-900',
+  'bg-yellow-100 dark:bg-yellow-900',
+  'bg-pink-100 dark:bg-pink-900',
+  'bg-indigo-100 dark:bg-indigo-900',
+  'bg-orange-100 dark:bg-orange-900',
+  'bg-teal-100 dark:bg-teal-900',
+];
+
 export const ShiftCalendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -38,7 +50,7 @@ export const ShiftCalendar = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("shifts")
-        .select("*, profiles(username)")
+        .select("*, profiles(username, id)")
         .gte("start_time", format(start, "yyyy-MM-dd"))
         .lte("end_time", format(end, "yyyy-MM-dd"))
         .neq("status", "cancelled");
@@ -47,6 +59,12 @@ export const ShiftCalendar = () => {
       return data;
     },
   });
+
+  // スタッフIDに基づいて色を割り当てる関数
+  const getStaffColor = (staffId: string) => {
+    const colorIndex = staffId.split('-')[0].split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return STAFF_COLORS[colorIndex % STAFF_COLORS.length];
+  };
 
   const handlePrevWeek = () => setCurrentDate(subWeeks(currentDate, 1));
   const handleNextWeek = () => setCurrentDate(addWeeks(currentDate, 1));
@@ -143,7 +161,7 @@ export const ShiftCalendar = () => {
                     {shiftsInSlot.map((shift) => (
                       <div
                         key={shift.id}
-                        className="text-xs p-1 bg-blue-100 dark:bg-blue-900 rounded"
+                        className={`text-xs p-1 rounded ${getStaffColor((shift.profiles as any).id)}`}
                       >
                         {(shift.profiles as any).username}
                       </div>
