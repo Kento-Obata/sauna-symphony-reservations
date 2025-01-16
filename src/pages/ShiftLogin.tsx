@@ -18,16 +18,35 @@ const ShiftLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
+  // Check if user is already logged in
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigate("/shift");
+      }
+    };
+    checkSession();
+  }, [navigate]);
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log("Auth state changed:", event, session);
         if (event === "SIGNED_IN") {
           // Check if user has staff or admin role
-          const { data: profile } = await supabase
+          const { data: profile, error: profileError } = await supabase
             .from("profiles")
             .select("role")
             .eq("id", session?.user?.id)
             .single();
+
+          if (profileError) {
+            console.error("Error fetching profile:", profileError);
+            setErrorMessage("プロフィールの取得に失敗しました。");
+            await supabase.auth.signOut();
+            return;
+          }
 
           if (profile?.role === "staff" || profile?.role === "admin" || profile?.role === "viewer") {
             navigate("/shift");
@@ -107,6 +126,7 @@ const ShiftLogin = () => {
               onChange={(e) => setUsername(e.target.value)}
               required
               disabled={isLoading}
+              autoComplete="username"
             />
           </div>
           <div className="space-y-2">
@@ -118,6 +138,7 @@ const ShiftLogin = () => {
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={isLoading}
+              autoComplete="current-password"
             />
           </div>
           <Button type="submit" className="w-full" disabled={isLoading}>
