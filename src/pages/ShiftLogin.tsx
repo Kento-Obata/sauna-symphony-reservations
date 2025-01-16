@@ -40,7 +40,7 @@ const ShiftLogin = () => {
             return;
           }
 
-          if (profile?.role && ["staff", "admin", "viewer"].includes(profile.role)) {
+          if (profile?.role && (profile.role === "staff" || profile.role === "admin")) {
             navigate("/shift");
           }
         }
