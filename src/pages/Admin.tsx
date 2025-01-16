@@ -13,7 +13,11 @@ import { AdminSearchResults } from "@/components/admin/AdminSearchResults";
 import { ShopClosureManager } from "@/components/admin/ShopClosureManager";
 import { useReservations } from "@/hooks/useReservations";
 
-const Admin = () => {
+interface AdminProps {
+  userRole?: string;
+}
+
+const Admin = ({ userRole }: AdminProps) => {
   const [showNewReservationDialog, setShowNewReservationDialog] = useState(false);
   const { data: reservations } = useReservations();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
@@ -139,9 +143,11 @@ const Admin = () => {
         </div>
       </div>
 
-      <div className="mb-8">
-        <ShopClosureManager />
-      </div>
+      {userRole === 'admin' && (
+        <div className="mb-8">
+          <ShopClosureManager />
+        </div>
+      )}
 
       <AdminReservationDialog
         open={showNewReservationDialog}

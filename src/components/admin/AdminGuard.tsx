@@ -10,6 +10,7 @@ interface AdminGuardProps {
 export const AdminGuard = ({ children }: AdminGuardProps) => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -36,13 +37,14 @@ export const AdminGuard = ({ children }: AdminGuardProps) => {
           return;
         }
 
-        if (!profile || profile.role !== 'admin') {
-          toast.error("管理者権限がありません");
+        if (!profile || (profile.role !== 'admin' && profile.role !== 'staff')) {
+          toast.error("管理者または従業員権限がありません");
           await supabase.auth.signOut();
           navigate("/admin/login");
           return;
         }
 
+        setUserRole(profile.role);
         setIsLoading(false);
       } catch (error) {
         console.error("Error checking auth:", error);
@@ -70,5 +72,13 @@ export const AdminGuard = ({ children }: AdminGuardProps) => {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
 
-  return <>{children}</>;
+  // Clone children and pass userRole as a prop
+  const childrenWithProps = React.Children.map(children, child => {
+    if (React.isValidElement(child)) {
+      return React.cloneElement(child, { userRole });
+    }
+    return child;
+  });
+
+  return <>{childrenWithProps}</>;
 };
