@@ -128,15 +128,15 @@ export const ShiftCalendar = () => {
 
       <div className="grid grid-cols-8 divide-x">
         <div className="col-span-1 bg-gray-50 dark:bg-gray-900">
-          <div className="h-20 border-b flex items-center justify-center font-medium">
+          <div className="h-16 border-b flex items-center justify-center font-medium text-xs">
             時間
           </div>
         </div>
         {days.map((day) => (
           <div key={day.toString()} className="col-span-1">
-            <div className="h-20 border-b p-2 text-center">
-              <div className="font-medium">{format(day, "M/d")}</div>
-              <div className="text-sm text-gray-500">
+            <div className="h-16 border-b p-2 text-center">
+              <div className="font-medium text-sm">{format(day, "M/d")}</div>
+              <div className="text-xs text-gray-500">
                 {format(day, "E", { locale: ja })}
               </div>
             </div>
@@ -146,7 +146,7 @@ export const ShiftCalendar = () => {
         {HOURS.map((hour) =>
           MINUTES.map((minute, minuteIndex) => (
             <React.Fragment key={`${hour}-${minute}`}>
-              <div className="col-span-1 h-8 border-b bg-gray-50 dark:bg-gray-900 flex items-center justify-end pr-2 text-sm">
+              <div className="col-span-1 h-7 border-b bg-gray-50 dark:bg-gray-900 flex items-center justify-end pr-2 text-xs">
                 {format(
                   setMinutes(setHours(new Date(), hour), minute),
                   "HH:mm"
@@ -158,17 +158,20 @@ export const ShiftCalendar = () => {
                 return (
                   <div
                     key={`${day}-${hour}-${minute}`}
-                    className="col-span-1 h-8 border-b hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                    className="col-span-1 h-7 border-b hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer relative"
                     onClick={() => handleCellClick(time)}
                   >
-                    {shiftsInSlot.map((shift) => (
-                      <div
-                        key={shift.id}
-                        className={`text-xs p-1 rounded ${getStaffColor((shift.profiles as any)?.id)}`}
-                      >
-                        {(shift.profiles as any)?.username}
-                      </div>
-                    ))}
+                    <div className="flex flex-wrap gap-0.5 p-0.5 absolute inset-0">
+                      {shiftsInSlot.map((shift) => (
+                        <div
+                          key={shift.id}
+                          className={`text-[10px] px-1 py-0.5 rounded-sm whitespace-nowrap overflow-hidden text-ellipsis ${getStaffColor((shift.profiles as any)?.id)}`}
+                          style={{ maxWidth: '100%' }}
+                        >
+                          {(shift.profiles as any)?.username}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 );
               })}
