@@ -5,6 +5,7 @@ import { Input } from './ui/input';
 import { Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import SteamAnimation from './SteamAnimation';
 
 export const Header = () => {
   const [searchInput, setSearchInput] = useState('');
@@ -51,6 +52,7 @@ export const Header = () => {
   
   return (
     <header className="relative h-[60vh] flex items-center justify-center overflow-hidden bg-sauna-base">
+      <SteamAnimation />
       <div className="absolute top-4 right-4 z-20 flex items-center gap-4">
         <button
           onClick={() => setShowForm(!showForm)}
