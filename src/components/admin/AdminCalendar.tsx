@@ -71,7 +71,7 @@ export const AdminCalendar = ({
 
   const getStatusDisplay = (reservations: Reservation[]) => {
     if (reservations.length === 0) {
-      return <span className="text-green-500">○</span>;
+      return <span className="text-black">○</span>;
     }
 
     const confirmedReservations = reservations.filter(r => r.status === "confirmed");
@@ -83,23 +83,17 @@ export const AdminCalendar = ({
     return (
       <div className="flex flex-col items-center text-sm">
         {totalConfirmedGuests > 0 && (
-          <span className={getStatusColor(totalConfirmedGuests)}>
+          <span className="text-black">
             {totalConfirmedGuests}名
           </span>
         )}
         {totalPendingGuests > 0 && (
-          <span className="text-yellow-500 italic">
+          <span className="text-black italic">
             ({totalPendingGuests}名)
           </span>
         )}
       </div>
     );
-  };
-
-  const getStatusColor = (guestCount: number) => {
-    if (guestCount === 0) return "text-green-500";
-    if (guestCount < 6) return "text-yellow-500";
-    return "text-red-500";
   };
 
   return (
