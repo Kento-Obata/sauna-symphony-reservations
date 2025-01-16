@@ -61,8 +61,11 @@ export const ShiftCalendar = () => {
   });
 
   // スタッフIDに基づいて色を割り当てる関数
-  const getStaffColor = (staffId: string) => {
-    const colorIndex = staffId.split('-')[0].split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const getStaffColor = (staffId: string | undefined) => {
+    if (!staffId) return STAFF_COLORS[0]; // デフォルトの色を返す
+    
+    // UUIDの最初の8文字を使用して色を決定
+    const colorIndex = staffId.substring(0, 8).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     return STAFF_COLORS[colorIndex % STAFF_COLORS.length];
   };
 
@@ -161,9 +164,9 @@ export const ShiftCalendar = () => {
                     {shiftsInSlot.map((shift) => (
                       <div
                         key={shift.id}
-                        className={`text-xs p-1 rounded ${getStaffColor((shift.profiles as any).id)}`}
+                        className={`text-xs p-1 rounded ${getStaffColor((shift.profiles as any)?.id)}`}
                       >
-                        {(shift.profiles as any).username}
+                        {(shift.profiles as any)?.username}
                       </div>
                     ))}
                   </div>
