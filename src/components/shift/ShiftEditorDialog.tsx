@@ -14,12 +14,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useState } from "react";
 import { format, parseISO, setHours, setMinutes } from "date-fns";
 import { ja } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 
 interface ShiftEditorDialogProps {
   date: Date;
@@ -63,6 +75,7 @@ export const ShiftEditorDialog = ({
   const [start, setStart] = useState(startTime || "");
   const [end, setEnd] = useState(endTime || "");
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: staffMembers } = useQuery({
     queryKey: ["staff-members"],
@@ -106,8 +119,18 @@ export const ShiftEditorDialog = ({
 
       if (error) {
         console.error("Error creating shift:", error);
+        toast({
+          title: "エラー",
+          description: "シフトの作成に失敗しました",
+          variant: "destructive",
+        });
         return;
       }
+      
+      toast({
+        title: "成功",
+        description: "シフトを作成しました",
+      });
     } else {
       const { error } = await supabase
         .from("shifts")
@@ -120,10 +143,46 @@ export const ShiftEditorDialog = ({
 
       if (error) {
         console.error("Error updating shift:", error);
+        toast({
+          title: "エラー",
+          description: "シフトの更新に失敗しました",
+          variant: "destructive",
+        });
         return;
       }
+      
+      toast({
+        title: "成功",
+        description: "シフトを更新しました",
+      });
     }
 
+    queryClient.invalidateQueries({ queryKey: ["shifts"] });
+    onOpenChange(false);
+  };
+
+  const handleDelete = async () => {
+    if (!shiftId) return;
+
+    const { error } = await supabase
+      .from("shifts")
+      .delete()
+      .eq("id", shiftId);
+
+    if (error) {
+      console.error("Error deleting shift:", error);
+      toast({
+        title: "エラー",
+        description: "シフトの削除に失敗しました",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "成功",
+      description: "シフトを削除しました",
+    });
     queryClient.invalidateQueries({ queryKey: ["shifts"] });
     onOpenChange(false);
   };
@@ -195,7 +254,7 @@ export const ShiftEditorDialog = ({
                   <SelectItem 
                     key={time} 
                     value={time}
-                    disabled={time <= start} // Disable times before or equal to start time
+                    disabled={time <= start}
                   >
                     {time}
                   </SelectItem>
@@ -204,11 +263,32 @@ export const ShiftEditorDialog = ({
             </Select>
           </div>
         </div>
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            キャンセル
-          </Button>
-          <Button onClick={handleSave}>保存</Button>
+        <div className="flex justify-between">
+          {mode === "edit" && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive">削除</Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>シフトを削除しますか？</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    この操作は取り消せません。
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete}>削除</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+          <div className="flex gap-2 ml-auto">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              キャンセル
+            </Button>
+            <Button onClick={handleSave}>保存</Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
