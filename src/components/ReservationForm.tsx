@@ -156,7 +156,7 @@ const ReservationForm = () => {
 
         <div className="text-center mt-8">
           <p className="mb-4 text-sauna-stone">料金: ¥40,000 (税込)</p>
-          <Button type="submit" className="w-full md:w-auto hover-lift">
+          <Button type="submit" className="w-full md:w-auto hover-lift bg-sauna-base hover:bg-sauna-base/90">
             予約する
           </Button>
         </div>
