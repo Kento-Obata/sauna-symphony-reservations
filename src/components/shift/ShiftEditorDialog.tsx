@@ -7,11 +7,19 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useState } from "react";
 import { format, parseISO, setHours, setMinutes } from "date-fns";
 import { ja } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 interface ShiftEditorDialogProps {
   date: Date;
@@ -39,6 +47,19 @@ export const ShiftEditorDialog = ({
   const [end, setEnd] = useState(endTime || "");
   const queryClient = useQueryClient();
 
+  const { data: staffMembers } = useQuery({
+    queryKey: ["staff-members"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, username")
+        .in("role", ["staff", "admin"]);
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const createTimestamp = (date: Date, timeStr: string) => {
     const [hours, minutes] = timeStr.split(":").map(Number);
     const timestamp = setMinutes(setHours(date, hours), minutes);
@@ -46,6 +67,16 @@ export const ShiftEditorDialog = ({
   };
 
   const handleSave = async () => {
+    if (!selectedStaff) {
+      console.error("Staff member must be selected");
+      return;
+    }
+
+    if (!start || !end) {
+      console.error("Start and end times must be set");
+      return;
+    }
+
     const startTimestamp = createTimestamp(date, start);
     const endTimestamp = createTimestamp(date, end);
 
@@ -99,6 +130,23 @@ export const ShiftEditorDialog = ({
               className="col-span-3"
               disabled
             />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="staff" className="text-right">
+              スタッフ
+            </Label>
+            <Select value={selectedStaff} onValueChange={setSelectedStaff}>
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="スタッフを選択" />
+              </SelectTrigger>
+              <SelectContent>
+                {staffMembers?.map((staff) => (
+                  <SelectItem key={staff.id} value={staff.id}>
+                    {staff.username}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="start" className="text-right">
