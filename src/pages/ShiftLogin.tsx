@@ -47,14 +47,20 @@ const ShiftLogin = () => {
     setErrorMessage(""); // Clear any previous error messages
 
     try {
+      const email = `${username}@example.com`;
+      console.log("Attempting login with:", { email, passwordLength: password.length });
+
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: `${username}@example.com`,
+        email: email,
         password: password,
       });
 
       if (error) {
         console.error("Login error:", error);
-        setErrorMessage("ログインに失敗しました。ユーザー名とパスワードを確認してください。");
+        setErrorMessage(
+          "ログインに失敗しました。ユーザー名とパスワードを確認してください。\n" +
+          "※ユーザー名は大文字小文字を区別します。"
+        );
         toast({
           variant: "destructive",
           title: "エラー",
@@ -80,7 +86,7 @@ const ShiftLogin = () => {
       <h1 className="text-3xl font-bold mb-8">スタッフログイン</h1>
       {errorMessage && (
         <Alert variant="destructive" className="mb-4">
-          <AlertDescription>{errorMessage}</AlertDescription>
+          <AlertDescription className="whitespace-pre-line">{errorMessage}</AlertDescription>
         </Alert>
       )}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
