@@ -103,7 +103,7 @@ export const AdminCalendar = ({
   };
 
   return (
-    <div className="bg-white dark:bg-sauna-charcoal rounded-lg shadow p-4">
+    <div className="bg-sauna-base dark:bg-sauna-charcoal rounded-lg shadow p-4">
       <div className="flex justify-between items-center mb-4">
         <Button variant="outline" size="icon" onClick={handlePrevWeek}>
           <ChevronLeft className="h-4 w-4" />
@@ -161,8 +161,6 @@ export const AdminCalendar = ({
           </>
         ))}
       </div>
-
-      {/* Removed the legend div as per user request */}
 
       <AdminReservationDialog
         open={showReservationDialog}
