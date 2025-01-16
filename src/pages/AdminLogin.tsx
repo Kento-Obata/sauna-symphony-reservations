@@ -34,6 +34,13 @@ const AdminLogin = () => {
           toast.error("ログインに失敗しました");
         }
         console.error("Login error:", error);
+        setIsLoading(false);
+        return;
+      }
+
+      if (!data.user) {
+        toast.error("ユーザー情報の取得に失敗しました");
+        setIsLoading(false);
         return;
       }
 
@@ -46,12 +53,14 @@ const AdminLogin = () => {
       if (profileError) {
         console.error("Error fetching profile:", profileError);
         toast.error("プロフィールの取得に失敗しました");
+        setIsLoading(false);
         return;
       }
 
       if (!profile || profile.role !== 'admin') {
         await supabase.auth.signOut();
         toast.error("管理者権限がありません");
+        setIsLoading(false);
         return;
       }
 

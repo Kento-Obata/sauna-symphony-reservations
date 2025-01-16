@@ -73,6 +73,7 @@ const ShiftLogin = () => {
         console.error("Error fetching profile:", profileError);
         toast.error("プロフィールの取得に失敗しました");
         setIsLoading(false);
+        await supabase.auth.signOut();
         return;
       }
 
@@ -88,7 +89,6 @@ const ShiftLogin = () => {
     } catch (error) {
       console.error("Error logging in:", error);
       toast.error("ログインに失敗しました");
-    } finally {
       setIsLoading(false);
     }
   };
