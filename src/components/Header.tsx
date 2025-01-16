@@ -54,19 +54,23 @@ export const Header = () => {
       <div className="absolute top-4 right-4 z-20 flex items-center gap-4">
         <button
           onClick={() => setShowForm(!showForm)}
-          className="text-black/80 hover:text-black transition-colors text-xs font-mplus font-extralight"
+          className="text-black/80 hover:text-black transition-colors text-xs font-mplus font-extralight flex items-center gap-1"
         >
-          予約確認
+          <Search className="h-4 w-4" />
+          予約を探す
         </button>
         {showForm && (
-          <form onSubmit={handleReservationLookup} className="flex gap-2">
-            <Input
-              type="text"
-              placeholder="予約コード or 電話番号"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              className="w-48 bg-sauna-base/50 border-black/30 text-black placeholder:text-black/50 font-mplus font-extralight"
-            />
+          <form onSubmit={handleReservationLookup} className="flex gap-2 bg-white/80 backdrop-blur-sm rounded-lg p-2 shadow-sm animate-fade-in">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="予約コード（8桁）または電話番号"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className="w-64 pl-10 bg-transparent border-black/30 text-black placeholder:text-black/50 font-mplus font-extralight"
+              />
+            </div>
             <Button type="submit" variant="secondary" size="icon" disabled={isLoading}>
               <Search className="h-4 w-4" />
             </Button>
