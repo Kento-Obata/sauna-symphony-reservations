@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const ShiftGuard = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
@@ -16,30 +17,41 @@ export const ShiftGuard = ({ children }: { children: React.ReactNode }) => {
           return;
         }
 
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('role')
           .eq('id', session.user.id)
           .single();
 
-        if (!profile || !['viewer', 'staff', 'admin'].includes(profile.role)) {
+        if (profileError) {
+          console.error("Profile fetch error:", profileError);
+          toast.error("プロフィールの取得に失敗しました");
           await supabase.auth.signOut();
           navigate("/shift/login");
           return;
         }
+
+        if (!profile || !['viewer', 'staff', 'admin'].includes(profile.role)) {
+          toast.error("アクセス権限がありません");
+          await supabase.auth.signOut();
+          navigate("/shift/login");
+          return;
+        }
+
+        setIsLoading(false);
       } catch (error) {
         console.error("Auth check error:", error);
         navigate("/shift/login");
-      } finally {
-        setIsLoading(false);
       }
     };
 
     checkAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
       if (event === "SIGNED_OUT") {
         navigate("/shift/login");
+      } else if (event === "SIGNED_IN") {
+        checkAuth();
       }
     });
 

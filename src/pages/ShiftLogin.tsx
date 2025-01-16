@@ -11,7 +11,6 @@ const ShiftLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Check if user is already logged in
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -22,7 +21,7 @@ const ShiftLogin = () => {
           .eq('id', session.user.id)
           .single();
 
-        if (profile && (profile.role === 'viewer' || profile.role === 'staff' || profile.role === 'admin')) {
+        if (profile && ['viewer', 'staff', 'admin'].includes(profile.role)) {
           navigate('/shift');
         }
       }
@@ -54,6 +53,12 @@ const ShiftLogin = () => {
           toast.error("ログインに失敗しました");
         }
         console.error("Login error:", error);
+        setIsLoading(false);
+        return;
+      }
+
+      if (!data.user) {
+        toast.error("ユーザー情報の取得に失敗しました");
         setIsLoading(false);
         return;
       }
