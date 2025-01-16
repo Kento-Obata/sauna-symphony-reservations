@@ -94,15 +94,16 @@ export const ShiftCalendar = () => {
       return null;
     }
 
-    if (Math.abs(differenceInMinutes(startTime, slotTime)) <= 30) {
-      const durationInSlots = Math.ceil(differenceInMinutes(endTime, startTime) / 30);
-      return {
-        height: `${durationInSlots * 1.75}rem`,
-        zIndex: 10,
-      };
+    const isFirstSlot = Math.abs(differenceInMinutes(startTime, slotTime)) < 30;
+    if (!isFirstSlot) {
+      return { visibility: 'hidden' as const };
     }
 
-    return null;
+    const durationInSlots = Math.ceil(differenceInMinutes(endTime, startTime) / 30);
+    return {
+      height: `${durationInSlots * 1.75}rem`,
+      zIndex: 10,
+    };
   };
 
   const getShiftsForTimeSlot = (timeSlot: Date) => {
