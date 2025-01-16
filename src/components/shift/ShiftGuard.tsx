@@ -46,7 +46,6 @@ export const ShiftGuard = ({ children }: { children: React.ReactNode }) => {
         }
 
         console.log("User has appropriate permissions with role:", profile.role);
-        // If we reach here, user has appropriate permissions
         setIsLoading(false);
       } catch (error) {
         console.error("Auth check error:", error);
@@ -62,7 +61,7 @@ export const ShiftGuard = ({ children }: { children: React.ReactNode }) => {
       if (event === 'SIGNED_OUT') {
         navigate("/shift/login", { replace: true });
       } else if (event === 'SIGNED_IN') {
-        checkAuth();
+        await checkAuth();
       }
     });
 
@@ -72,7 +71,11 @@ export const ShiftGuard = ({ children }: { children: React.ReactNode }) => {
   }, [navigate]);
 
   if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    );
   }
 
   return <>{children}</>;
