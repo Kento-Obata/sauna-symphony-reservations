@@ -4,7 +4,6 @@ import { ja } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2 } from "lucide-react";
 import { useShopClosures } from "@/hooks/useShopClosures";
 import { toast } from "sonner";
 import {
@@ -103,53 +102,21 @@ export const ShopClosureManager = () => {
           )}
         </div>
 
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Input
-              placeholder="休業理由（任意）"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-            />
-            <Button
-              onClick={handleAddClosures}
-              disabled={selectedDates.length === 0}
-              className="w-full"
-            >
-              {selectedDates.length > 0
-                ? `${selectedDates.length}日分の休業日を追加`
-                : "休業日を追加"}
-            </Button>
-          </div>
-
-          <div className="space-y-2">
-            <h3 className="font-medium text-foreground">休業日一覧</h3>
-            {closures?.map((closure) => (
-              <div
-                key={closure.id}
-                className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg"
-              >
-                <div>
-                  <div className="text-foreground">
-                    {format(new Date(closure.date), "yyyy年MM月dd日(E)", {
-                      locale: ja,
-                    })}
-                  </div>
-                  {closure.reason && (
-                    <div className="text-sm text-muted-foreground">
-                      {closure.reason}
-                    </div>
-                  )}
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDeleteClosure(closure.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-          </div>
+        <div className="space-y-2">
+          <Input
+            placeholder="休業理由（任意）"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+          />
+          <Button
+            onClick={handleAddClosures}
+            disabled={selectedDates.length === 0}
+            className="w-full"
+          >
+            {selectedDates.length > 0
+              ? `${selectedDates.length}日分の休業日を追加`
+              : "休業日を追加"}
+          </Button>
         </div>
       </div>
 
