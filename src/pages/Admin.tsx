@@ -115,6 +115,15 @@ const Admin = () => {
         onClearFilters={handleClearFilters}
       />
 
+      {(nameQuery || phoneQuery || dateQuery) && (
+        <div className="mb-8">
+          <AdminSearchResults
+            reservations={filteredReservations || []}
+            onStatusChange={handleStatusChange}
+          />
+        </div>
+      )}
+
       <div className="grid lg:grid-cols-3 gap-8 mb-8">
         <div className="lg:col-span-2">
           <AdminCalendar 
@@ -133,13 +142,6 @@ const Admin = () => {
       <div className="mb-8">
         <ShopClosureManager />
       </div>
-
-      {(nameQuery || phoneQuery || dateQuery) && (
-        <AdminSearchResults
-          reservations={filteredReservations || []}
-          onStatusChange={handleStatusChange}
-        />
-      )}
 
       <AdminReservationDialog
         open={showNewReservationDialog}
