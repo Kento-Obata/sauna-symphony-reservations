@@ -47,7 +47,7 @@ const ShiftLogin = () => {
     setErrorMessage(""); // Clear any previous error messages
 
     try {
-      const email = `${username}@example.com`;
+      const email = `${username}@u-sync.jp`;
       console.log("Attempting login with:", { email, passwordLength: password.length });
 
       const { data, error } = await supabase.auth.signInWithPassword({
