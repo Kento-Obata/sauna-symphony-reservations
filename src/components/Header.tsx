@@ -50,27 +50,14 @@ export const Header = () => {
   };
   
   return (
-    <header className="relative h-[60vh] flex flex-col items-center justify-center overflow-hidden bg-sauna-base">
-      {/* Navigation Bar */}
-      <div className="w-full h-16 flex items-center justify-between px-6 fixed top-0 left-0 z-50 bg-sauna-base/50 backdrop-blur-sm border-b border-black/10">
-        <div className="text-black/80 text-sm font-mplus font-extralight">
-          U
-        </div>
-        <div className="flex items-center gap-8">
-          <a href="#reservation-section" className="text-black/80 hover:text-black transition-colors text-xs font-mplus font-extralight">
-            予約
-          </a>
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="text-black/80 hover:text-black transition-colors text-xs font-mplus font-extralight"
-          >
-            予約確認
-          </button>
-        </div>
-      </div>
-
-      {/* Search Form */}
-      <div className="absolute top-20 right-4 z-20">
+    <header className="relative h-[60vh] flex items-center justify-center overflow-hidden bg-sauna-base">
+      <div className="absolute top-4 right-4 z-20 flex items-center gap-4">
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className="text-black/80 hover:text-black transition-colors text-xs font-mplus font-extralight"
+        >
+          予約確認
+        </button>
         {showForm && (
           <form onSubmit={handleReservationLookup} className="flex gap-2">
             <Input
@@ -87,11 +74,7 @@ export const Header = () => {
         )}
       </div>
       
-      {/* Spacer div to prevent navigation bar overlap */}
-      <div className="w-full h-24" />
-      
-      {/* Main Content */}
-      <div className="relative z-10 w-full mx-auto text-center">
+      <div className="relative z-10 w-full mx-auto text-center pt-12">
         <div className="flex flex-col items-center space-y-4 px-4 md:px-0">
           <div className="space-y-1">
             <img 
