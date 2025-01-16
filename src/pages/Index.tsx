@@ -28,9 +28,9 @@ const Index = () => {
       
       <section className="max-w-4xl mx-auto px-4 py-8 bg-sauna-base">
         <div className="mt-20 glass-card p-8">
-          <h2 className="text-3xl font-bold mb-8 text-center text-gradient">
+          <div className="text-3xl font-mplus font-extralight mb-8 text-center text-gradient">
             Access
-          </h2>
+          </div>
           
           <div className="space-y-6">
             <div className="text-center space-y-4">
@@ -49,12 +49,12 @@ const Index = () => {
               </div>
               
               <div className="pt-6">
-                <h3 className="font-semibold mb-2">お車でお越しの場合</h3>
+                <div className="font-mplus font-extralight mb-2">お車でお越しの場合</div>
                 <p className="text-black">福岡空港から車で30分（交通状況によってはそれ以上かかることがありますので、ご注意ください）</p>
               </div>
               
               <div>
-                <h3 className="font-semibold mb-2">電車でお越しの場合</h3>
+                <div className="font-mplus font-extralight mb-2">電車でお越しの場合</div>
                 <p className="text-black">
                   JR香椎線 宇美駅からバスで20分
                 </p>
