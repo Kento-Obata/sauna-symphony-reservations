@@ -71,32 +71,11 @@ export const AdminCalendar = ({
 
   const getStatusDisplay = (reservations: Reservation[]) => {
     if (reservations.length === 0) {
-      return <span className="text-black">3</span>;
+      return <span className="text-black">○</span>;
     }
 
-    const confirmedReservations = reservations.filter(r => r.status === "confirmed");
-    const pendingReservations = reservations.filter(r => r.status === "pending");
-    
-    const totalConfirmedGuests = confirmedReservations.length;
-    const totalPendingGuests = pendingReservations.length;
-
-    // 予約可能枠を計算（1日3枠まで予約可能）
-    const availableSlots = 3 - (totalConfirmedGuests + totalPendingGuests);
-
-    return (
-      <div className="flex flex-col items-center text-sm">
-        {availableSlots > 0 ? (
-          <span className="text-black">{availableSlots}</span>
-        ) : (
-          <span className="text-black">×</span>
-        )}
-        {totalPendingGuests > 0 && (
-          <span className="text-black italic">
-            ({totalPendingGuests}名)
-          </span>
-        )}
-      </div>
-    );
+    const totalGuests = reservations.reduce((sum, r) => sum + r.guest_count, 0);
+    return <span className="text-black">{totalGuests}</span>;
   };
 
   return (
