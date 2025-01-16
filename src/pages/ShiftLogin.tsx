@@ -27,7 +27,13 @@ const ShiftLogin = () => {
       }
     };
 
-    checkSession();
+    // Clear any existing session before checking
+    const clearAndCheck = async () => {
+      await supabase.auth.signOut();
+      await checkSession();
+    };
+
+    clearAndCheck();
   }, [navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -41,6 +47,9 @@ const ShiftLogin = () => {
     setIsLoading(true);
     
     try {
+      // First, ensure we're starting with a clean session
+      await supabase.auth.signOut();
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -85,7 +94,7 @@ const ShiftLogin = () => {
       }
 
       toast.success("ログインしました");
-      navigate("/shift");
+      navigate("/shift", { replace: true });
     } catch (error) {
       console.error("Error logging in:", error);
       toast.error("ログインに失敗しました");
