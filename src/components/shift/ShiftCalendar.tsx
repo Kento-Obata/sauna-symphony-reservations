@@ -12,6 +12,7 @@ import {
   addMinutes,
   isSameDay,
   parseISO,
+  isWithinInterval,
 } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -20,7 +21,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { ShiftEditorDialog } from "./ShiftEditorDialog";
 
-// Changed from 24 hours to 8-22 range
 const HOURS = Array.from({ length: 15 }, (_, i) => i + 8);
 const MINUTES = [0, 30];
 
@@ -62,12 +62,12 @@ export const ShiftCalendar = () => {
     return slots;
   };
 
-  const getShiftsForTimeSlot = (date: Date) => {
+  const getShiftsForTimeSlot = (timeSlot: Date) => {
     if (!shifts) return [];
     return shifts.filter((shift) => {
       const startTime = parseISO(shift.start_time);
       const endTime = parseISO(shift.end_time);
-      return isSameDay(startTime, date) || isSameDay(endTime, date);
+      return isWithinInterval(timeSlot, { start: startTime, end: endTime });
     });
   };
 
