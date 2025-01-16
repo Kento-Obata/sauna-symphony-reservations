@@ -27,23 +27,28 @@ export const useShopClosures = () => {
   });
 
   const addClosure = useMutation({
-    mutationFn: async ({ date, reason }: { date: string; reason?: string }) => {
+    mutationFn: async ({ date, reason }: { date: string; reason?: string | null }) => {
       const { data, error } = await supabase
         .from("shop_closures")
         .insert([{ date, reason }])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === "42501") {
+          throw new Error("管理者権限がありません");
+        }
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["shop-closures"] });
       toast.success("休業日を追加しました");
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("Error adding closure:", error);
-      toast.error("休業日の追加に失敗しました");
+      toast.error(error.message || "休業日の追加に失敗しました");
     },
   });
 
@@ -54,15 +59,20 @@ export const useShopClosures = () => {
         .delete()
         .eq("id", id);
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === "42501") {
+          throw new Error("管理者権限がありません");
+        }
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["shop-closures"] });
       toast.success("休業日を削除しました");
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("Error deleting closure:", error);
-      toast.error("休業日の削除に失敗しました");
+      toast.error(error.message || "休業日の削除に失敗しました");
     },
   });
 
