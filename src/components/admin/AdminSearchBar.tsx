@@ -31,7 +31,7 @@ export const AdminSearchBar = ({
 }: AdminSearchBarProps) => {
   return (
     <div className="flex gap-4 items-center mb-6">
-      <div className="flex-1">
+      <div className="flex-1 basis-0">
         <Input
           placeholder="お客様名で検索"
           value={nameQuery}
@@ -39,7 +39,7 @@ export const AdminSearchBar = ({
           className="w-full"
         />
       </div>
-      <div className="flex-1">
+      <div className="flex-1 basis-0">
         <Input
           placeholder="電話番号で検索"
           value={phoneQuery}
@@ -47,28 +47,30 @@ export const AdminSearchBar = ({
           className="w-full"
         />
       </div>
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            variant={dateQuery ? "default" : "outline"}
-            className="min-w-[240px] justify-start text-left font-normal"
-          >
-            {dateQuery ? (
-              format(dateQuery, "yyyy年MM月dd日", { locale: ja })
-            ) : (
-              <span>日付で検索</span>
-            )}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="single"
-            selected={dateQuery}
-            onSelect={setDateQuery}
-            initialFocus
-          />
-        </PopoverContent>
-      </Popover>
+      <div className="flex-1 basis-0">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant={dateQuery ? "default" : "outline"}
+              className="w-full justify-start text-left font-normal"
+            >
+              {dateQuery ? (
+                format(dateQuery, "yyyy年MM月dd日", { locale: ja })
+              ) : (
+                <span>日付で検索</span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={dateQuery}
+              onSelect={setDateQuery}
+              initialFocus
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
       {(nameQuery || phoneQuery || dateQuery) && (
         <Button
           variant="ghost"
