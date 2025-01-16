@@ -14,6 +14,7 @@ import {
   parseISO,
   isWithinInterval,
   differenceInMinutes,
+  areIntervalsOverlapping,
 } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -112,7 +113,38 @@ export const ShiftCalendar = () => {
     return slots;
   };
 
-  const calculateShiftStyle = (startTime: Date, endTime: Date, slotTime: Date) => {
+  const calculateShiftPosition = (shift: any, allShifts: any[]) => {
+    const currentShiftStart = parseISO(shift.start_time);
+    const currentShiftEnd = parseISO(shift.end_time);
+    
+    // Find overlapping shifts
+    const overlappingShifts = allShifts.filter(otherShift => {
+      if (otherShift.id === shift.id) return false;
+      
+      const otherStart = parseISO(otherShift.start_time);
+      const otherEnd = parseISO(otherShift.end_time);
+      
+      return areIntervalsOverlapping(
+        { start: currentShiftStart, end: currentShiftEnd },
+        { start: otherStart, end: otherEnd }
+      );
+    });
+
+    // Calculate position based on overlapping shifts
+    const position = overlappingShifts.filter(
+      otherShift => otherShift.id < shift.id
+    ).length;
+
+    const totalOverlapping = overlappingShifts.length + 1;
+    const width = Math.min(33, 100 / totalOverlapping);
+    
+    return {
+      left: `${position * width}%`,
+      width: `${width}%`,
+    };
+  };
+
+  const calculateShiftStyle = (startTime: Date, endTime: Date, slotTime: Date, shift: any, allShifts: any[]) => {
     const slotStart = new Date(slotTime);
     const slotEnd = addMinutes(slotTime, 30);
     
@@ -126,9 +158,12 @@ export const ShiftCalendar = () => {
     }
 
     const durationInSlots = Math.ceil(differenceInMinutes(endTime, startTime) / 30);
+    const position = calculateShiftPosition(shift, allShifts);
+    
     return {
       height: `${durationInSlots * 1.75}rem`,
       zIndex: 10,
+      ...position,
     };
   };
 
@@ -240,14 +275,14 @@ export const ShiftCalendar = () => {
                     {shiftsInSlot.map((shift) => {
                       const startTime = parseISO(shift.start_time);
                       const endTime = parseISO(shift.end_time);
-                      const style = calculateShiftStyle(startTime, endTime, time);
+                      const style = calculateShiftStyle(startTime, endTime, time, shift, shiftsInSlot);
                       
                       if (!style) return null;
 
                       return (
                         <div
                           key={shift.id}
-                          className={`absolute w-1/3 left-1/3 px-1 py-0.5 ${getStaffColor((shift.profiles as any)?.id)} rounded-sm cursor-pointer hover:brightness-95`}
+                          className={`absolute px-1 py-0.5 ${getStaffColor((shift.profiles as any)?.id)} rounded-sm cursor-pointer hover:brightness-95`}
                           style={style}
                           onClick={(e) => handleShiftClick(e, shift)}
                         >
