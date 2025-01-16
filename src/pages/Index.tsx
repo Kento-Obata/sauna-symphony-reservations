@@ -35,14 +35,14 @@ const Index = () => {
           <div className="space-y-6">
             <div className="text-center space-y-4">
               <div>
-                <p className="text-sauna-stone/90">
+                <p className="text-black">
                   〒811-2127<br />福岡県糟屋郡宇美町障子岳6-8-4
                 </p>
                 <a 
                   href="https://maps.google.com/maps?q=8Q5GHG7V%2BJ5" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-sauna-copper hover:underline mt-2 inline-block"
+                  className="text-black hover:underline mt-2 inline-block"
                 >
                   Google Mapsで見る
                 </a>
@@ -50,12 +50,12 @@ const Index = () => {
               
               <div className="pt-6">
                 <h3 className="font-semibold mb-2">お車でお越しの場合</h3>
-                <p className="text-sauna-stone/90">福岡空港から車で30分（交通状況によってはそれ以上かかることがありますので、ご注意ください）</p>
+                <p className="text-black">福岡空港から車で30分（交通状況によってはそれ以上かかることがありますので、ご注意ください）</p>
               </div>
               
               <div>
                 <h3 className="font-semibold mb-2">電車でお越しの場合</h3>
-                <p className="text-sauna-stone/90">
+                <p className="text-black">
                   JR香椎線 宇美駅からバスで20分
                 </p>
               </div>
