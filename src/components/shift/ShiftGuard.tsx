@@ -36,7 +36,6 @@ export const ShiftGuard = ({ children }: { children: React.ReactNode }) => {
 
         console.log("Profile retrieved:", profile);
 
-        // Check if user has appropriate role
         if (!profile || !['viewer', 'staff', 'admin'].includes(profile.role)) {
           console.error("Insufficient permissions. User role:", profile?.role);
           toast.error("シフト管理画面へのアクセス権限がありません");
@@ -61,6 +60,7 @@ export const ShiftGuard = ({ children }: { children: React.ReactNode }) => {
       if (event === 'SIGNED_OUT') {
         navigate("/shift/login", { replace: true });
       } else if (event === 'SIGNED_IN') {
+        setIsLoading(true);  // Set loading state when checking auth after sign in
         await checkAuth();
       }
     });
