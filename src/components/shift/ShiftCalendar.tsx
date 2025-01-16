@@ -13,6 +13,7 @@ import {
   isSameDay,
   parseISO,
   isWithinInterval,
+  differenceInMinutes,
 } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,6 @@ import { ShiftEditorDialog } from "./ShiftEditorDialog";
 const HOURS = Array.from({ length: 15 }, (_, i) => i + 8);
 const MINUTES = [0, 30];
 
-// 各スタッフメンバーに割り当てる色の配列
 const STAFF_COLORS = [
   'bg-purple-100 dark:bg-purple-900',
   'bg-blue-100 dark:bg-blue-900',
@@ -60,13 +60,10 @@ export const ShiftCalendar = () => {
     },
   });
 
-  // スタッフIDに基づいて色を割り当てる関数
   const getStaffColor = (staffId: string | undefined) => {
-    if (!staffId) return STAFF_COLORS[0]; // デフォルトの色を返す
-    
-    // UUIDの最初の8文字を使用して色を決定
-    const colorIndex = staffId.substring(0, 8).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return STAFF_COLORS[colorIndex % STAFF_COLORS.length];
+    if (!staffId) return STAFF_COLORS[0];
+    const colorIndex = parseInt(staffId.substring(0, 8), 16) % STAFF_COLORS.length;
+    return STAFF_COLORS[colorIndex];
   };
 
   const handlePrevWeek = () => setCurrentDate(subWeeks(currentDate, 1));
@@ -81,6 +78,27 @@ export const ShiftCalendar = () => {
       }
     }
     return slots;
+  };
+
+  // 新しい関数: シフトの表示位置とサイズを計算
+  const calculateShiftStyle = (startTime: Date, endTime: Date, slotTime: Date) => {
+    const slotStart = new Date(slotTime);
+    const slotEnd = addMinutes(slotTime, 30);
+    
+    if (!isWithinInterval(slotTime, { start: startTime, end: endTime })) {
+      return null;
+    }
+
+    // 最初のスロットの場合のみ表示
+    if (Math.abs(differenceInMinutes(startTime, slotTime)) <= 30) {
+      const durationInSlots = Math.ceil(differenceInMinutes(endTime, startTime) / 30);
+      return {
+        height: `${durationInSlots * 1.75}rem`, // h-7 = 1.75rem
+        zIndex: 10,
+      };
+    }
+
+    return null;
   };
 
   const getShiftsForTimeSlot = (timeSlot: Date) => {
@@ -161,17 +179,28 @@ export const ShiftCalendar = () => {
                     className="col-span-1 h-7 border-b hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer relative"
                     onClick={() => handleCellClick(time)}
                   >
-                    <div className="flex flex-wrap gap-0.5 p-0.5 absolute inset-0">
-                      {shiftsInSlot.map((shift) => (
+                    {shiftsInSlot.map((shift) => {
+                      const startTime = parseISO(shift.start_time);
+                      const endTime = parseISO(shift.end_time);
+                      const style = calculateShiftStyle(startTime, endTime, time);
+                      
+                      if (!style) return null;
+
+                      return (
                         <div
                           key={shift.id}
-                          className={`text-[10px] px-1 py-0.5 rounded-sm whitespace-nowrap overflow-hidden text-ellipsis ${getStaffColor((shift.profiles as any)?.id)}`}
-                          style={{ maxWidth: '100%' }}
+                          className={`absolute inset-x-0 px-1 py-0.5 ${getStaffColor((shift.profiles as any)?.id)} rounded-sm`}
+                          style={style}
                         >
-                          {(shift.profiles as any)?.username}
+                          <div className="text-[10px] whitespace-nowrap overflow-hidden text-ellipsis">
+                            {(shift.profiles as any)?.username}
+                            <span className="ml-1">
+                              {format(startTime, "HH:mm")}-{format(endTime, "HH:mm")}
+                            </span>
+                          </div>
                         </div>
-                      ))}
-                    </div>
+                      );
+                    })}
                   </div>
                 );
               })}
