@@ -4,12 +4,11 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, setHours, setMinutes } from "date-fns";
 import { ja } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -40,12 +39,21 @@ export const ShiftEditorDialog = ({
   const [end, setEnd] = useState(endTime || "");
   const queryClient = useQueryClient();
 
+  const createTimestamp = (date: Date, timeStr: string) => {
+    const [hours, minutes] = timeStr.split(":").map(Number);
+    const timestamp = setMinutes(setHours(date, hours), minutes);
+    return timestamp.toISOString();
+  };
+
   const handleSave = async () => {
+    const startTimestamp = createTimestamp(date, start);
+    const endTimestamp = createTimestamp(date, end);
+
     if (mode === "create") {
       const { error } = await supabase.from("shifts").insert({
         staff_id: selectedStaff,
-        start_time: start,
-        end_time: end,
+        start_time: startTimestamp,
+        end_time: endTimestamp,
       });
 
       if (error) {
@@ -57,8 +65,8 @@ export const ShiftEditorDialog = ({
         .from("shifts")
         .update({
           staff_id: selectedStaff,
-          start_time: start,
-          end_time: end,
+          start_time: startTimestamp,
+          end_time: endTimestamp,
         })
         .eq("id", shiftId);
 
