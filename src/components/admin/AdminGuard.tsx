@@ -27,8 +27,23 @@ export const AdminGuard = ({ children }: AdminGuardProps) => {
           .eq('id', session.user.id)
           .single();
 
-        if (profileError || !profile || profile.role !== 'admin') {
-          console.error("Profile error or insufficient permissions:", profileError);
+        if (profileError) {
+          console.error("Profile error:", profileError);
+          toast.error("プロフィールの取得に失敗しました");
+          await supabase.auth.signOut();
+          navigate("/admin/login", { replace: true });
+          return;
+        }
+
+        // viewer権限のユーザーは/shiftにリダイレクト
+        if (profile?.role === 'viewer') {
+          navigate("/shift", { replace: true });
+          return;
+        }
+
+        // admin以外の権限は/admin/loginにリダイレクト
+        if (!profile || profile.role !== 'admin') {
+          console.error("Insufficient permissions");
           toast.error("管理者権限がありません");
           await supabase.auth.signOut();
           navigate("/admin/login", { replace: true });
