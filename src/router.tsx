@@ -7,7 +7,6 @@ import ReservationPending from "@/pages/ReservationPending";
 import ReservationConfirm from "@/pages/ReservationConfirm";
 import ReservationComplete from "@/pages/ReservationComplete";
 import Shift from "@/pages/Shift";
-import ShiftLogin from "@/pages/ShiftLogin";
 
 export const router = createBrowserRouter([
   {
@@ -21,10 +20,6 @@ export const router = createBrowserRouter([
   {
     path: "/admin/login",
     element: <AdminLogin />,
-  },
-  {
-    path: "/shift/login",
-    element: <ShiftLogin />,
   },
   {
     path: "/shift",

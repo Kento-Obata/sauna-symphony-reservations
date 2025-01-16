@@ -55,29 +55,10 @@ export const ShiftCalendar = () => {
     endTime: string;
   } | null>(null);
   const [selectedStaffId, setSelectedStaffId] = useState<string>("all");
-  const [userRole, setUserRole] = useState<string | null>(null);
 
   const start = startOfWeek(currentDate, { weekStartsOn: 1 });
   const end = endOfWeek(currentDate, { weekStartsOn: 1 });
   const days = eachDayOfInterval({ start, end });
-
-  // Fetch user role
-  useQuery({
-    queryKey: ["userRole"],
-    queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return null;
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", session.user.id)
-        .single();
-
-      setUserRole(profile?.role || null);
-      return profile?.role;
-    },
-  });
 
   const { data: shifts } = useQuery({
     queryKey: ["shifts", format(start, "yyyy-MM-dd"), format(end, "yyyy-MM-dd"), selectedStaffId],
@@ -196,14 +177,12 @@ export const ShiftCalendar = () => {
   };
 
   const handleCellClick = (date: Date) => {
-    if (userRole === 'viewer') return;
     setSelectedDate(date);
     setSelectedShift(null);
     setIsEditorOpen(true);
   };
 
   const handleShiftClick = (e: React.MouseEvent, shift: any) => {
-    if (userRole === 'viewer') return;
     e.stopPropagation();
     const startTime = parseISO(shift.start_time);
     const endTime = parseISO(shift.end_time);
@@ -246,21 +225,19 @@ export const ShiftCalendar = () => {
               ))}
             </SelectContent>
           </Select>
-          {userRole !== 'viewer' && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2 w-full sm:w-auto"
-              onClick={() => {
-                setSelectedDate(new Date());
-                setSelectedShift(null);
-                setIsEditorOpen(true);
-              }}
-            >
-              <Plus className="h-4 w-4" />
-              シフト追加
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 w-full sm:w-auto"
+            onClick={() => {
+              setSelectedDate(new Date());
+              setSelectedShift(null);
+              setIsEditorOpen(true);
+            }}
+          >
+            <Plus className="h-4 w-4" />
+            シフト追加
+          </Button>
         </div>
       </div>
 
@@ -330,18 +307,16 @@ export const ShiftCalendar = () => {
         )}
       </div>
 
-      {userRole !== 'viewer' && (
-        <ShiftEditorDialog
-          date={selectedDate}
-          isOpen={isEditorOpen}
-          onOpenChange={setIsEditorOpen}
-          mode={selectedShift ? "edit" : "create"}
-          staffId={selectedShift?.staffId}
-          startTime={selectedShift?.startTime}
-          endTime={selectedShift?.endTime}
-          shiftId={selectedShift?.id}
-        />
-      )}
+      <ShiftEditorDialog
+        date={selectedDate}
+        isOpen={isEditorOpen}
+        onOpenChange={setIsEditorOpen}
+        mode={selectedShift ? "edit" : "create"}
+        staffId={selectedShift?.staffId}
+        startTime={selectedShift?.startTime}
+        endTime={selectedShift?.endTime}
+        shiftId={selectedShift?.id}
+      />
     </div>
   );
 };
