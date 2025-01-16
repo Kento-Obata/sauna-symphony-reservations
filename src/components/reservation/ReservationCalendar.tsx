@@ -2,6 +2,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { isBefore, isAfter, addMonths, format } from "date-fns";
 import { ReservationStatus } from "@/components/ReservationStatus";
 import { Reservation } from "@/types/reservation";
+import { useShopClosures } from "@/hooks/useShopClosures";
 
 interface ReservationCalendarProps {
   date: Date | undefined;
@@ -16,6 +17,12 @@ export const ReservationCalendar = ({
 }: ReservationCalendarProps) => {
   const today = new Date();
   const threeMonthsFromNow = addMonths(today, 3);
+  const { data: shopClosures } = useShopClosures();
+
+  const isDateClosed = (day: Date) => {
+    const dateString = format(day, 'yyyy-MM-dd');
+    return shopClosures?.some(closure => closure.date === dateString);
+  };
 
   const getDayContent = (day: Date) => {
     // Only show reservation status for dates between today and three months from now
@@ -36,10 +43,30 @@ export const ReservationCalendar = ({
       <div className="w-full h-full flex flex-col items-center justify-start pt-0.5 border-b-[1px] border-sauna-stone/50">
         <span>{day.getDate()}</span>
         <div className="text-xs translate-y-[-2px]">
-          <ReservationStatus reservationCount={reservationCount} />
+          <ReservationStatus 
+            reservationCount={reservationCount}
+            isClosed={isDateClosed(day)} 
+          />
         </div>
       </div>
     );
+  };
+
+  const isDateDisabled = (day: Date) => {
+    if (
+      isBefore(day, today) || 
+      isAfter(day, threeMonthsFromNow) ||
+      isDateClosed(day)
+    ) return true;
+
+    if (!reservations) return false;
+
+    const dateString = format(day, 'yyyy-MM-dd');
+    const dateReservations = reservations.filter(
+      (r) => r.date === dateString && (r.status === "confirmed" || r.status === "pending")
+    );
+
+    return dateReservations.length >= 3;
   };
 
   return (
@@ -47,10 +74,7 @@ export const ReservationCalendar = ({
       mode="single"
       selected={date}
       onSelect={setDate}
-      disabled={(date) => 
-        isBefore(date, today) || 
-        isAfter(date, threeMonthsFromNow)
-      }
+      disabled={isDateDisabled}
       className="rounded-md border"
       components={{
         DayContent: ({ date }) => getDayContent(date)

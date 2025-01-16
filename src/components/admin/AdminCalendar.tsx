@@ -15,6 +15,7 @@ import { TIME_SLOTS } from "@/components/TimeSlotSelect";
 import { Reservation } from "@/types/reservation";
 import { AdminReservationDialog } from "./AdminReservationDialog";
 import { AdminReservationDetailsDialog } from "./AdminReservationDetailsDialog";
+import { useShopClosures } from "@/hooks/useShopClosures";
 
 interface AdminCalendarProps {
   reservations?: Reservation[];
@@ -31,6 +32,7 @@ export const AdminCalendar = ({
   const [showReservationDialog, setShowReservationDialog] = useState(false);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
+  const { data: shopClosures } = useShopClosures();
 
   const start = startOfWeek(currentDate, { weekStartsOn: 1 });
   const end = endOfWeek(currentDate, { weekStartsOn: 1 });
@@ -48,7 +50,14 @@ export const AdminCalendar = ({
     );
   };
 
+  const isDateClosed = (date: Date) => {
+    const dateString = format(date, "yyyy-MM-dd");
+    return shopClosures?.some(closure => closure.date === dateString);
+  };
+
   const handleCellClick = (date: Date, timeSlot: string) => {
+    if (isDateClosed(date)) return;
+    
     const slotReservations = getReservationsForDateAndSlot(date, timeSlot);
     if (slotReservations.length === 1) {
       setSelectedReservation(slotReservations[0]);
@@ -69,7 +78,11 @@ export const AdminCalendar = ({
     }
   };
 
-  const getStatusDisplay = (reservations: Reservation[]) => {
+  const getStatusDisplay = (date: Date, reservations: Reservation[]) => {
+    if (isDateClosed(date)) {
+      return <span className="text-black">休</span>;
+    }
+
     if (reservations.length === 0) {
       return <span className="text-black">○</span>;
     }
@@ -109,9 +122,8 @@ export const AdminCalendar = ({
         ))}
 
         {Object.entries(TIME_SLOTS).map(([slot, time]) => (
-          <>
+          <React.Fragment key={`time-${slot}`}>
             <div
-              key={`time-${slot}`}
               className="col-span-1 p-2 text-sm text-right text-gray-600 dark:text-gray-300"
             >
               {time.start}
@@ -123,6 +135,7 @@ export const AdminCalendar = ({
                   key={`${day}-${slot}`}
                   onClick={() => handleCellClick(day, slot)}
                   className={`col-span-1 p-2 border rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors
+                    ${isDateClosed(day) ? 'bg-gray-100 cursor-not-allowed' : ''}
                     ${
                       isSameDay(day, selectedDate) && selectedTimeSlot === slot
                         ? "ring-2 ring-primary"
@@ -130,11 +143,11 @@ export const AdminCalendar = ({
                     }
                   `}
                 >
-                  {getStatusDisplay(slotReservations)}
+                  {getStatusDisplay(day, slotReservations)}
                 </button>
               );
             })}
-          </>
+          </React.Fragment>
         ))}
       </div>
 
