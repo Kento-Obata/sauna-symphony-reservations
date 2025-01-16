@@ -16,7 +16,6 @@ const ShiftLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  // Check if user is already logged in
   useEffect(() => {
     const checkSession = async () => {
       try {
@@ -27,8 +26,7 @@ const ShiftLogin = () => {
         }
         
         if (session?.user) {
-          console.log("User already logged in:", session);
-          // プロフィールを確認
+          console.log("Found existing session:", session.user.email);
           const { data: profile, error: profileError } = await supabase
             .from("profiles")
             .select("role")
@@ -40,7 +38,8 @@ const ShiftLogin = () => {
             return;
           }
 
-          if (profile?.role && (profile.role === "staff" || profile.role === "admin")) {
+          console.log("User profile:", profile);
+          if (profile?.role && ["staff", "admin", "viewer"].includes(profile.role)) {
             navigate("/shift");
           }
         }
@@ -55,15 +54,8 @@ const ShiftLogin = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log("Auth state changed:", event, session);
-        if (event === "SIGNED_IN") {
-          if (!session?.user?.id) {
-            console.error("No user ID in session");
-            setErrorMessage("ユーザー情報の取得に失敗しました。");
-            return;
-          }
-
+        if (event === "SIGNED_IN" && session?.user?.id) {
           try {
-            // Check if user has staff or admin role
             const { data: profile, error: profileError } = await supabase
               .from("profiles")
               .select("role")
@@ -77,21 +69,20 @@ const ShiftLogin = () => {
               return;
             }
 
+            console.log("User profile after sign in:", profile);
             if (!profile?.role) {
-              console.error("No role found for user");
-              setErrorMessage("スタッフ権限がありません。");
+              setErrorMessage("プロフィールが見つかりません。");
               await supabase.auth.signOut();
               return;
             }
 
-            if (["staff", "admin", "viewer"].includes(profile.role)) {
-              console.log("User has valid role:", profile.role);
-              navigate("/shift");
-            } else {
-              console.error("Invalid role:", profile.role);
-              setErrorMessage("スタッフ権限がありません。");
+            if (!["staff", "admin", "viewer"].includes(profile.role)) {
+              setErrorMessage("アクセス権限がありません。");
               await supabase.auth.signOut();
+              return;
             }
+
+            navigate("/shift");
           } catch (error) {
             console.error("Error in auth state change:", error);
             setErrorMessage("認証エラーが発生しました。");
@@ -111,7 +102,7 @@ const ShiftLogin = () => {
     if (isLoading) return;
 
     setIsLoading(true);
-    setErrorMessage(""); // Clear any previous error messages
+    setErrorMessage("");
 
     try {
       if (!username || !password) {
