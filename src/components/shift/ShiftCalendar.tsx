@@ -197,8 +197,8 @@ export const ShiftCalendar = () => {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-      <div className="flex flex-col sm:flex-row justify-between items-center p-4 border-b gap-4">
+    <div className="bg-sauna-base rounded-lg shadow overflow-hidden">
+      <div className="flex flex-col sm:flex-row justify-between items-center p-4 border-b gap-4 bg-sauna-base">
         <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
           <Button variant="outline" size="icon" onClick={handlePrevWeek}>
             <ChevronLeft className="h-4 w-4" />
@@ -241,8 +241,8 @@ export const ShiftCalendar = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-8 divide-x">
-        <div className="col-span-1 bg-gray-50 dark:bg-gray-900">
+      <div className="grid grid-cols-8 divide-x bg-sauna-base">
+        <div className="col-span-1 bg-sauna-base">
           <div className="h-16 border-b flex items-center justify-center font-medium text-xs">
             時間
           </div>
@@ -261,7 +261,7 @@ export const ShiftCalendar = () => {
         {HOURS.map((hour) =>
           MINUTES.map((minute, minuteIndex) => (
             <React.Fragment key={`${hour}-${minute}`}>
-              <div className="col-span-1 h-7 border-b bg-gray-50 dark:bg-gray-900 flex items-center justify-end pr-2 text-xs">
+              <div className="col-span-1 h-7 border-b bg-sauna-base flex items-center justify-end pr-2 text-xs">
                 {format(
                   setMinutes(setHours(new Date(), hour), minute),
                   "HH:mm"
@@ -273,7 +273,7 @@ export const ShiftCalendar = () => {
                 return (
                   <div
                     key={`${day}-${hour}-${minute}`}
-                    className="col-span-1 h-7 border-b hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer relative"
+                    className="col-span-1 h-7 border-b hover:bg-sauna-button transition-colors cursor-pointer relative"
                     onClick={() => handleCellClick(time)}
                   >
                     {shiftsInSlot.map((shift) => {
