@@ -121,7 +121,7 @@ export const ShiftCalendar = () => {
   };
 
   const handleShiftClick = (e: React.MouseEvent, shift: any) => {
-    e.stopPropagation(); // セルのクリックイベントが発火するのを防ぐ
+    e.stopPropagation();
     setSelectedDate(parseISO(shift.start_time));
     setSelectedShift({
       id: shift.id,
