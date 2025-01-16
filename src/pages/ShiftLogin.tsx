@@ -54,6 +54,7 @@ const ShiftLogin = () => {
           toast.error("ログインに失敗しました");
         }
         console.error("Login error:", error);
+        setIsLoading(false);
         return;
       }
 
@@ -66,12 +67,14 @@ const ShiftLogin = () => {
       if (profileError) {
         console.error("Error fetching profile:", profileError);
         toast.error("プロフィールの取得に失敗しました");
+        setIsLoading(false);
         return;
       }
 
       if (!profile || !['viewer', 'staff', 'admin'].includes(profile.role)) {
         await supabase.auth.signOut();
         toast.error("アクセス権限がありません");
+        setIsLoading(false);
         return;
       }
 
