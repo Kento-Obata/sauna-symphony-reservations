@@ -80,7 +80,7 @@ export const Header = () => {
             <img 
               src="/lovable-uploads/1aa72bce-66cd-4327-8168-efd559ff3e6e.png" 
               alt="U" 
-              className="h-80 w-auto mx-auto"
+              className="h-70 w-auto mx-auto"
             />
           </div>
         </div>
