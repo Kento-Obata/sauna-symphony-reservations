@@ -8,12 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 const ShiftLogin = () => {
   const navigate = useNavigate();
   const [errorMessage, setErrorMessage] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -44,6 +46,9 @@ const ShiftLogin = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
+
+    setIsLoading(true);
     setErrorMessage(""); // Clear any previous error messages
 
     try {
@@ -78,6 +83,8 @@ const ShiftLogin = () => {
     } catch (error) {
       console.error("Unexpected error:", error);
       setErrorMessage("ログインに失敗しました。");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -99,6 +106,7 @@ const ShiftLogin = () => {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
+              disabled={isLoading}
             />
           </div>
           <div className="space-y-2">
@@ -109,10 +117,18 @@ const ShiftLogin = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              disabled={isLoading}
             />
           </div>
-          <Button type="submit" className="w-full">
-            ログイン
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ログイン中...
+              </>
+            ) : (
+              'ログイン'
+            )}
           </Button>
         </form>
       </div>
