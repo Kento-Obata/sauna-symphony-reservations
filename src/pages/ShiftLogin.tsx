@@ -12,29 +12,11 @@ const ShiftLogin = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single();
-
-        if (profile && ['viewer', 'staff', 'admin'].includes(profile.role)) {
-          navigate('/shift');
-        }
-      }
-    };
-
-    // Clear any existing session before checking
-    const clearAndCheck = async () => {
+    const clearSession = async () => {
       await supabase.auth.signOut();
-      await checkSession();
     };
-
-    clearAndCheck();
-  }, [navigate]);
+    clearSession();
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,57 +29,55 @@ const ShiftLogin = () => {
     setIsLoading(true);
     
     try {
-      // First, ensure we're starting with a clean session
+      // Clear any existing session before attempting to log in
       await supabase.auth.signOut();
 
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) {
-        if (error.message === "Invalid login credentials") {
+      if (authError) {
+        if (authError.message === "Invalid login credentials") {
           toast.error("メールアドレスまたはパスワードが間違っています");
         } else {
           toast.error("ログインに失敗しました");
         }
-        console.error("Login error:", error);
-        setIsLoading(false);
+        console.error("Login error:", authError);
         return;
       }
 
-      if (!data.user) {
+      if (!authData.user) {
         toast.error("ユーザー情報の取得に失敗しました");
-        setIsLoading(false);
         return;
       }
 
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('role')
-        .eq('id', data.user.id)
+        .eq('id', authData.user.id)
         .single();
 
-      if (profileError) {
+      if (profileError || !profile) {
         console.error("Error fetching profile:", profileError);
         toast.error("プロフィールの取得に失敗しました");
-        setIsLoading(false);
         await supabase.auth.signOut();
         return;
       }
 
-      if (!profile || !['viewer', 'staff', 'admin'].includes(profile.role)) {
+      // Check if user has appropriate role for shift access
+      if (!['viewer', 'staff', 'admin'].includes(profile.role)) {
         await supabase.auth.signOut();
         toast.error("アクセス権限がありません");
-        setIsLoading(false);
         return;
       }
 
       toast.success("ログインしました");
       navigate("/shift", { replace: true });
     } catch (error) {
-      console.error("Error logging in:", error);
-      toast.error("ログインに失敗しました");
+      console.error("Error during login process:", error);
+      toast.error("ログイン処理中にエラーが発生しました");
+    } finally {
       setIsLoading(false);
     }
   };
