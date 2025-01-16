@@ -17,18 +17,6 @@ export const router = createBrowserRouter([
     element: <Index />,
   },
   {
-    path: "/admin/login",
-    element: <AdminLogin />,
-  },
-  {
-    path: "/admin",
-    element: (
-      <AdminGuard>
-        <Admin />
-      </AdminGuard>
-    ),
-  },
-  {
     path: "/shift/login",
     element: <ShiftLogin />,
   },
@@ -38,6 +26,18 @@ export const router = createBrowserRouter([
       <ShiftGuard>
         <Shift />
       </ShiftGuard>
+    ),
+  },
+  {
+    path: "/admin/login",
+    element: <AdminLogin />,
+  },
+  {
+    path: "/admin",
+    element: (
+      <AdminGuard>
+        <Admin />
+      </AdminGuard>
     ),
   },
   {
