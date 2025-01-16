@@ -1,3 +1,4 @@
+import React from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { isBefore, isAfter, addMonths, format } from "date-fns";
 import { ReservationStatus } from "@/components/ReservationStatus";
@@ -17,7 +18,7 @@ export const ReservationCalendar = ({
 }: ReservationCalendarProps) => {
   const today = new Date();
   const threeMonthsFromNow = addMonths(today, 3);
-  const { data: shopClosures } = useShopClosures();
+  const { closures: shopClosures } = useShopClosures();
 
   const isDateClosed = (day: Date) => {
     const dateString = format(day, 'yyyy-MM-dd');

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   startOfWeek,
   endOfWeek,
@@ -32,7 +32,7 @@ export const AdminCalendar = ({
   const [showReservationDialog, setShowReservationDialog] = useState(false);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
-  const { data: shopClosures } = useShopClosures();
+  const { closures: shopClosures } = useShopClosures();
 
   const start = startOfWeek(currentDate, { weekStartsOn: 1 });
   const end = endOfWeek(currentDate, { weekStartsOn: 1 });
