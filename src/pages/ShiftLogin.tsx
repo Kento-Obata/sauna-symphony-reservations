@@ -76,6 +76,7 @@ const ShiftLogin = () => {
               return;
             }
 
+            // Update this condition to explicitly check for viewer role
             if (!["staff", "admin", "viewer"].includes(profile.role)) {
               setErrorMessage("アクセス権限がありません。");
               await supabase.auth.signOut();
