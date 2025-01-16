@@ -1,10 +1,14 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface AdminGuardProps {
   children: React.ReactNode;
+}
+
+interface AdminChildProps {
+  userRole?: string;
 }
 
 export const AdminGuard = ({ children }: AdminGuardProps) => {
@@ -74,8 +78,8 @@ export const AdminGuard = ({ children }: AdminGuardProps) => {
 
   // Clone children and pass userRole as a prop
   const childrenWithProps = React.Children.map(children, child => {
-    if (React.isValidElement(child)) {
-      return React.cloneElement(child, { userRole });
+    if (React.isValidElement<AdminChildProps>(child)) {
+      return React.cloneElement(child, { userRole: userRole || undefined });
     }
     return child;
   });
