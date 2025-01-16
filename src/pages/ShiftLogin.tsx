@@ -18,8 +18,11 @@ const ShiftLogin = () => {
 
   useEffect(() => {
     const checkSession = async () => {
+      console.log("Checking session...");
       try {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        console.log("Session check result:", { session, error: sessionError });
+        
         if (sessionError) {
           console.error("Session check error:", sessionError);
           return;
@@ -33,13 +36,15 @@ const ShiftLogin = () => {
             .eq("id", session.user.id)
             .single();
 
+          console.log("Profile check result:", { profile, error: profileError });
+
           if (profileError) {
             console.error("Error fetching profile:", profileError);
             return;
           }
 
-          console.log("User profile:", profile);
           if (profile?.role && ["staff", "admin", "viewer"].includes(profile.role)) {
+            console.log("Valid role found, navigating to /shift");
             navigate("/shift");
           }
         }
@@ -51,16 +56,20 @@ const ShiftLogin = () => {
   }, [navigate]);
 
   useEffect(() => {
+    console.log("Setting up auth state change listener");
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log("Auth state changed:", event, session);
+        console.log("Auth state changed:", { event, email: session?.user?.email });
         if (event === "SIGNED_IN" && session?.user?.id) {
           try {
+            console.log("Fetching profile for user:", session.user.id);
             const { data: profile, error: profileError } = await supabase
               .from("profiles")
               .select("role")
               .eq("id", session.user.id)
               .single();
+
+            console.log("Profile fetch result:", { profile, error: profileError });
 
             if (profileError) {
               console.error("Error fetching profile:", profileError);
@@ -69,20 +78,21 @@ const ShiftLogin = () => {
               return;
             }
 
-            console.log("User profile after sign in:", profile);
             if (!profile?.role) {
+              console.error("No role found in profile");
               setErrorMessage("プロフィールが見つかりません。");
               await supabase.auth.signOut();
               return;
             }
 
-            // Update this condition to explicitly check for viewer role
             if (!["staff", "admin", "viewer"].includes(profile.role)) {
+              console.error("Invalid role:", profile.role);
               setErrorMessage("アクセス権限がありません。");
               await supabase.auth.signOut();
               return;
             }
 
+            console.log("Navigating to /shift");
             navigate("/shift");
           } catch (error) {
             console.error("Error in auth state change:", error);
@@ -119,6 +129,8 @@ const ShiftLogin = () => {
         password: password,
       });
 
+      console.log("Login attempt result:", { data, error });
+
       if (error) {
         console.error("Login error:", error);
         setErrorMessage(
@@ -134,11 +146,11 @@ const ShiftLogin = () => {
       }
 
       if (!data.user) {
+        console.error("No user data returned");
         setErrorMessage("ログインに失敗しました。");
         return;
       }
 
-      // Success case is handled by the onAuthStateChange listener
     } catch (error) {
       console.error("Unexpected error:", error);
       setErrorMessage("ログインに失敗しました。");
