@@ -1,14 +1,14 @@
 import { ShiftCalendar } from "@/components/shift/ShiftCalendar";
-import { AdminGuard } from "@/components/admin/AdminGuard";
+import { ShiftGuard } from "@/components/shift/ShiftGuard";
 
 const Shift = () => {
   return (
-    <AdminGuard>
+    <ShiftGuard>
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">シフト管理</h1>
         <ShiftCalendar />
       </div>
-    </AdminGuard>
+    </ShiftGuard>
   );
 };
 
