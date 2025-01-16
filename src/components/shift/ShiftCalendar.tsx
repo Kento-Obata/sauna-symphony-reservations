@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   startOfWeek,
   endOfWeek,
@@ -15,15 +15,18 @@ import {
 } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { ShiftEditorDialog } from "./ShiftEditorDialog";
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const MINUTES = [0, 30];
 
 export const ShiftCalendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   const start = startOfWeek(currentDate, { weekStartsOn: 1 });
   const end = endOfWeek(currentDate, { weekStartsOn: 1 });
@@ -67,16 +70,35 @@ export const ShiftCalendar = () => {
     });
   };
 
+  const handleCellClick = (date: Date) => {
+    setSelectedDate(date);
+    setIsEditorOpen(true);
+  };
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
       <div className="flex justify-between items-center p-4 border-b">
         <Button variant="outline" size="icon" onClick={handlePrevWeek}>
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        <h2 className="text-lg font-semibold">
-          {format(start, "yyyy年MM月dd日", { locale: ja })} -{" "}
-          {format(end, "MM月dd日", { locale: ja })}
-        </h2>
+        <div className="flex items-center gap-4">
+          <h2 className="text-lg font-semibold">
+            {format(start, "yyyy年MM月dd日", { locale: ja })} -{" "}
+            {format(end, "MM月dd日", { locale: ja })}
+          </h2>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => {
+              setSelectedDate(new Date());
+              setIsEditorOpen(true);
+            }}
+          >
+            <Plus className="h-4 w-4" />
+            シフト追加
+          </Button>
+        </div>
         <Button variant="outline" size="icon" onClick={handleNextWeek}>
           <ChevronRight className="h-4 w-4" />
         </Button>
@@ -103,7 +125,10 @@ export const ShiftCalendar = () => {
           MINUTES.map((minute, minuteIndex) => (
             <React.Fragment key={`${hour}-${minute}`}>
               <div className="col-span-1 h-8 border-b bg-gray-50 dark:bg-gray-900 flex items-center justify-end pr-2 text-sm">
-                {format(setMinutes(setHours(new Date(), hour), minute), "HH:mm")}
+                {format(
+                  setMinutes(setHours(new Date(), hour), minute),
+                  "HH:mm"
+                )}
               </div>
               {days.map((day) => {
                 const time = setMinutes(setHours(day, hour), minute);
@@ -111,7 +136,8 @@ export const ShiftCalendar = () => {
                 return (
                   <div
                     key={`${day}-${hour}-${minute}`}
-                    className="col-span-1 h-8 border-b hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    className="col-span-1 h-8 border-b hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                    onClick={() => handleCellClick(time)}
                   >
                     {shiftsInSlot.map((shift) => (
                       <div
@@ -128,6 +154,13 @@ export const ShiftCalendar = () => {
           ))
         )}
       </div>
+
+      <ShiftEditorDialog
+        date={selectedDate}
+        isOpen={isEditorOpen}
+        onOpenChange={setIsEditorOpen}
+        mode="create"
+      />
     </div>
   );
 };
