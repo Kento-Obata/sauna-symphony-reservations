@@ -105,6 +105,44 @@ export type Database = {
         }
         Relationships: []
       }
+      shifts: {
+        Row: {
+          created_at: string | null
+          end_time: string
+          id: string
+          staff_id: string
+          start_time: string
+          status: Database["public"]["Enums"]["shift_status"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          end_time: string
+          id?: string
+          staff_id: string
+          start_time: string
+          status?: Database["public"]["Enums"]["shift_status"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          end_time?: string
+          id?: string
+          staff_id?: string
+          start_time?: string
+          status?: Database["public"]["Enums"]["shift_status"] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shifts_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shop_closures: {
         Row: {
           created_at: string
@@ -148,6 +186,7 @@ export type Database = {
       }
     }
     Enums: {
+      shift_status: "scheduled" | "cancelled"
       time_slot: "morning" | "afternoon" | "evening"
     }
     CompositeTypes: {

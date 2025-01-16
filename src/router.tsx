@@ -6,6 +6,7 @@ import { ReservationDetail } from "@/pages/ReservationDetail";
 import ReservationPending from "@/pages/ReservationPending";
 import ReservationConfirm from "@/pages/ReservationConfirm";
 import ReservationComplete from "@/pages/ReservationComplete";
+import Shift from "@/pages/Shift";
 
 export const router = createBrowserRouter([
   {
@@ -19,6 +20,10 @@ export const router = createBrowserRouter([
   {
     path: "/admin/login",
     element: <AdminLogin />,
+  },
+  {
+    path: "/shift",
+    element: <Shift />,
   },
   {
     path: "/reservation/:code",
