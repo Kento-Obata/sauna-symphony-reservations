@@ -11,7 +11,7 @@ import { toast } from "sonner";
 export const ShopClosureManager = () => {
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const [reason, setReason] = useState("");
-  const { closures, addClosure } = useShopClosures();
+  const { closures, addClosure, deleteClosure } = useShopClosures();
 
   const handleAddClosures = async () => {
     if (selectedDates.length === 0) return;
