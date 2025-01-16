@@ -54,7 +54,7 @@ export const ShiftCalendar = () => {
     startTime: string;
     endTime: string;
   } | null>(null);
-  const [selectedStaffId, setSelectedStaffId] = useState<string>("");
+  const [selectedStaffId, setSelectedStaffId] = useState<string>("all");
 
   const start = startOfWeek(currentDate, { weekStartsOn: 1 });
   const end = endOfWeek(currentDate, { weekStartsOn: 1 });
@@ -70,7 +70,7 @@ export const ShiftCalendar = () => {
         .lte("end_time", format(end, "yyyy-MM-dd"))
         .neq("status", "cancelled");
 
-      if (selectedStaffId) {
+      if (selectedStaffId && selectedStaffId !== "all") {
         query = query.eq("staff_id", selectedStaffId);
       }
 
@@ -215,7 +215,7 @@ export const ShiftCalendar = () => {
               <SelectValue placeholder="スタッフで絞り込み" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">全て表示</SelectItem>
+              <SelectItem value="all">全て表示</SelectItem>
               {staffMembers?.map((staff) => (
                 <SelectItem key={staff.id} value={staff.id}>
                   {staff.username}
