@@ -21,6 +21,7 @@ interface Shift {
   id: string;
   start_time: string;
   end_time: string;
+  staff_id: string;
   profiles: { username: string };
 }
 
@@ -183,7 +184,12 @@ export const ShiftCalendar = () => {
       <ShiftEditorDialog
         isOpen={showShiftEditor}
         onOpenChange={setShowShiftEditor}
-        shift={selectedShift}
+        date={selectedShift ? parseISO(selectedShift.start_time) : new Date()}
+        staffId={selectedShift?.staff_id}
+        startTime={selectedShift ? format(parseISO(selectedShift.start_time), "HH:mm") : undefined}
+        endTime={selectedShift ? format(parseISO(selectedShift.end_time), "HH:mm") : undefined}
+        mode={selectedShift ? "edit" : "create"}
+        shiftId={selectedShift?.id}
       />
     </div>
   );
