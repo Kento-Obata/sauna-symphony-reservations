@@ -4,7 +4,7 @@ import Map from "@/components/Map";
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex flex-col bg-sauna-base">
+    <div className="min-h-screen flex flex-col">
       <Header />
       <div className="h-[30vh] relative bg-sauna-base">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-w-4xl w-full px-4">
