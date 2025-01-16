@@ -26,7 +26,7 @@ const Index = () => {
         <ReservationForm />
       </div>
       
-      <section className="max-w-4xl mx-auto px-4 py-20">
+      <section className="max-w-4xl mx-auto px-4 py-8 bg-sauna-base">
         <div className="mt-20 glass-card p-8">
           <h2 className="text-3xl font-bold mb-8 text-center text-gradient">
             Access
