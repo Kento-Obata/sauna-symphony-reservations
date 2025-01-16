@@ -28,7 +28,21 @@ const ShiftLogin = () => {
         
         if (session?.user) {
           console.log("User already logged in:", session);
-          navigate("/shift");
+          // プロフィールを確認
+          const { data: profile, error: profileError } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", session.user.id)
+            .single();
+
+          if (profileError) {
+            console.error("Error fetching profile:", profileError);
+            return;
+          }
+
+          if (profile?.role && ["staff", "admin", "viewer"].includes(profile.role)) {
+            navigate("/shift");
+          }
         }
       } catch (error) {
         console.error("Unexpected error during session check:", error);
