@@ -55,9 +55,9 @@ const ShiftLogin = () => {
         return;
       }
 
-      if (profile.role !== 'staff') {
+      if (!['viewer', 'staff', 'admin'].includes(profile.role)) {
         await supabase.auth.signOut();
-        toast.error("シフト管理権限がありません");
+        toast.error("シフト管理画面へのアクセス権限がありません");
         return;
       }
 
