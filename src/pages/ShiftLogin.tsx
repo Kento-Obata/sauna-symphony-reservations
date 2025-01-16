@@ -1,5 +1,3 @@
-import { Auth } from "@supabase/auth-ui-react";
-import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -21,10 +19,19 @@ const ShiftLogin = () => {
   // Check if user is already logged in
   useEffect(() => {
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        console.log("User already logged in:", session);
-        navigate("/shift");
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) {
+          console.error("Session check error:", sessionError);
+          return;
+        }
+        
+        if (session?.user) {
+          console.log("User already logged in:", session);
+          navigate("/shift");
+        }
+      } catch (error) {
+        console.error("Unexpected error during session check:", error);
       }
     };
     checkSession();
@@ -56,11 +63,18 @@ const ShiftLogin = () => {
               return;
             }
 
-            if (profile?.role === "staff" || profile?.role === "admin" || profile?.role === "viewer") {
+            if (!profile?.role) {
+              console.error("No role found for user");
+              setErrorMessage("スタッフ権限がありません。");
+              await supabase.auth.signOut();
+              return;
+            }
+
+            if (["staff", "admin", "viewer"].includes(profile.role)) {
               console.log("User has valid role:", profile.role);
               navigate("/shift");
             } else {
-              console.error("Invalid role:", profile?.role);
+              console.error("Invalid role:", profile.role);
               setErrorMessage("スタッフ権限がありません。");
               await supabase.auth.signOut();
             }
@@ -86,6 +100,11 @@ const ShiftLogin = () => {
     setErrorMessage(""); // Clear any previous error messages
 
     try {
+      if (!username || !password) {
+        setErrorMessage("ユーザー名とパスワードを入力してください。");
+        return;
+      }
+
       const email = `${username}@u-sync.jp`;
       console.log("Attempting login with:", { email, passwordLength: password.length });
 
@@ -142,6 +161,7 @@ const ShiftLogin = () => {
               required
               disabled={isLoading}
               autoComplete="username"
+              placeholder="ユーザー名を入力"
             />
           </div>
           <div className="space-y-2">
@@ -154,6 +174,7 @@ const ShiftLogin = () => {
               required
               disabled={isLoading}
               autoComplete="current-password"
+              placeholder="パスワードを入力"
             />
           </div>
           <Button type="submit" className="w-full" disabled={isLoading}>
