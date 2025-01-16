@@ -9,12 +9,18 @@ export const ShiftGuard = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
+    let mounted = true;
+
     const checkAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!session) {
-          navigate("/shift/login", { replace: true });
+          if (mounted) {
+            setIsAuthenticated(false);
+            setIsLoading(false);
+            navigate("/shift/login", { replace: true });
+          }
           return;
         }
 
@@ -28,7 +34,11 @@ export const ShiftGuard = ({ children }: { children: React.ReactNode }) => {
           console.error("Profile error:", profileError);
           toast.error("プロフィールの取得に失敗しました");
           await supabase.auth.signOut();
-          navigate("/shift/login", { replace: true });
+          if (mounted) {
+            setIsAuthenticated(false);
+            setIsLoading(false);
+            navigate("/shift/login", { replace: true });
+          }
           return;
         }
 
@@ -36,18 +46,27 @@ export const ShiftGuard = ({ children }: { children: React.ReactNode }) => {
           console.error("Insufficient permissions. User role:", profile?.role);
           toast.error("シフト管理画面へのアクセス権限がありません");
           await supabase.auth.signOut();
-          navigate("/shift/login", { replace: true });
+          if (mounted) {
+            setIsAuthenticated(false);
+            setIsLoading(false);
+            navigate("/shift/login", { replace: true });
+          }
           return;
         }
 
-        setIsAuthenticated(true);
+        if (mounted) {
+          setIsAuthenticated(true);
+          setIsLoading(false);
+        }
       } catch (error) {
         console.error("Auth check error:", error);
         toast.error("認証エラーが発生しました");
         await supabase.auth.signOut();
-        navigate("/shift/login", { replace: true });
-      } finally {
-        setIsLoading(false);
+        if (mounted) {
+          setIsAuthenticated(false);
+          setIsLoading(false);
+          navigate("/shift/login", { replace: true });
+        }
       }
     };
 
@@ -55,14 +74,18 @@ export const ShiftGuard = ({ children }: { children: React.ReactNode }) => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
       if (event === 'SIGNED_OUT') {
-        setIsAuthenticated(false);
-        navigate("/shift/login", { replace: true });
+        if (mounted) {
+          setIsAuthenticated(false);
+          setIsLoading(false);
+          navigate("/shift/login", { replace: true });
+        }
       } else if (event === 'SIGNED_IN') {
         await checkAuth();
       }
     });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, [navigate]);
