@@ -40,6 +40,12 @@ export const ShiftCalendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedShift, setSelectedShift] = useState<{
+    id: string;
+    staffId: string;
+    startTime: string;
+    endTime: string;
+  } | null>(null);
 
   const start = startOfWeek(currentDate, { weekStartsOn: 1 });
   const end = endOfWeek(currentDate, { weekStartsOn: 1 });
@@ -80,7 +86,6 @@ export const ShiftCalendar = () => {
     return slots;
   };
 
-  // 新しい関数: シフトの表示位置とサイズを計算
   const calculateShiftStyle = (startTime: Date, endTime: Date, slotTime: Date) => {
     const slotStart = new Date(slotTime);
     const slotEnd = addMinutes(slotTime, 30);
@@ -89,11 +94,10 @@ export const ShiftCalendar = () => {
       return null;
     }
 
-    // 最初のスロットの場合のみ表示
     if (Math.abs(differenceInMinutes(startTime, slotTime)) <= 30) {
       const durationInSlots = Math.ceil(differenceInMinutes(endTime, startTime) / 30);
       return {
-        height: `${durationInSlots * 1.75}rem`, // h-7 = 1.75rem
+        height: `${durationInSlots * 1.75}rem`,
         zIndex: 10,
       };
     }
@@ -112,6 +116,19 @@ export const ShiftCalendar = () => {
 
   const handleCellClick = (date: Date) => {
     setSelectedDate(date);
+    setSelectedShift(null);
+    setIsEditorOpen(true);
+  };
+
+  const handleShiftClick = (e: React.MouseEvent, shift: any) => {
+    e.stopPropagation(); // セルのクリックイベントが発火するのを防ぐ
+    setSelectedDate(parseISO(shift.start_time));
+    setSelectedShift({
+      id: shift.id,
+      staffId: shift.staff_id,
+      startTime: format(parseISO(shift.start_time), "HH:mm"),
+      endTime: format(parseISO(shift.end_time), "HH:mm"),
+    });
     setIsEditorOpen(true);
   };
 
@@ -132,6 +149,7 @@ export const ShiftCalendar = () => {
             className="gap-2"
             onClick={() => {
               setSelectedDate(new Date());
+              setSelectedShift(null);
               setIsEditorOpen(true);
             }}
           >
@@ -189,8 +207,9 @@ export const ShiftCalendar = () => {
                       return (
                         <div
                           key={shift.id}
-                          className={`absolute inset-x-0 px-1 py-0.5 ${getStaffColor((shift.profiles as any)?.id)} rounded-sm`}
+                          className={`absolute inset-x-0 px-1 py-0.5 ${getStaffColor((shift.profiles as any)?.id)} rounded-sm cursor-pointer hover:brightness-95`}
                           style={style}
+                          onClick={(e) => handleShiftClick(e, shift)}
                         >
                           <div className="text-[10px] whitespace-nowrap overflow-hidden text-ellipsis">
                             {(shift.profiles as any)?.username}
@@ -213,7 +232,11 @@ export const ShiftCalendar = () => {
         date={selectedDate}
         isOpen={isEditorOpen}
         onOpenChange={setIsEditorOpen}
-        mode="create"
+        mode={selectedShift ? "edit" : "create"}
+        staffId={selectedShift?.staffId}
+        startTime={selectedShift?.startTime}
+        endTime={selectedShift?.endTime}
+        shiftId={selectedShift?.id}
       />
     </div>
   );
