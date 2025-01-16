@@ -6,21 +6,30 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Trash2 } from "lucide-react";
 import { useShopClosures } from "@/hooks/useShopClosures";
+import { toast } from "sonner";
 
 export const ShopClosureManager = () => {
-  const [selectedDate, setSelectedDate] = useState<Date>();
+  const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const [reason, setReason] = useState("");
-  const { closures, addClosure, deleteClosure } = useShopClosures();
+  const { closures, addClosure } = useShopClosures();
 
-  const handleAddClosure = () => {
-    if (!selectedDate) return;
+  const handleAddClosures = async () => {
+    if (selectedDates.length === 0) return;
     
-    addClosure.mutate({
-      date: format(selectedDate, "yyyy-MM-dd"),
-      reason: reason || null,
-    });
+    // Add closures one by one
+    for (const date of selectedDates) {
+      try {
+        await addClosure.mutateAsync({
+          date: format(date, "yyyy-MM-dd"),
+          reason: reason || null,
+        });
+      } catch (error) {
+        console.error("Failed to add closure for date:", date, error);
+        toast.error(`${format(date, "yyyy/MM/dd")}の追加に失敗しました`);
+      }
+    }
     
-    setSelectedDate(undefined);
+    setSelectedDates([]);
     setReason("");
   };
 
@@ -41,9 +50,9 @@ export const ShopClosureManager = () => {
       <div className="grid md:grid-cols-2 gap-6">
         <div>
           <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={setSelectedDate}
+            mode="multiple"
+            selected={selectedDates}
+            onSelect={setSelectedDates}
             className="rounded-md border"
             modifiers={{
               closed: (date) => isDateClosed(date),
@@ -52,6 +61,11 @@ export const ShopClosureManager = () => {
               closed: { backgroundColor: "rgb(239 68 68 / 0.1)" },
             }}
           />
+          {selectedDates.length > 0 && (
+            <p className="text-sm text-muted-foreground mt-2">
+              {selectedDates.length}日選択中
+            </p>
+          )}
         </div>
 
         <div className="space-y-4">
@@ -62,11 +76,13 @@ export const ShopClosureManager = () => {
               onChange={(e) => setReason(e.target.value)}
             />
             <Button
-              onClick={handleAddClosure}
-              disabled={!selectedDate}
+              onClick={handleAddClosures}
+              disabled={selectedDates.length === 0}
               className="w-full"
             >
-              休業日を追加
+              {selectedDates.length > 0
+                ? `${selectedDates.length}日分の休業日を追加`
+                : "休業日を追加"}
             </Button>
           </div>
 
