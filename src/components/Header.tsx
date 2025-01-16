@@ -87,8 +87,11 @@ export const Header = () => {
         )}
       </div>
       
+      {/* Spacer div to prevent navigation bar overlap */}
+      <div className="w-full h-24" />
+      
       {/* Main Content */}
-      <div className="relative z-10 w-full mx-auto text-center mt-50">
+      <div className="relative z-10 w-full mx-auto text-center">
         <div className="flex flex-col items-center space-y-4 px-4 md:px-0">
           <div className="space-y-1">
             <img 
