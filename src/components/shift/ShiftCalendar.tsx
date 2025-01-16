@@ -20,7 +20,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { ShiftEditorDialog } from "./ShiftEditorDialog";
 
-const HOURS = Array.from({ length: 24 }, (_, i) => i);
+// Changed from 24 hours to 8-22 range
+const HOURS = Array.from({ length: 15 }, (_, i) => i + 8);
 const MINUTES = [0, 30];
 
 export const ShiftCalendar = () => {
