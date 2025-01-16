@@ -5,11 +5,13 @@ import { Input } from './ui/input';
 import { Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { AnimatedHamburger } from './AnimatedHamburger';
 
 export const Header = () => {
   const [searchInput, setSearchInput] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleReservationLookup = async (e: React.FormEvent) => {
@@ -52,6 +54,10 @@ export const Header = () => {
   return (
     <header className="relative h-[60vh] flex items-center justify-center overflow-hidden bg-sauna-base">
       <div className="absolute top-4 right-4 z-20 flex items-center gap-4">
+        <AnimatedHamburger
+          isOpen={isMenuOpen}
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+        />
         <button
           onClick={() => setShowForm(!showForm)}
           className="text-black/80 hover:text-black transition-colors text-xs font-mplus font-extralight"
@@ -75,7 +81,6 @@ export const Header = () => {
       </div>
       
       <div className="relative z-10 w-full mx-auto text-center">
-        {/* Spacer div to ensure proper spacing */}
         <div className="h-36" />
         <div className="flex flex-col items-center space-y-4 px-4 md:px-0">
           <div className="space-y-1">
