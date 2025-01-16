@@ -52,7 +52,7 @@ export const Header = () => {
   return (
     <header className="relative h-[60vh] flex flex-col items-center justify-center overflow-hidden bg-sauna-base">
       {/* Navigation Bar */}
-      <div className="w-full h-16 flex items-center justify-between px-6 absolute top-0 left-0 bg-sauna-base/50 backdrop-blur-sm border-b border-black/10">
+      <div className="w-full h-16 flex items-center justify-between px-6 fixed top-0 left-0 z-50 bg-sauna-base/50 backdrop-blur-sm border-b border-black/10">
         <div className="text-black/80 text-sm font-mplus font-extralight">
           U
         </div>
