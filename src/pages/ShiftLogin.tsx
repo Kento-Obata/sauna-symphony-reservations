@@ -23,6 +23,7 @@ const ShiftLogin = () => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
+        console.log("User already logged in:", session);
         navigate("/shift");
       }
     };
@@ -34,24 +35,38 @@ const ShiftLogin = () => {
       async (event, session) => {
         console.log("Auth state changed:", event, session);
         if (event === "SIGNED_IN") {
-          // Check if user has staff or admin role
-          const { data: profile, error: profileError } = await supabase
-            .from("profiles")
-            .select("role")
-            .eq("id", session?.user?.id)
-            .single();
-
-          if (profileError) {
-            console.error("Error fetching profile:", profileError);
-            setErrorMessage("プロフィールの取得に失敗しました。");
-            await supabase.auth.signOut();
+          if (!session?.user?.id) {
+            console.error("No user ID in session");
+            setErrorMessage("ユーザー情報の取得に失敗しました。");
             return;
           }
 
-          if (profile?.role === "staff" || profile?.role === "admin" || profile?.role === "viewer") {
-            navigate("/shift");
-          } else {
-            setErrorMessage("スタッフ権限がありません。");
+          try {
+            // Check if user has staff or admin role
+            const { data: profile, error: profileError } = await supabase
+              .from("profiles")
+              .select("role")
+              .eq("id", session.user.id)
+              .single();
+
+            if (profileError) {
+              console.error("Error fetching profile:", profileError);
+              setErrorMessage("プロフィールの取得に失敗しました。");
+              await supabase.auth.signOut();
+              return;
+            }
+
+            if (profile?.role === "staff" || profile?.role === "admin" || profile?.role === "viewer") {
+              console.log("User has valid role:", profile.role);
+              navigate("/shift");
+            } else {
+              console.error("Invalid role:", profile?.role);
+              setErrorMessage("スタッフ権限がありません。");
+              await supabase.auth.signOut();
+            }
+          } catch (error) {
+            console.error("Error in auth state change:", error);
+            setErrorMessage("認証エラーが発生しました。");
             await supabase.auth.signOut();
           }
         }
