@@ -13,9 +13,12 @@ export const ShiftGuard = ({ children }: { children: React.ReactNode }) => {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!session) {
+          console.log("No session found, redirecting to login");
           navigate("/shift/login", { replace: true });
           return;
         }
+
+        console.log("Session found, checking profile for user:", session.user.id);
 
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
@@ -31,15 +34,18 @@ export const ShiftGuard = ({ children }: { children: React.ReactNode }) => {
           return;
         }
 
+        console.log("Profile retrieved:", profile);
+
         // Check if user has appropriate role
         if (!profile || !['viewer', 'staff', 'admin'].includes(profile.role)) {
-          console.error("Insufficient permissions");
+          console.error("Insufficient permissions. User role:", profile?.role);
           toast.error("シフト管理画面へのアクセス権限がありません");
           await supabase.auth.signOut();
           navigate("/shift/login", { replace: true });
           return;
         }
 
+        console.log("User has appropriate permissions with role:", profile.role);
         // If we reach here, user has appropriate permissions
         setIsLoading(false);
       } catch (error) {
