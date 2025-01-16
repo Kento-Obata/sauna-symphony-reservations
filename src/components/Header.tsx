@@ -50,7 +50,7 @@ export const Header = () => {
   };
   
   return (
-    <header className="relative h-[60vh] flex items-center justify-center overflow-hidden bg-sauna-base">
+    <header className="relative h-[70vh] flex items-center justify-center overflow-hidden bg-sauna-base">
       <div className="absolute top-4 right-4 z-20 flex items-center gap-4">
         <button
           onClick={() => setShowForm(!showForm)}
@@ -75,9 +75,8 @@ export const Header = () => {
       </div>
       
       <div className="relative z-10 w-full mx-auto text-center">
-        {/* Spacer div to ensure proper spacing */}
-        <div className="h-36" />
-        <div className="flex flex-col items-center space-y-4 px-4 md:px-0">
+        <div className="h-24" />
+        <div className="flex flex-col items-center space-y-4 px-4 md:px-0 pb-8">
           <div className="space-y-1">
             <img 
               src="/lovable-uploads/1aa72bce-66cd-4327-8168-efd559ff3e6e.png" 
