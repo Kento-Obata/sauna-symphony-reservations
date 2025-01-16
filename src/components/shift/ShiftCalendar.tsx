@@ -247,7 +247,7 @@ export const ShiftCalendar = () => {
                       return (
                         <div
                           key={shift.id}
-                          className={`absolute inset-x-0 px-1 py-0.5 ${getStaffColor((shift.profiles as any)?.id)} rounded-sm cursor-pointer hover:brightness-95`}
+                          className={`absolute w-1/3 left-1/3 px-1 py-0.5 ${getStaffColor((shift.profiles as any)?.id)} rounded-sm cursor-pointer hover:brightness-95`}
                           style={style}
                           onClick={(e) => handleShiftClick(e, shift)}
                         >
