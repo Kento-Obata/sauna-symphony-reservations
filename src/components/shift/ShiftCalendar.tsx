@@ -21,6 +21,13 @@ import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { ShiftEditorDialog } from "./ShiftEditorDialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const HOURS = Array.from({ length: 15 }, (_, i) => i + 8);
 const MINUTES = [0, 30];
@@ -46,20 +53,39 @@ export const ShiftCalendar = () => {
     startTime: string;
     endTime: string;
   } | null>(null);
+  const [selectedStaffId, setSelectedStaffId] = useState<string>("");
 
   const start = startOfWeek(currentDate, { weekStartsOn: 1 });
   const end = endOfWeek(currentDate, { weekStartsOn: 1 });
   const days = eachDayOfInterval({ start, end });
 
   const { data: shifts } = useQuery({
-    queryKey: ["shifts", format(start, "yyyy-MM-dd"), format(end, "yyyy-MM-dd")],
+    queryKey: ["shifts", format(start, "yyyy-MM-dd"), format(end, "yyyy-MM-dd"), selectedStaffId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("shifts")
         .select("*, profiles(username, id)")
         .gte("start_time", format(start, "yyyy-MM-dd"))
         .lte("end_time", format(end, "yyyy-MM-dd"))
         .neq("status", "cancelled");
+
+      if (selectedStaffId) {
+        query = query.eq("staff_id", selectedStaffId);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: staffMembers } = useQuery({
+    queryKey: ["staff-members"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, username")
+        .in("role", ["staff", "admin"]);
 
       if (error) throw error;
       return data;
@@ -144,6 +170,19 @@ export const ShiftCalendar = () => {
             {format(start, "yyyy年MM月dd日", { locale: ja })} -{" "}
             {format(end, "MM月dd日", { locale: ja })}
           </h2>
+          <Select value={selectedStaffId} onValueChange={setSelectedStaffId}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="スタッフで絞り込み" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">全て表示</SelectItem>
+              {staffMembers?.map((staff) => (
+                <SelectItem key={staff.id} value={staff.id}>
+                  {staff.username}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Button
             variant="outline"
             size="sm"
