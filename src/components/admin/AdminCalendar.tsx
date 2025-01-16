@@ -44,7 +44,7 @@ export const AdminCalendar = ({
       (r) => 
         r.date === format(date, "yyyy-MM-dd") && 
         r.time_slot === timeSlot &&
-        (r.status === "confirmed" || r.status === "pending") // Include both confirmed and pending reservations
+        (r.status === "confirmed" || r.status === "pending")
     );
   };
 
@@ -77,15 +77,18 @@ export const AdminCalendar = ({
     const confirmedReservations = reservations.filter(r => r.status === "confirmed");
     const pendingReservations = reservations.filter(r => r.status === "pending");
     
-    const totalConfirmedGuests = confirmedReservations.reduce((sum, res) => sum + res.guest_count, 0);
-    const totalPendingGuests = pendingReservations.reduce((sum, res) => sum + res.guest_count, 0);
+    const totalConfirmedGuests = confirmedReservations.length;
+    const totalPendingGuests = pendingReservations.length;
+
+    // 予約可能枠を計算（1枠のみ予約可能）
+    const availableSlots = 1 - (totalConfirmedGuests + totalPendingGuests);
 
     return (
       <div className="flex flex-col items-center text-sm">
-        {totalConfirmedGuests > 0 && (
-          <span className="text-black">
-            {totalConfirmedGuests}名
-          </span>
+        {availableSlots > 0 ? (
+          <span className="text-black">{availableSlots}</span>
+        ) : (
+          <span className="text-black">×</span>
         )}
         {totalPendingGuests > 0 && (
           <span className="text-black italic">
