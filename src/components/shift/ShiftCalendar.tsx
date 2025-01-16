@@ -196,21 +196,26 @@ export const ShiftCalendar = () => {
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-      <div className="flex justify-between items-center p-4 border-b">
-        <Button variant="outline" size="icon" onClick={handlePrevWeek}>
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-center p-4 border-b gap-4">
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
+          <Button variant="outline" size="icon" onClick={handlePrevWeek}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
           <div className="text-base">
             {format(start, "yyyy年MM月dd日", { locale: ja })} -{" "}
             {format(end, "MM月dd日", { locale: ja })}
           </div>
+          <Button variant="outline" size="icon" onClick={handleNextWeek}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
           <Select value={selectedStaffId} onValueChange={setSelectedStaffId}>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-full sm:w-[200px]">
               <SelectValue placeholder="スタッフで絞り込み" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">全て表示</SelectItem>
+              <SelectItem value="">全て表示</SelectItem>
               {staffMembers?.map((staff) => (
                 <SelectItem key={staff.id} value={staff.id}>
                   {staff.username}
@@ -221,7 +226,7 @@ export const ShiftCalendar = () => {
           <Button
             variant="outline"
             size="sm"
-            className="gap-2"
+            className="gap-2 w-full sm:w-auto"
             onClick={() => {
               setSelectedDate(new Date());
               setSelectedShift(null);
@@ -232,9 +237,6 @@ export const ShiftCalendar = () => {
             シフト追加
           </Button>
         </div>
-        <Button variant="outline" size="icon" onClick={handleNextWeek}>
-          <ChevronRight className="h-4 w-4" />
-        </Button>
       </div>
 
       <div className="grid grid-cols-8 divide-x">
