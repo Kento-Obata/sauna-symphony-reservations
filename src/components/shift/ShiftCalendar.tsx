@@ -9,7 +9,6 @@ import {
   isSameDay,
   parseISO,
   isWithinInterval,
-  addMinutes,
 } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -22,7 +21,7 @@ interface Shift {
   id: string;
   start_time: string;
   end_time: string;
-  profiles: { username: string }[];
+  profiles: { username: string };
 }
 
 export const ShiftCalendar = () => {
@@ -54,7 +53,7 @@ export const ShiftCalendar = () => {
     queryKey: ["shifts", start.toISOString(), end.toISOString()],
     queryFn: fetchShifts,
     staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
-    cacheTime: 1000 * 60 * 30, // Keep data in cache for 30 minutes
+    gcTime: 1000 * 60 * 30, // Keep data in cache for 30 minutes (renamed from cacheTime)
   });
 
   const handlePrevWeek = () => setCurrentDate(subWeeks(currentDate, 1));
@@ -71,7 +70,7 @@ export const ShiftCalendar = () => {
     const slotEnd = new Date(day);
     const [hours, minutes] = timeSlot.split(":").map(Number);
     slotStart.setHours(hours, minutes, 0, 0);
-    slotEnd.setHours(hours, minutes + 30, 0, 0); // Assuming 30-minute slots
+    slotEnd.setHours(hours, minutes + 30, 0, 0);
 
     if (isWithinInterval(startTime, { start: slotStart, end: slotEnd }) || 
         isWithinInterval(endTime, { start: slotStart, end: slotEnd })) {
@@ -136,9 +135,8 @@ export const ShiftCalendar = () => {
                 {timeSlot}
               </div>
               {days.map((day) => {
-                const dayShifts = shifts.filter((shift: Shift) => {
+                const dayShifts = shifts.filter((shift) => {
                   const startTime = parseISO(shift.start_time);
-                  const endTime = parseISO(shift.end_time);
                   return isSameDay(startTime, day);
                 });
 
@@ -147,7 +145,7 @@ export const ShiftCalendar = () => {
                     key={`${day}-${timeSlot}`}
                     className="col-span-1 border rounded relative h-8 hover:bg-sauna-button transition-colors"
                   >
-                    {dayShifts.map((shift: Shift) => {
+                    {dayShifts.map((shift) => {
                       const startTime = parseISO(shift.start_time);
                       const endTime = parseISO(shift.end_time);
                       const style = calculatePosition(
@@ -166,13 +164,9 @@ export const ShiftCalendar = () => {
                           style={style}
                           onClick={(e) => handleShiftClick(e, shift)}
                         >
-                          <div className="text-[10px] flex items-center gap-1">
+                          <div className="text-[10px] flex items-center justify-center h-full">
                             <span className="writing-vertical-lr">
-                              {(shift.profiles as any)?.username}
-                            </span>
-                            <span>
-                              {format(startTime, "HH:mm")}-
-                              {format(endTime, "HH:mm")}
+                              {shift.profiles?.username}
                             </span>
                           </div>
                         </div>
@@ -187,7 +181,7 @@ export const ShiftCalendar = () => {
       )}
 
       <ShiftEditorDialog
-        open={showShiftEditor}
+        isOpen={showShiftEditor}
         onOpenChange={setShowShiftEditor}
         shift={selectedShift}
       />
