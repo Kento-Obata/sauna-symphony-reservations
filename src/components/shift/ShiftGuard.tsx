@@ -13,7 +13,6 @@ export const ShiftGuard = ({ children }: { children: React.ReactNode }) => {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!session) {
-          await supabase.auth.signOut();
           navigate("/shift/login", { replace: true });
           return;
         }
@@ -26,7 +25,7 @@ export const ShiftGuard = ({ children }: { children: React.ReactNode }) => {
 
         if (profileError || !profile || !['viewer', 'staff', 'admin'].includes(profile.role)) {
           console.error("Profile error or insufficient permissions:", profileError);
-          toast.error("アクセス権限がありません");
+          toast.error("シフト管理画面へのアクセス権限がありません");
           await supabase.auth.signOut();
           navigate("/shift/login", { replace: true });
           return;

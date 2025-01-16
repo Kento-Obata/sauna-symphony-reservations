@@ -17,7 +17,6 @@ export const AdminGuard = ({ children }: AdminGuardProps) => {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!session) {
-          await supabase.auth.signOut();
           navigate("/admin/login", { replace: true });
           return;
         }
