@@ -22,7 +22,7 @@ const Index = () => {
           </div>
         </div>
       </div>
-      <div id="reservation-section" className="relative z-10 text-center">
+      <div className="relative z-10 text-center">
         <ReservationForm />
       </div>
       
