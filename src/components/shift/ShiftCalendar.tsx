@@ -290,9 +290,9 @@ export const ShiftCalendar = () => {
                           style={style}
                           onClick={(e) => handleShiftClick(e, shift)}
                         >
-                          <div className="text-[10px] whitespace-nowrap overflow-hidden text-ellipsis">
-                            {(shift.profiles as any)?.username}
-                            <span className="ml-1">
+                          <div className="text-[10px] flex items-center gap-1">
+                            <span className="writing-vertical-lr">{(shift.profiles as any)?.username}</span>
+                            <span>
                               {format(startTime, "HH:mm")}-{format(endTime, "HH:mm")}
                             </span>
                           </div>
