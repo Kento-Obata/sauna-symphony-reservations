@@ -29,7 +29,7 @@ export default {
           stone: "#A4A99D",
           wood: "#A4A99D",
           iron: "#A4A99D",
-          button: "#BFC2BA",
+          button: "#B6BAB0",
         },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
