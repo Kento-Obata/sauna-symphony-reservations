@@ -60,6 +60,45 @@ export const ShiftCalendar = () => {
   const end = endOfWeek(currentDate, { weekStartsOn: 0 });
   const days = eachDayOfInterval({ start, end });
 
+  const { data: shifts } = useQuery({
+    queryKey: ["shifts", format(start, "yyyy-MM-dd"), format(end, "yyyy-MM-dd"), selectedStaffId],
+    queryFn: async () => {
+      let query = supabase
+        .from("shifts")
+        .select("*, profiles(username, id)")
+        .gte("start_time", format(start, "yyyy-MM-dd"))
+        .lte("end_time", format(end, "yyyy-MM-dd"))
+        .neq("status", "cancelled");
+
+      if (selectedStaffId && selectedStaffId !== "all") {
+        query = query.eq("staff_id", selectedStaffId);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: staffMembers } = useQuery({
+    queryKey: ["staff-members"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, username")
+        .in("role", ["staff", "admin"]);
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const getStaffColor = (staffId: string | undefined) => {
+    if (!staffId) return STAFF_COLORS[0];
+    const colorIndex = parseInt(staffId.substring(0, 8), 16) % STAFF_COLORS.length;
+    return STAFF_COLORS[colorIndex];
+  };
+
   const handlePrevWeek = () => setCurrentDate(subWeeks(currentDate, 1));
   const handleNextWeek = () => setCurrentDate(addWeeks(currentDate, 1));
 
