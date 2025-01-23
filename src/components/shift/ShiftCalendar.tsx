@@ -3,7 +3,6 @@ import {
   startOfWeek,
   endOfWeek,
   eachDayOfInterval,
-  addDays,
   format,
   addWeeks,
   subWeeks,
@@ -56,6 +55,7 @@ export const ShiftCalendar = () => {
   } | null>(null);
   const [selectedStaffId, setSelectedStaffId] = useState<string>("all");
 
+  // Changed weekStartsOn from 1 to 0 to start the week from Sunday
   const start = startOfWeek(currentDate, { weekStartsOn: 0 });
   const end = endOfWeek(currentDate, { weekStartsOn: 0 });
   const days = eachDayOfInterval({ start, end });
