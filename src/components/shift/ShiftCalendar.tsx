@@ -15,6 +15,8 @@ import {
   isWithinInterval,
   differenceInMinutes,
   areIntervalsOverlapping,
+  startOfDay,
+  endOfDay,
 } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -66,8 +68,8 @@ export const ShiftCalendar = () => {
       let query = supabase
         .from("shifts")
         .select("*, profiles(username, id)")
-        .gte("start_time", format(start, "yyyy-MM-dd"))
-        .lte("end_time", format(end, "yyyy-MM-dd"))
+        .gte("start_time", startOfDay(start).toISOString())
+        .lte("end_time", endOfDay(addDays(end, 1)).toISOString())
         .neq("status", "cancelled");
 
       if (selectedStaffId && selectedStaffId !== "all") {
