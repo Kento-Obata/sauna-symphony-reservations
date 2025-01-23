@@ -129,7 +129,6 @@ export const ShiftCalendar = ({
       </div>
 
       <ShiftEditorDialog
-        open={showReservationDialog}
         onOpenChange={setShowReservationDialog}
         date={selectedDate || new Date()}
         mode="create"
