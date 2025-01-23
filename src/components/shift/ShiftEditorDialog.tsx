@@ -162,7 +162,10 @@ export const ShiftEditorDialog = ({
   };
 
   const handleDelete = async () => {
-    if (!shiftId) return;
+    if (!shiftId) {
+      console.error("No shift ID provided for deletion");
+      return;
+    }
 
     const { error } = await supabase
       .from("shifts")
@@ -183,11 +186,12 @@ export const ShiftEditorDialog = ({
       title: "成功",
       description: "シフトを削除しました",
     });
+    
+    // Invalidate and refetch shifts data
     queryClient.invalidateQueries({ queryKey: ["shifts"] });
     onOpenChange(false);
   };
 
-  // Reset form values when dialog opens with new data
   useEffect(() => {
     if (isOpen) {
       setSelectedStaff(staffId || "");
