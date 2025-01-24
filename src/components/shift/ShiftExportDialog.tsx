@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { format, startOfMonth, endOfMonth, parseISO } from "date-fns";
+import { format, startOfMonth, endOfMonth, parseISO, subMonths, addMonths } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,13 +13,17 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export const ShiftExportDialog = () => {
-  const [currentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(new Date());
   const { toast } = useToast();
   
   const start = startOfMonth(currentDate);
   const end = endOfMonth(currentDate);
+
+  const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
+  const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
 
   const { data: shifts } = useQuery({
     queryKey: ["shifts", format(start, "yyyy-MM"), "export"],
@@ -89,7 +93,20 @@ export const ShiftExportDialog = () => {
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>シフト表 - {format(start, "yyyy年MM月", { locale: ja })}</DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle>シフト表</DialogTitle>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="icon" onClick={handlePrevMonth}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="min-w-[120px] text-center">
+                {format(start, "yyyy年MM月", { locale: ja })}
+              </span>
+              <Button variant="outline" size="icon" onClick={handleNextMonth}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </DialogHeader>
         <ScrollArea className="h-[400px] w-full rounded-md border p-4">
           <pre className="whitespace-pre-wrap font-mono text-sm">
