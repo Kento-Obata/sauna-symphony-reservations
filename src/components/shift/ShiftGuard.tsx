@@ -9,15 +9,22 @@ export const ShiftGuard = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        setIsLoading(false);
-        navigate("/shift/login", { replace: true });
-        return;
-      }
-
       try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("Session error:", sessionError);
+          navigate("/shift/login", { replace: true });
+          return;
+        }
+
+        if (!session) {
+          setIsLoading(false);
+          navigate("/shift/login", { replace: true });
+          return;
+        }
+
+        // Check profile and role
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('role')
@@ -25,6 +32,7 @@ export const ShiftGuard = ({ children }: { children: React.ReactNode }) => {
           .single();
 
         if (profileError || !profile) {
+          console.error("Profile error:", profileError);
           toast.error("プロフィールの取得に失敗しました");
           await supabase.auth.signOut();
           setIsLoading(false);
@@ -52,9 +60,13 @@ export const ShiftGuard = ({ children }: { children: React.ReactNode }) => {
 
     checkAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_OUT') {
-        navigate("/shift/login", { replace: true });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+        if (!session) {
+          navigate("/shift/login", { replace: true });
+        } else {
+          checkAuth();
+        }
       }
     });
 

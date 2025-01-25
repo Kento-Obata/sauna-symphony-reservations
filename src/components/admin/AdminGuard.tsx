@@ -14,13 +14,21 @@ export const AdminGuard = ({ children }: AdminGuardProps) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        // First try to get the session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
+        if (sessionError) {
+          console.error("Session error:", sessionError);
+          navigate("/admin/login", { replace: true });
+          return;
+        }
+
         if (!session) {
           navigate("/admin/login", { replace: true });
           return;
         }
 
+        // Then check the profile
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('role')
@@ -60,11 +68,13 @@ export const AdminGuard = ({ children }: AdminGuardProps) => {
 
     checkAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
-      if (event === 'SIGNED_OUT') {
-        navigate("/admin/login", { replace: true });
-      } else if (event === 'SIGNED_IN') {
-        checkAuth();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+        if (!session) {
+          navigate("/admin/login", { replace: true });
+        } else {
+          checkAuth();
+        }
       }
     });
 
