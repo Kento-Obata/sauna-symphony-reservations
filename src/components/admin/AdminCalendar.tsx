@@ -7,15 +7,21 @@ import {
   addWeeks,
   subWeeks,
   isSameDay,
+  startOfDay,
+  endOfDay,
 } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
 import { TIME_SLOTS } from "@/components/TimeSlotSelect";
 import { Reservation } from "@/types/reservation";
 import { AdminReservationDialog } from "./AdminReservationDialog";
 import { AdminReservationDetailsDialog } from "./AdminReservationDetailsDialog";
 import { useShopClosures } from "@/hooks/useShopClosures";
+import { AdminCalendarEventDialog } from "./AdminCalendarEventDialog";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
 
 interface AdminCalendarProps {
   reservations?: Reservation[];
@@ -31,12 +37,28 @@ export const AdminCalendar = ({
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
   const [showReservationDialog, setShowReservationDialog] = useState(false);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [showEventDialog, setShowEventDialog] = useState(false);
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const { closures: shopClosures } = useShopClosures();
 
   const start = startOfWeek(currentDate, { weekStartsOn: 1 });
   const end = endOfWeek(currentDate, { weekStartsOn: 1 });
   const days = eachDayOfInterval({ start, end });
+
+  const { data: events } = useQuery({
+    queryKey: ["calendar-events", format(start, "yyyy-MM-dd"), format(end, "yyyy-MM-dd")],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("calendar_events")
+        .select("*")
+        .gte("date", format(start, "yyyy-MM-dd"))
+        .lte("date", format(end, "yyyy-MM-dd"));
+
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const handlePrevWeek = () => setCurrentDate(subWeeks(currentDate, 1));
   const handleNextWeek = () => setCurrentDate(addWeeks(currentDate, 1));
@@ -48,6 +70,10 @@ export const AdminCalendar = ({
         r.time_slot === timeSlot &&
         (r.status === "confirmed" || r.status === "pending")
     );
+  };
+
+  const getEventsForDate = (date: Date) => {
+    return events?.filter((event) => event.date === format(date, "yyyy-MM-dd")) || [];
   };
 
   const isDateClosed = (date: Date) => {
@@ -73,9 +99,16 @@ export const AdminCalendar = ({
   };
 
   const handleDayClick = (date: Date) => {
-    if (onDateSelect) {
-      onDateSelect(date);
-    }
+    setSelectedDate(date);
+    setSelectedEvent(null);
+    setShowEventDialog(true);
+  };
+
+  const handleEventClick = (e: React.MouseEvent, event: any) => {
+    e.stopPropagation();
+    setSelectedEvent(event);
+    setSelectedDate(null);
+    setShowEventDialog(true);
   };
 
   const getStatusDisplay = (date: Date, reservations: Reservation[]) => {
@@ -89,6 +122,19 @@ export const AdminCalendar = ({
 
     const totalGuests = reservations.reduce((sum, r) => sum + r.guest_count, 0);
     return <span className="text-black">{totalGuests}</span>;
+  };
+
+  const getEventBadgeColor = (type: string) => {
+    switch (type) {
+      case "event":
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
+      case "schedule":
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+      case "note":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
+    }
   };
 
   return (
@@ -117,6 +163,17 @@ export const AdminCalendar = ({
             {format(day, "M/d")}
             <div className="text-sm text-gray-600 dark:text-gray-300">
               {format(day, "E", { locale: ja })}
+            </div>
+            <div className="flex flex-col gap-1 mt-1">
+              {getEventsForDate(day).map((event) => (
+                <Badge
+                  key={event.id}
+                  className={`text-xs cursor-pointer truncate ${getEventBadgeColor(event.type)}`}
+                  onClick={(e) => handleEventClick(e, event)}
+                >
+                  {event.title}
+                </Badge>
+              ))}
             </div>
           </button>
         ))}
@@ -162,6 +219,13 @@ export const AdminCalendar = ({
         open={showDetailsDialog}
         onOpenChange={setShowDetailsDialog}
         reservation={selectedReservation}
+      />
+
+      <AdminCalendarEventDialog
+        open={showEventDialog}
+        onOpenChange={setShowEventDialog}
+        date={selectedDate}
+        event={selectedEvent}
       />
     </div>
   );

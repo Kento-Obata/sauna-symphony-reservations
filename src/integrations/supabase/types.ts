@@ -30,6 +30,36 @@ export type Database = {
         }
         Relationships: []
       }
+      calendar_events: {
+        Row: {
+          created_at: string
+          date: string
+          description: string | null
+          id: string
+          title: string
+          type: Database["public"]["Enums"]["event_type"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          description?: string | null
+          id?: string
+          title: string
+          type?: Database["public"]["Enums"]["event_type"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          title?: string
+          type?: Database["public"]["Enums"]["event_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -186,6 +216,7 @@ export type Database = {
       }
     }
     Enums: {
+      event_type: "event" | "schedule" | "note"
       shift_status: "scheduled" | "cancelled"
       time_slot: "morning" | "afternoon" | "evening"
     }
