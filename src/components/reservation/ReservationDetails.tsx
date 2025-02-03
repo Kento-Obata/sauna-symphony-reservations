@@ -82,12 +82,20 @@ export const ReservationDetails = ({
     }
   };
 
-  // Get available temperatures based on time slot
+  // Get available temperatures based on time slot and season
   const getAvailableTemperatures = () => {
-    if (timeSlot === "morning") {
-      return Array.from({ length: 13 }, (_, i) => i + 5); // 5°C to 17°C
+    if (timeSlot !== "morning") {
+      return [15]; // Fixed temperature for afternoon and evening
     }
-    return Array.from({ length: 8 }, (_, i) => i + 10); // 10°C to 17°C
+
+    const currentMonth = date ? date.getMonth() + 1 : new Date().getMonth() + 1;
+    const isWinter = currentMonth >= 11 || currentMonth <= 3;
+
+    if (isWinter) {
+      return Array.from({ length: 4 }, (_, i) => i + 7); // 7°C to 10°C
+    } else {
+      return [15]; // Fixed 15°C for summer mornings
+    }
   };
 
   // Get surcharge based on temperature
@@ -172,31 +180,46 @@ export const ReservationDetails = ({
         <label className="block text-sm mb-2">
           水風呂温度 <span className="text-red-500">*</span>
         </label>
-        <div className="text-sm text-muted-foreground mb-2">
-          ※ 初めての方は15℃がおすすめです
-        </div>
-        <Select onValueChange={setTemperature} value={temperature || "15"} defaultValue="15">
-          <SelectTrigger>
-            <SelectValue placeholder="温度を選択" />
-          </SelectTrigger>
-          <SelectContent>
-            {getAvailableTemperatures().map((temp) => {
-              const surcharge = getSurcharge(temp);
-              return (
-                <SelectItem key={temp} value={temp.toString()}>
-                  <div className="flex justify-between items-center w-full">
-                    <span>{temp}°C</span>
-                    {surcharge > 0 && (
-                      <span className="text-sm text-muted-foreground ml-2">
-                        (+¥{surcharge.toLocaleString()})
-                      </span>
-                    )}
-                  </div>
-                </SelectItem>
-              );
-            })}
-          </SelectContent>
-        </Select>
+        {timeSlot === "morning" ? (
+          <>
+            <div className="text-sm text-muted-foreground mb-2">
+              ※ 初めての方は15℃がおすすめです
+            </div>
+            <Select 
+              onValueChange={setTemperature} 
+              value={temperature || "15"}
+              defaultValue="15"
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="温度を選択" />
+              </SelectTrigger>
+              <SelectContent>
+                {getAvailableTemperatures().map((temp) => {
+                  const surcharge = getSurcharge(temp);
+                  return (
+                    <SelectItem key={temp} value={temp.toString()}>
+                      <div className="flex justify-between items-center w-full">
+                        <span>{temp}°C</span>
+                        {surcharge > 0 && (
+                          <span className="text-sm text-muted-foreground ml-2">
+                            (+¥{surcharge.toLocaleString()})
+                          </span>
+                        )}
+                      </div>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          </>
+        ) : (
+          <Input
+            type="text"
+            value="15°C"
+            readOnly
+            className="bg-gray-100"
+          />
+        )}
       </div>
     </div>
   );
