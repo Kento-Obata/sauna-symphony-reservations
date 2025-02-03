@@ -183,7 +183,7 @@ export const ReservationDetails = ({
         {timeSlot === "morning" ? (
           <>
             <div className="text-sm text-muted-foreground mb-2">
-              ※ 初めての方は15℃がおすすめです
+              ※ 午前の部のみ水温選択が可能です（冬期：7-10℃ / 夏期：15℃）
             </div>
             <Select 
               onValueChange={setTemperature} 
