@@ -51,26 +51,36 @@ const ShiftRequest = () => {
     }
 
     const formattedDate = format(selectedDate, "yyyy-MM-dd");
+    const timeSlot = TIME_SLOTS[selectedTimeSlot];
 
     try {
-      const { error } = await supabase.from("shift_requests").insert({
-        staff_id: staffId,
-        date: formattedDate,
-        time_slot: selectedTimeSlot,
-      });
+      // Check for existing shifts
+      const { data: existingShifts, error: checkError } = await supabase
+        .from("shifts")
+        .select("id")
+        .eq("staff_id", staffId)
+        .eq("start_time", `${formattedDate}T${timeSlot.start}:00+09:00`);
 
-      if (error) {
-        if (error.code === "23505") {
-          toast({
-            title: "エラー",
-            description: "同じ日時に既に仮シフトが登録されています",
-            variant: "destructive",
-          });
-        } else {
-          throw error;
-        }
+      if (checkError) throw checkError;
+
+      if (existingShifts && existingShifts.length > 0) {
+        toast({
+          title: "エラー",
+          description: "同じ日時に既にシフトが登録されています",
+          variant: "destructive",
+        });
         return;
       }
+
+      // Insert new shift
+      const { error: insertError } = await supabase.from("shifts").insert({
+        staff_id: staffId,
+        start_time: `${formattedDate}T${timeSlot.start}:00+09:00`,
+        end_time: `${formattedDate}T${timeSlot.end}:00+09:00`,
+        status: "scheduled",
+      });
+
+      if (insertError) throw insertError;
 
       toast({
         title: "成功",
