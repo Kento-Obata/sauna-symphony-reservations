@@ -1,3 +1,4 @@
+
 import { createBrowserRouter } from "react-router-dom";
 import Index from "@/pages/Index";
 import Admin from "@/pages/Admin";
@@ -8,6 +9,7 @@ import ReservationConfirm from "@/pages/ReservationConfirm";
 import ReservationComplete from "@/pages/ReservationComplete";
 import Shift from "@/pages/Shift";
 import ShiftLogin from "@/pages/ShiftLogin";
+import ShiftRequest from "@/pages/ShiftRequest";
 import { ShiftGuard } from "@/components/shift/ShiftGuard";
 import { AdminGuard } from "@/components/admin/AdminGuard";
 
@@ -27,6 +29,10 @@ export const router = createBrowserRouter([
         <Shift />
       </ShiftGuard>
     ),
+  },
+  {
+    path: "/shift/request",
+    element: <ShiftRequest />,
   },
   {
     path: "/admin/login",
