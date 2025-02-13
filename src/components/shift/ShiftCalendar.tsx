@@ -322,20 +322,20 @@ export const ShiftCalendar = () => {
               <div className="text-xs text-gray-500">
                 {format(day, "E", { locale: ja })}
               </div>
-              <div className="mt-1 flex items-center justify-between px-1">
+              <div className="mt-1">
                 {events?.find((event) => event.date === format(day, "yyyy-MM-dd")) ? (
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 px-1"
+                    className="h-6 w-full px-1 overflow-hidden"
                     onClick={() =>
                       handleEditEvent(
                         events.find((event) => event.date === format(day, "yyyy-MM-dd"))
                       )
                     }
                   >
-                    <PencilLine className="h-3 w-3" />
-                    <span className="ml-1 text-xs truncate">
+                    <PencilLine className="h-3 w-3 shrink-0" />
+                    <span className="ml-1 text-xs truncate block">
                       {
                         events.find((event) => event.date === format(day, "yyyy-MM-dd"))
                           ?.title
@@ -346,7 +346,7 @@ export const ShiftCalendar = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 px-1"
+                    className="h-6 w-full px-1"
                     onClick={() => {
                       setSelectedDate(day);
                       setEventTitle("");
@@ -354,7 +354,7 @@ export const ShiftCalendar = () => {
                       setIsEventDialogOpen(true);
                     }}
                   >
-                    <Plus className="h-3 w-3" />
+                    <Plus className="h-3 w-3 shrink-0" />
                     <span className="ml-1 text-xs">メモ</span>
                   </Button>
                 )}
