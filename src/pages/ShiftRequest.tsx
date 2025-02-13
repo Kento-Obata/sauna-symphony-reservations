@@ -11,9 +11,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Check, X } from "lucide-react";
 
 const TIME_SLOTS = {
-  morning: { label: "午前 (9:00-13:00)", start: "09:00", end: "13:00" },
-  afternoon: { label: "午後 (13:00-17:00)", start: "13:00", end: "17:00" },
-  evening: { label: "夜 (17:00-21:00)", start: "17:00", end: "21:00" },
+  morning: { label: "午前 (8:30-13:30)", start: "08:30", end: "13:30" },
+  afternoon: { label: "午後 (12:30-17:00)", start: "12:30", end: "17:00" },
+  evening: { label: "夜 (16:00-20:30)", start: "16:00", end: "20:30" },
 } as const;
 
 const ShiftRequest = () => {
