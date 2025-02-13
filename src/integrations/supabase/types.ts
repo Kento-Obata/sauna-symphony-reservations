@@ -135,6 +135,44 @@ export type Database = {
         }
         Relationships: []
       }
+      shift_preferences: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          preference: Database["public"]["Enums"]["shift_preference"]
+          staff_id: string
+          time_slot: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          preference: Database["public"]["Enums"]["shift_preference"]
+          staff_id: string
+          time_slot: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          preference?: Database["public"]["Enums"]["shift_preference"]
+          staff_id?: string
+          time_slot?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_preferences_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shifts: {
         Row: {
           created_at: string | null
@@ -217,6 +255,7 @@ export type Database = {
     }
     Enums: {
       event_type: "event" | "schedule" | "note"
+      shift_preference: "available" | "unavailable"
       shift_status: "scheduled" | "cancelled"
       time_slot: "morning" | "afternoon" | "evening"
     }
