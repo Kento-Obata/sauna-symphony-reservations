@@ -20,7 +20,7 @@ import {
 } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, PencilLine } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { ShiftEditorDialog } from "./ShiftEditorDialog";
@@ -31,6 +31,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 const HOURS = Array.from({ length: 15 }, (_, i) => i + 8);
 const MINUTES = [0, 30];
@@ -57,6 +65,9 @@ export const ShiftCalendar = () => {
     endTime: string;
   } | null>(null);
   const [selectedStaffId, setSelectedStaffId] = useState<string>("all");
+  const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
+  const [eventTitle, setEventTitle] = useState("");
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
 
   const start = startOfWeek(currentDate, { weekStartsOn: 1 });
   const end = endOfWeek(currentDate, { weekStartsOn: 1 });
@@ -198,6 +209,61 @@ export const ShiftCalendar = () => {
     setIsEditorOpen(true);
   };
 
+  const { data: events, refetch: refetchEvents } = useQuery({
+    queryKey: ["calendar-events", format(start, "yyyy-MM-dd"), format(end, "yyyy-MM-dd")],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("calendar_events")
+        .select("*")
+        .gte("date", format(start, "yyyy-MM-dd"))
+        .lte("date", format(end, "yyyy-MM-dd"))
+        .eq("type", "note");
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const handleEventSave = async () => {
+    try {
+      if (editingEventId) {
+        const { error } = await supabase
+          .from("calendar_events")
+          .update({
+            title: eventTitle,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", editingEventId);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("calendar_events")
+          .insert({
+            title: eventTitle,
+            date: format(selectedDate, "yyyy-MM-dd"),
+            type: "note",
+          });
+
+        if (error) throw error;
+      }
+
+      await refetchEvents();
+      setIsEventDialogOpen(false);
+      setEventTitle("");
+      setEditingEventId(null);
+    } catch (error) {
+      console.error("Error saving event:", error);
+    }
+  };
+
+  const handleEditEvent = (event: any) => {
+    setEditingEventId(event.id);
+    setEventTitle(event.title);
+    setSelectedDate(parseISO(event.date));
+    setIsEventDialogOpen(true);
+  };
+
   return (
     <div className="bg-sauna-base rounded-lg shadow overflow-hidden">
       <div className="flex flex-col sm:flex-row justify-between items-center p-4 border-b gap-4 bg-sauna-base">
@@ -255,6 +321,43 @@ export const ShiftCalendar = () => {
               <div className="font-medium text-sm">{format(day, "M/d")}</div>
               <div className="text-xs text-gray-500">
                 {format(day, "E", { locale: ja })}
+              </div>
+              <div className="mt-1 flex items-center justify-between px-1">
+                {events?.find((event) => event.date === format(day, "yyyy-MM-dd")) ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-1"
+                    onClick={() =>
+                      handleEditEvent(
+                        events.find((event) => event.date === format(day, "yyyy-MM-dd"))
+                      )
+                    }
+                  >
+                    <PencilLine className="h-3 w-3" />
+                    <span className="ml-1 text-xs truncate">
+                      {
+                        events.find((event) => event.date === format(day, "yyyy-MM-dd"))
+                          ?.title
+                      }
+                    </span>
+                  </Button>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-1"
+                    onClick={() => {
+                      setSelectedDate(day);
+                      setEventTitle("");
+                      setEditingEventId(null);
+                      setIsEventDialogOpen(true);
+                    }}
+                  >
+                    <Plus className="h-3 w-3" />
+                    <span className="ml-1 text-xs">メモ</span>
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -316,6 +419,38 @@ export const ShiftCalendar = () => {
         endTime={selectedShift?.endTime}
         shiftId={selectedShift?.id}
       />
+
+      <Dialog open={isEventDialogOpen} onOpenChange={setIsEventDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {format(selectedDate, "M月d日")}のメモを{editingEventId ? "編集" : "追加"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Input
+                placeholder="メモを入力"
+                value={eventTitle}
+                onChange={(e) => setEventTitle(e.target.value)}
+              />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsEventDialogOpen(false);
+                  setEventTitle("");
+                  setEditingEventId(null);
+                }}
+              >
+                キャンセル
+              </Button>
+              <Button onClick={handleEventSave}>保存</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
