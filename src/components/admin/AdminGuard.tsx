@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,12 +41,6 @@ export const AdminGuard = ({ children }: AdminGuardProps) => {
           toast.error("プロフィールの取得に失敗しました");
           await supabase.auth.signOut();
           navigate("/admin/login", { replace: true });
-          return;
-        }
-
-        // viewer権限のユーザーは/shiftにリダイレクト
-        if (profile?.role === 'viewer') {
-          navigate("/shift", { replace: true });
           return;
         }
 
