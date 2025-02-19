@@ -54,14 +54,15 @@ export const PriceSettingsManager = () => {
   };
 
   const handleSave = async () => {
-    const updates = editedPrices.map(({ id, price_per_person }) => ({
+    const updates = editedPrices.map(({ id, price_per_person, guest_count }) => ({
       id,
       price_per_person,
+      guest_count
     }));
 
     const { error } = await supabase
       .from("price_settings")
-      .upsert(updates, { onConflict: "id" });
+      .upsert(updates);
 
     if (error) {
       toast.error("料金設定の更新に失敗しました");
