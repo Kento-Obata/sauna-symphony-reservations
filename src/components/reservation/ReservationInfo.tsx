@@ -1,6 +1,8 @@
+
 import { format } from "date-fns";
 import { Reservation } from "@/types/reservation";
 import { getTotalPrice, getSurcharge, formatPrice } from "@/utils/priceCalculations";
+import { useEffect, useState } from "react";
 
 const TIME_SLOTS = {
   morning: "10:00-12:30",
@@ -13,6 +15,25 @@ interface ReservationInfoProps {
 }
 
 export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
+  const [totalPrice, setTotalPrice] = useState<number>(0);
+  const surcharge = getSurcharge(reservation.water_temperature);
+
+  useEffect(() => {
+    const calculatePrice = async () => {
+      try {
+        const price = await getTotalPrice(
+          reservation.guest_count,
+          reservation.water_temperature
+        );
+        setTotalPrice(price);
+      } catch (error) {
+        console.error("料金の計算に失敗しました:", error);
+      }
+    };
+
+    calculatePrice();
+  }, [reservation.guest_count, reservation.water_temperature]);
+
   const getStatusDisplay = (status: string) => {
     switch (status) {
       case "pending":
@@ -25,9 +46,6 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
         return status;
     }
   };
-
-  const totalPrice = getTotalPrice(reservation.water_temperature);
-  const surcharge = getSurcharge(reservation.water_temperature);
 
   return (
     <div className="grid grid-cols-2 gap-4">
