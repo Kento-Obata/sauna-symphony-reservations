@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   startOfWeek,
@@ -13,7 +12,7 @@ import { ja } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Ban } from "lucide-react";
 import { TIME_SLOTS } from "@/components/TimeSlotSelect";
-import { Reservation } from "@/types/reservation";
+import { Reservation, TimeSlot } from "@/types/reservation";
 import { AdminReservationDialog } from "./AdminReservationDialog";
 import { AdminReservationDetailsDialog } from "./AdminReservationDetailsDialog";
 import { useShopClosures } from "@/hooks/useShopClosures";
@@ -35,7 +34,7 @@ export const AdminCalendar = ({
 }: AdminCalendarProps) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(null);
   const [showReservationDialog, setShowReservationDialog] = useState(false);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [showEventDialog, setShowEventDialog] = useState(false);
@@ -109,7 +108,7 @@ export const AdminCalendar = ({
     }
   };
 
-  const handleCellClick = (date: Date, timeSlot: string) => {
+  const handleCellClick = (date: Date, timeSlot: TimeSlot) => {
     if (isDateClosed(date)) return;
     
     const slotReservations = getReservationsForDateAndSlot(date, timeSlot);
@@ -139,7 +138,7 @@ export const AdminCalendar = ({
     setShowEventDialog(true);
   };
 
-  const handleBlockClick = (e: React.MouseEvent, date: Date, timeSlot: string) => {
+  const handleBlockClick = (e: React.MouseEvent, date: Date, timeSlot: TimeSlot) => {
     e.stopPropagation();
     setSelectedDate(date);
     setSelectedTimeSlot(timeSlot);
@@ -213,7 +212,7 @@ export const AdminCalendar = ({
           </button>
         ))}
 
-        {Object.entries(TIME_SLOTS).map(([slot, time]) => (
+        {(Object.entries(TIME_SLOTS) as [TimeSlot, { start: string }][]).map(([slot, time]) => (
           <React.Fragment key={`time-${slot}`}>
             <div className="col-span-1 p-2 text-sm text-right text-gray-600 dark:text-gray-300">
               {time.start}
@@ -258,7 +257,7 @@ export const AdminCalendar = ({
         open={showReservationDialog}
         onOpenChange={setShowReservationDialog}
         defaultDate={selectedDate}
-        defaultTimeSlot={selectedTimeSlot as any}
+        defaultTimeSlot={selectedTimeSlot}
       />
 
       <AdminReservationDetailsDialog
@@ -282,7 +281,7 @@ export const AdminCalendar = ({
           <div className="py-4">
             <p>
               {selectedDate && format(selectedDate, "yyyy年MM月dd日", { locale: ja })}の
-              {selectedTimeSlot && TIME_SLOTS[selectedTimeSlot as keyof typeof TIME_SLOTS].start}
+              {selectedTimeSlot && TIME_SLOTS[selectedTimeSlot].start}
               の枠を休枠として設定します。
             </p>
           </div>
