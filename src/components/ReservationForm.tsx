@@ -174,7 +174,15 @@ const ReservationForm = () => {
         </div>
 
         <div className="text-center mt-8">
-          <p className="mb-4 text-sauna-stone">料金: {formatPrice(totalPrice)}</p>
+          <div className="mb-4">
+            <p className="text-lg font-semibold text-sauna-stone">料金</p>
+            <p className="text-2xl font-bold text-sauna-button">{formatPrice(totalPrice)}</p>
+            {temperature && parseInt(temperature) <= 7 && (
+              <p className="text-sm text-muted-foreground mt-1">
+                ※ 水温7℃以下のオプション料金 +¥5,000を含む
+              </p>
+            )}
+          </div>
           <Button type="submit" className="w-full md:w-auto hover-lift bg-sauna-button hover:bg-sauna-button/90">
             予約する
           </Button>

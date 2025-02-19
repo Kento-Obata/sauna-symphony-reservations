@@ -1,20 +1,17 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { TimeSlot, ReservationFormData } from "@/types/reservation";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { getTotalPrice, getSurcharge, formatPrice } from "@/utils/priceCalculations";
 
 const timeSlotLabels: Record<TimeSlot, string> = {
   morning: "午前",
   afternoon: "午後",
   evening: "夜",
-};
-
-const getSurcharge = (temp: number): number => {
-  if (temp <= 7) return 5000;
-  if (temp <= 10) return 3000;
-  return 0;
 };
 
 interface ReservationConfirmDialogProps {
@@ -36,14 +33,30 @@ export const ReservationConfirmDialog = ({
   isSubmitting,
   reservationCode,
 }: ReservationConfirmDialogProps) => {
+  const [totalPrice, setTotalPrice] = useState<number>(0);
+  const surcharge = getSurcharge(reservation.water_temperature);
+
+  useEffect(() => {
+    const calculatePrice = async () => {
+      try {
+        const price = await getTotalPrice(
+          reservation.guest_count,
+          reservation.water_temperature
+        );
+        setTotalPrice(price);
+      } catch (error) {
+        console.error("料金の計算に失敗しました:", error);
+      }
+    };
+
+    calculatePrice();
+  }, [reservation.guest_count, reservation.water_temperature]);
+
   const formattedDate = reservation.date
     ? format(new Date(reservation.date), "yyyy年MM月dd日 (E)", {
         locale: ja,
       })
     : "";
-
-  const surcharge = getSurcharge(reservation.water_temperature);
-  const totalPrice = 40000 + surcharge;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -77,6 +90,16 @@ export const ReservationConfirmDialog = ({
 
             <div className="text-muted-foreground">水風呂温度</div>
             <div>{reservation.water_temperature}℃</div>
+
+            <div className="text-muted-foreground">料金</div>
+            <div>
+              {formatPrice(totalPrice)}
+              {surcharge > 0 && (
+                <span className="block text-xs text-muted-foreground">
+                  （水温オプション料金 +{formatPrice(surcharge)}を含む）
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="text-center text-sm text-muted-foreground">
@@ -86,14 +109,6 @@ export const ReservationConfirmDialog = ({
                 ※ 10℃以下は本当に冷たいです。入ったことのない方はご注意ください。
               </p>
             )}
-            <p className="mt-2">
-              料金: ¥{totalPrice.toLocaleString()} (税込)
-              {surcharge > 0 && (
-                <span className="block text-xs">
-                  ※ 水温オプション料金 +¥{surcharge.toLocaleString()} を含む
-                </span>
-              )}
-            </p>
             <p className="mt-2">受付時間: 予約時間の15分前からご案内いたします。</p>
             <p className="mt-2 text-yellow-600 font-bold">
               ※ 本予約用のSMSとメールが送信されます。
