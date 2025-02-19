@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import {
   startOfWeek,
@@ -7,12 +8,10 @@ import {
   addWeeks,
   subWeeks,
   isSameDay,
-  startOfDay,
-  endOfDay,
 } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Ban } from "lucide-react";
 import { TIME_SLOTS } from "@/components/TimeSlotSelect";
 import { Reservation } from "@/types/reservation";
 import { AdminReservationDialog } from "./AdminReservationDialog";
@@ -22,6 +21,8 @@ import { AdminCalendarEventDialog } from "./AdminCalendarEventDialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 interface AdminCalendarProps {
   reservations?: Reservation[];
@@ -38,6 +39,7 @@ export const AdminCalendar = ({
   const [showReservationDialog, setShowReservationDialog] = useState(false);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [showEventDialog, setShowEventDialog] = useState(false);
+  const [showBlockDialog, setShowBlockDialog] = useState(false);
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const { closures: shopClosures } = useShopClosures();
@@ -81,6 +83,32 @@ export const AdminCalendar = ({
     return shopClosures?.some(closure => closure.date === dateString);
   };
 
+  const handleBlockTimeSlot = async () => {
+    if (!selectedDate || !selectedTimeSlot) return;
+
+    try {
+      const { error } = await supabase
+        .from("reservations")
+        .insert({
+          date: format(selectedDate, "yyyy-MM-dd"),
+          time_slot: selectedTimeSlot,
+          guest_name: "休枠",
+          guest_count: 1,
+          phone: "00000000000",
+          water_temperature: 15,
+          status: "confirmed"
+        });
+
+      if (error) throw error;
+
+      toast.success("休枠を設定しました");
+      setShowBlockDialog(false);
+    } catch (error) {
+      console.error("Error blocking time slot:", error);
+      toast.error("休枠の設定に失敗しました");
+    }
+  };
+
   const handleCellClick = (date: Date, timeSlot: string) => {
     if (isDateClosed(date)) return;
     
@@ -109,6 +137,13 @@ export const AdminCalendar = ({
     setSelectedEvent(event);
     setSelectedDate(null);
     setShowEventDialog(true);
+  };
+
+  const handleBlockClick = (e: React.MouseEvent, date: Date, timeSlot: string) => {
+    e.stopPropagation();
+    setSelectedDate(date);
+    setSelectedTimeSlot(timeSlot);
+    setShowBlockDialog(true);
   };
 
   const getStatusDisplay = (date: Date, reservations: Reservation[]) => {
@@ -180,28 +215,39 @@ export const AdminCalendar = ({
 
         {Object.entries(TIME_SLOTS).map(([slot, time]) => (
           <React.Fragment key={`time-${slot}`}>
-            <div
-              className="col-span-1 p-2 text-sm text-right text-gray-600 dark:text-gray-300"
-            >
+            <div className="col-span-1 p-2 text-sm text-right text-gray-600 dark:text-gray-300">
               {time.start}
             </div>
             {days.map((day) => {
               const slotReservations = getReservationsForDateAndSlot(day, slot);
+              const isBlocked = slotReservations.some(r => r.guest_name === "休枠");
               return (
-                <button
+                <div
                   key={`${day}-${slot}`}
-                  onClick={() => handleCellClick(day, slot)}
-                  className={`col-span-1 p-2 border rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors
-                    ${isDateClosed(day) ? 'bg-gray-100 cursor-not-allowed' : ''}
-                    ${
+                  className="col-span-1 p-2 border rounded relative"
+                >
+                  <button
+                    onClick={() => handleCellClick(day, slot)}
+                    className={`w-full h-full ${
+                      isDateClosed(day) ? 'bg-gray-100 cursor-not-allowed' : ''
+                    } ${
                       isSameDay(day, selectedDate) && selectedTimeSlot === slot
                         ? "ring-2 ring-primary"
                         : ""
-                    }
-                  `}
-                >
-                  {getStatusDisplay(day, slotReservations)}
-                </button>
+                    }`}
+                  >
+                    {getStatusDisplay(day, slotReservations)}
+                  </button>
+                  {!isDateClosed(day) && !isBlocked && slotReservations.length === 0 && (
+                    <button
+                      onClick={(e) => handleBlockClick(e, day, slot)}
+                      className="absolute top-0 right-0 p-1 text-gray-500 hover:text-gray-700"
+                      title="休枠設定"
+                    >
+                      <Ban className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
               );
             })}
           </React.Fragment>
@@ -227,6 +273,29 @@ export const AdminCalendar = ({
         date={selectedDate}
         event={selectedEvent}
       />
+
+      <Dialog open={showBlockDialog} onOpenChange={setShowBlockDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>休枠の設定</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p>
+              {selectedDate && format(selectedDate, "yyyy年MM月dd日", { locale: ja })}の
+              {selectedTimeSlot && TIME_SLOTS[selectedTimeSlot as keyof typeof TIME_SLOTS].start}
+              の枠を休枠として設定します。
+            </p>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setShowBlockDialog(false)}>
+              キャンセル
+            </Button>
+            <Button onClick={handleBlockTimeSlot}>
+              設定する
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
