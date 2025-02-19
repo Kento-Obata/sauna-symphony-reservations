@@ -1,8 +1,9 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { Search } from 'lucide-react';
+import { Search, Instagram } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -52,6 +53,14 @@ export const Header = () => {
   return (
     <header className="relative h-[70vh] flex items-center justify-center overflow-hidden bg-sauna-base">
       <div className="absolute top-4 right-4 z-20 flex items-center gap-4">
+        <a
+          href="https://www.instagram.com/u_sauna_official/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-black/80 hover:text-black transition-colors"
+        >
+          <Instagram className="h-5 w-5" />
+        </a>
         <button
           onClick={() => setShowForm(!showForm)}
           className="text-black/80 hover:text-black transition-colors text-xs font-mplus font-extralight flex items-center gap-1"
