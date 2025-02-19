@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { TimeSlot, ReservationFormData } from "@/types/reservation";
 import { format, isValid } from "date-fns";
@@ -6,10 +7,11 @@ import { useReservations } from "@/hooks/useReservations";
 import { ReservationCalendar } from "./reservation/ReservationCalendar";
 import { ReservationDetails } from "./reservation/ReservationDetails";
 import { useReservationForm } from "@/hooks/useReservationForm";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Checkbox } from "./ui/checkbox";
 import { TermsDialog } from "./TermsDialog";
 import { toast } from "sonner";
+import { getTotalPrice, formatPrice } from "@/utils/priceCalculations";
 
 const ReservationForm = () => {
   const {
@@ -37,8 +39,25 @@ const ReservationForm = () => {
 
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showTermsDialog, setShowTermsDialog] = useState(false);
+  const [totalPrice, setTotalPrice] = useState<number>(0);
 
   const { data: reservations, isLoading, error } = useReservations();
+
+  useEffect(() => {
+    const updatePrice = async () => {
+      if (people && temperature) {
+        try {
+          const price = await getTotalPrice(parseInt(people), parseInt(temperature));
+          setTotalPrice(price);
+        } catch (error) {
+          console.error("料金の計算に失敗しました:", error);
+          toast.error("料金の計算に失敗しました");
+        }
+      }
+    };
+
+    updatePrice();
+  }, [people, temperature]);
 
   const handleDateChange = (newDate: Date | undefined) => {
     setDate(newDate);
@@ -155,7 +174,7 @@ const ReservationForm = () => {
         </div>
 
         <div className="text-center mt-8">
-          <p className="mb-4 text-sauna-stone">料金: ¥40,000 (税込)</p>
+          <p className="mb-4 text-sauna-stone">料金: {formatPrice(totalPrice)}</p>
           <Button type="submit" className="w-full md:w-auto hover-lift bg-sauna-button hover:bg-sauna-button/90">
             予約する
           </Button>
