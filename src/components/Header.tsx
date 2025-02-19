@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
@@ -54,7 +53,7 @@ export const Header = () => {
     <header className="relative h-[70vh] flex items-center justify-center overflow-hidden bg-sauna-base">
       <div className="absolute top-4 right-4 z-20 flex items-center gap-4">
         <a
-          href="https://www.instagram.com/u_sauna_official/"
+          href="https://www.instagram.com/u__sauna/"
           target="_blank"
           rel="noopener noreferrer"
           className="text-black/80 hover:text-black transition-colors"
