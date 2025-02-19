@@ -1,3 +1,4 @@
+
 import { Calendar } from "@/components/ui/calendar";
 import {
   Form,
@@ -23,11 +24,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { TimeSlot, ReservationFormData } from "@/types/reservation";
 import { ReservationConfirmDialog } from "@/components/ReservationConfirmDialog";
-import { useState } from "react";
-import { useSearchParams, useRouter } from 'next/navigation';
-import { sendReservationData } from "@/integrations/supabase/utils";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { formatPrice } from "@/utils/priceCalculations";
-import { useEffect } from 'react';
 
 const timeSlotOptions = [
   { value: "morning", label: "午前" },
@@ -56,11 +55,10 @@ const formSchema = z.object({
 const ReservationForm = () => {
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [reservationData, setReservationData] = useState<ReservationFormData | null>(null);
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const [temperature, setTemperature] = useState<string | null>(null);
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const reservationCode = searchParams.get('code');
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -87,10 +85,12 @@ const ReservationForm = () => {
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    setReservationData(values);
-    setIsConfirmDialogOpen(true);
-
     try {
+      const formattedValues: ReservationFormData = {
+        ...values,
+        date: format(values.date, 'yyyy-MM-dd'),
+      };
+
       const response = await fetch('/api/calculate-price', {
         method: 'POST',
         headers: {
@@ -108,29 +108,10 @@ const ReservationForm = () => {
   
       const data = await response.json();
       setTotalPrice(data.totalPrice);
+      setIsConfirmDialogOpen(true);
     } catch (error) {
-      console.error('Failed to calculate total price:', error);
+      console.error('Failed to process reservation:', error);
     }
-  };
-
-  const confirmReservation = async () => {
-    if (!reservationData) return;
-
-    setIsSubmitting(true);
-    try {
-      const reservationCode = await sendReservationData(reservationData);
-      setIsConfirmDialogOpen(false);
-      router.push(`/complete?code=${reservationCode}`);
-    } catch (error) {
-      console.error("予約エラー:", error);
-      alert("予約処理中にエラーが発生しました。");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const editReservation = () => {
-    setIsConfirmDialogOpen(false);
   };
 
   return (
@@ -314,9 +295,13 @@ const ReservationForm = () => {
       <ReservationConfirmDialog
         isOpen={isConfirmDialogOpen}
         onClose={() => setIsConfirmDialogOpen(false)}
-        onConfirm={confirmReservation}
-        onEdit={editReservation}
-        reservation={reservationData || form.getValues()}
+        onConfirm={() => {
+          setIsSubmitting(true);
+          // 予約確定処理をここに実装
+          navigate('/complete');
+        }}
+        onEdit={() => setIsConfirmDialogOpen(false)}
+        reservation={form.getValues()}
         isSubmitting={isSubmitting}
         reservationCode={reservationCode || undefined}
       />
