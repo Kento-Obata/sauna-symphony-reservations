@@ -1,3 +1,4 @@
+
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -82,27 +83,11 @@ export const ReservationDetails = ({
     }
   };
 
-  // Get available temperatures based on time slot and season
-  const getAvailableTemperatures = () => {
-    if (timeSlot !== "morning") {
-      return [15]; // Fixed temperature for afternoon and evening
-    }
-
-    const currentMonth = date ? date.getMonth() + 1 : new Date().getMonth() + 1;
-    const isWinter = currentMonth >= 11 || currentMonth <= 3;
-
-    if (isWinter) {
-      return Array.from({ length: 4 }, (_, i) => i + 7); // 7°C to 10°C
-    } else {
-      return [15]; // Fixed 15°C for summer mornings
-    }
-  };
-
-  // Get surcharge based on temperature
-  const getSurcharge = (temp: number): number => {
-    if (temp <= 7) return 5000;
-    if (temp <= 10) return 3000;
-    return 0;
+  // 4月以降かどうかを判定する関数
+  const isAfterApril = (selectedDate: Date | undefined): boolean => {
+    if (!selectedDate) return false;
+    const month = selectedDate.getMonth() + 1; // JavaScriptの月は0から始まるため+1
+    return month >= 4;
   };
 
   return (
@@ -181,45 +166,59 @@ export const ReservationDetails = ({
         <label className="block text-sm mb-2">
           水風呂温度 <span className="text-red-500">*</span>
         </label>
-        {timeSlot === "morning" ? (
+        {!date || !isAfterApril(date) ? (
           <>
             <div className="text-sm text-muted-foreground mb-2">
-              ※ 午前の部のみ水温選択が可能です（冬期：7-10℃ / 夏期：15℃）
+              ※ 水温選択は4月以降のご予約から可能となります
             </div>
-            <Select 
-              onValueChange={setTemperature} 
-              value={temperature || "15"}
-              defaultValue="15"
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="温度を選択" />
-              </SelectTrigger>
-              <SelectContent>
-                {getAvailableTemperatures().map((temp) => {
-                  const surcharge = getSurcharge(temp);
-                  return (
-                    <SelectItem key={temp} value={temp.toString()}>
-                      <div className="flex justify-between items-center w-full">
-                        <span>{temp}°C</span>
-                        {surcharge > 0 && (
-                          <span className="text-sm text-muted-foreground ml-2">
-                            (+¥{surcharge.toLocaleString()})
-                          </span>
-                        )}
-                      </div>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
+            <Input
+              type="text"
+              value="15°C"
+              readOnly
+              className="bg-gray-100"
+            />
           </>
         ) : (
-          <Input
-            type="text"
-            value="15°C"
-            readOnly
-            className="bg-gray-100"
-          />
+          <>
+            <div className="text-sm text-muted-foreground mb-2">
+              ※ 午前の部のみ水温選択が可能です（7-10℃）
+            </div>
+            {timeSlot === "morning" ? (
+              <Select 
+                onValueChange={setTemperature} 
+                value={temperature || "15"}
+                defaultValue="15"
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="温度を選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 4 }, (_, i) => i + 7).map((temp) => {
+                    const surcharge = temp <= 7 ? 5000 : temp <= 10 ? 3000 : 0;
+                    return (
+                      <SelectItem key={temp} value={temp.toString()}>
+                        <div className="flex justify-between items-center w-full">
+                          <span>{temp}°C</span>
+                          {surcharge > 0 && (
+                            <span className="text-sm text-muted-foreground ml-2">
+                              (+¥{surcharge.toLocaleString()})
+                            </span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input
+                type="text"
+                value="15°C"
+                readOnly
+                className="bg-gray-100"
+              />
+            )}
+          </>
         )}
       </div>
     </div>
