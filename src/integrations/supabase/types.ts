@@ -60,6 +60,30 @@ export type Database = {
         }
         Relationships: []
       }
+      price_settings: {
+        Row: {
+          created_at: string
+          guest_count: number
+          id: string
+          price_per_person: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          guest_count: number
+          id?: string
+          price_per_person: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          guest_count?: number
+          id?: string
+          price_per_person?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

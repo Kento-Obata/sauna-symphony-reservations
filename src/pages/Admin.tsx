@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -11,6 +12,7 @@ import { AdminCalendar } from "@/components/admin/AdminCalendar";
 import { AdminUpcomingReservations } from "@/components/admin/AdminUpcomingReservations";
 import { AdminSearchResults } from "@/components/admin/AdminSearchResults";
 import { ShopClosureManager } from "@/components/admin/ShopClosureManager";
+import { PriceSettingsManager } from "@/components/admin/PriceSettingsManager";
 import { useReservations } from "@/hooks/useReservations";
 
 const Admin = () => {
@@ -141,6 +143,10 @@ const Admin = () => {
 
       <div className="mb-8">
         <ShopClosureManager />
+      </div>
+
+      <div className="mb-8">
+        <PriceSettingsManager />
       </div>
 
       <AdminReservationDialog
