@@ -24,6 +24,10 @@ const Index = () => {
         </div>
       </div>
 
+      <div className="relative z-10 text-center">
+        <ReservationForm />
+      </div>
+
       <div className="max-w-4xl mx-auto w-full px-4 py-8">
         <div className="glass-card p-8 mb-8">
           <div className="text-3xl font-mplus font-thin mb-8 text-center text-gradient">
@@ -54,10 +58,6 @@ const Index = () => {
             <p>※ 1名様でのご利用をご希望の場合は、お電話にてご予約ください。</p>
           </div>
         </div>
-      </div>
-
-      <div className="relative z-10 text-center">
-        <ReservationForm />
       </div>
       
       <section className="max-w-4xl mx-auto px-4 py-8 bg-sauna-base">
