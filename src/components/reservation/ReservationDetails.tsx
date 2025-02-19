@@ -1,4 +1,3 @@
-
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -159,7 +158,7 @@ export const ReservationDetails = ({
             ))}
           </SelectContent>
         </Select>
-        <p className="text-sm text-muted-foreground mt-1">※ 1名でもご利用いただけます。その場合はお電話にてご予約ください。</p>
+        <p className="text-sm text-muted-foreground mt-1">※ 1名様でも2名様料金でご利用いただけます。</p>
       </div>
 
       <div>
