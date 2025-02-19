@@ -53,7 +53,7 @@ const Index = () => {
               <tbody>
                 {priceData.map(({ people, perPerson, total }) => (
                   <tr key={people} className="border-b border-sauna-stone/10">
-                    <td className="py-4 px-6 text-left">{people}名様</td>
+                    <td className="py-4 px-6 text-left">{people}</td>
                     <td className="py-4 px-6 text-right">¥{perPerson.toLocaleString()}</td>
                     <td className="py-4 px-6 text-right">¥{total.toLocaleString()}</td>
                   </tr>
