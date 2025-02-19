@@ -1,3 +1,4 @@
+
 import { Header } from "@/components/Header";
 import ReservationForm from "@/components/ReservationForm";
 import Map from "@/components/Map";
@@ -22,6 +23,39 @@ const Index = () => {
           </div>
         </div>
       </div>
+
+      <div className="max-w-4xl mx-auto w-full px-4 py-8">
+        <div className="glass-card p-8 mb-8">
+          <div className="text-3xl font-mplus font-thin mb-8 text-center text-gradient">
+            Price
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-sauna-stone/10">
+                  <th className="py-4 px-6 text-left text-sm font-mplus font-extralight">人数</th>
+                  <th className="py-4 px-6 text-right text-sm font-mplus font-extralight">お一人様</th>
+                  <th className="py-4 px-6 text-right text-sm font-mplus font-extralight">合計金額</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[2, 3, 4, 5, 6].map((count) => (
+                  <tr key={count} className="border-b border-sauna-stone/10">
+                    <td className="py-4 px-6 text-left">{count}名様</td>
+                    <td className="py-4 px-6 text-right">¥40,000</td>
+                    <td className="py-4 px-6 text-right">¥{(40000 * count).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="mt-4 text-sm text-muted-foreground space-y-2">
+            <p>※ 水温7℃以下をご希望の場合は、別途¥5,000を頂戴いたします。</p>
+            <p>※ 1名様でのご利用をご希望の場合は、お電話にてご予約ください。</p>
+          </div>
+        </div>
+      </div>
+
       <div className="relative z-10 text-center">
         <ReservationForm />
       </div>

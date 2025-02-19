@@ -167,13 +167,14 @@ export const ReservationDetails = ({
             <SelectValue placeholder="人数を選択" />
           </SelectTrigger>
           <SelectContent>
-            {[1, 2, 3, 4, 5, 6].map((num) => (
+            {[2, 3, 4, 5, 6].map((num) => (
               <SelectItem key={num} value={num.toString()}>
                 {num}名
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
+        <p className="text-sm text-muted-foreground mt-1">※ 1名でもご利用いただけます。その場合はお電話にてご予約ください。</p>
       </div>
 
       <div>
