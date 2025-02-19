@@ -4,6 +4,14 @@ import ReservationForm from "@/components/ReservationForm";
 import Map from "@/components/Map";
 
 const Index = () => {
+  const priceData = [
+    { people: 2, perPerson: 7500, total: 15000 },
+    { people: 3, perPerson: 7000, total: 21000 },
+    { people: 4, perPerson: 7000, total: 28000 },
+    { people: 5, perPerson: 6000, total: 30000 },
+    { people: 6, perPerson: 6000, total: 36000 },
+  ];
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -43,11 +51,11 @@ const Index = () => {
                 </tr>
               </thead>
               <tbody>
-                {[2, 3, 4, 5, 6].map((count) => (
-                  <tr key={count} className="border-b border-sauna-stone/10">
-                    <td className="py-4 px-6 text-left">{count}名様</td>
-                    <td className="py-4 px-6 text-right">¥40,000</td>
-                    <td className="py-4 px-6 text-right">¥{(40000 * count).toLocaleString()}</td>
+                {priceData.map(({ people, perPerson, total }) => (
+                  <tr key={people} className="border-b border-sauna-stone/10">
+                    <td className="py-4 px-6 text-left">{people}名様</td>
+                    <td className="py-4 px-6 text-right">¥{perPerson.toLocaleString()}</td>
+                    <td className="py-4 px-6 text-right">¥{total.toLocaleString()}</td>
                   </tr>
                 ))}
               </tbody>
