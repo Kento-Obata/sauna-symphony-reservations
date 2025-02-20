@@ -1,19 +1,11 @@
-
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TimeSlot } from "@/types/reservation";
 import { TimeSlotSelect } from "@/components/TimeSlotSelect";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MonthSelector } from "./MonthSelector";
 import { DaySelector } from "./DaySelector";
 import { isValid } from "date-fns";
-
 interface ReservationDetailsProps {
   timeSlot: TimeSlot | "";
   setTimeSlot: (value: TimeSlot | "") => void;
@@ -31,7 +23,6 @@ interface ReservationDetailsProps {
   setDate: (date: Date | undefined) => void;
   timeSlotReservations: Record<TimeSlot, number>;
 }
-
 export const ReservationDetails = ({
   timeSlot,
   setTimeSlot,
@@ -47,10 +38,9 @@ export const ReservationDetails = ({
   setTemperature,
   date,
   setDate,
-  timeSlotReservations,
+  timeSlotReservations
 }: ReservationDetailsProps) => {
   const isMobile = useIsMobile();
-
   const handleMonthSelect = (monthStr: string) => {
     try {
       const selectedMonth = new Date(monthStr);
@@ -64,7 +54,6 @@ export const ReservationDetails = ({
       console.error("Error selecting month:", error);
     }
   };
-
   const handleDateSelect = (day: number) => {
     if (!date || !isValid(date)) {
       console.error("Invalid date for day selection:", date);
@@ -89,58 +78,36 @@ export const ReservationDetails = ({
     const month = selectedDate.getMonth() + 1; // JavaScriptの月は0から始まるため+1
     return month >= 4;
   };
-
-  return (
-    <div className="space-y-4">
-      {isMobile && (
-        <div className="space-y-4">
+  return <div className="space-y-4">
+      {isMobile && <div className="space-y-4">
           <MonthSelector date={date} onMonthSelect={handleMonthSelect} />
           {date && <DaySelector date={date} onDaySelect={handleDateSelect} />}
-        </div>
-      )}
+        </div>}
 
       <div>
         <label className="block text-sm mb-2">
           時間帯 <span className="text-red-500">*</span>
         </label>
-        <TimeSlotSelect
-          value={timeSlot}
-          onValueChange={setTimeSlot}
-          selectedDate={date}
-          timeSlotReservations={timeSlotReservations}
-        />
+        <TimeSlotSelect value={timeSlot} onValueChange={setTimeSlot} selectedDate={date} timeSlotReservations={timeSlotReservations} />
       </div>
 
       <div>
         <label className="block text-sm mb-2">
           お名前 <span className="text-red-500">*</span>
         </label>
-        <Input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
+        <Input value={name} onChange={e => setName(e.target.value)} required />
       </div>
 
       <div>
         <label className="block text-sm mb-2">
           電話番号 <span className="text-red-500">*</span>
         </label>
-        <Input
-          type="tel"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          required
-        />
+        <Input type="tel" value={phone} onChange={e => setPhone(e.target.value)} required />
       </div>
 
       <div>
         <label className="block text-sm mb-2">メールアドレス（任意）</label>
-        <Input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+        <Input type="email" value={email} onChange={e => setEmail(e.target.value)} />
       </div>
 
       <div>
@@ -152,11 +119,9 @@ export const ReservationDetails = ({
             <SelectValue placeholder="人数を選択" />
           </SelectTrigger>
           <SelectContent>
-            {[2, 3, 4, 5, 6].map((num) => (
-              <SelectItem key={num} value={num.toString()}>
+            {[2, 3, 4, 5, 6].map(num => <SelectItem key={num} value={num.toString()}>
                 {num}名
-              </SelectItem>
-            ))}
+              </SelectItem>)}
           </SelectContent>
         </Select>
         <p className="text-sm text-muted-foreground mt-1">※ 1名様でも2名様料金でご利用いただけます。</p>
@@ -166,29 +131,16 @@ export const ReservationDetails = ({
         <label className="block text-sm mb-2">
           水風呂温度 <span className="text-red-500">*</span>
         </label>
-        {!date || !isAfterApril(date) ? (
-          <>
+        {!date || !isAfterApril(date) ? <>
             <div className="text-sm text-muted-foreground mb-2">
               ※ 水温選択は4月以降のご予約から可能となります
             </div>
-            <Input
-              type="text"
-              value="15°C"
-              readOnly
-              className="bg-gray-100"
-            />
-          </>
-        ) : (
-          <>
+            <Input type="text" value="15°C" readOnly className="bg-sauna-base" />
+          </> : <>
             <div className="text-sm text-muted-foreground mb-2">
               ※ 午前の部のみ水温選択が可能です（5-14℃）
             </div>
-            {timeSlot === "morning" ? (
-              <Select 
-                onValueChange={setTemperature} 
-                value={temperature || "15"}
-                defaultValue="15"
-              >
+            {timeSlot === "morning" ? <Select onValueChange={setTemperature} value={temperature || "15"} defaultValue="15">
                 <SelectTrigger>
                   <SelectValue placeholder="温度を選択" />
                 </SelectTrigger>
@@ -211,18 +163,8 @@ export const ReservationDetails = ({
                   </SelectItem>
                   <SelectItem value="15">15℃</SelectItem>
                 </SelectContent>
-              </Select>
-            ) : (
-              <Input
-                type="text"
-                value="15°C"
-                readOnly
-                className="bg-gray-100"
-              />
-            )}
-          </>
-        )}
+              </Select> : <Input type="text" value="15°C" readOnly className="bg-gray-100" />}
+          </>}
       </div>
-    </div>
-  );
+    </div>;
 };
