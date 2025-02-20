@@ -43,6 +43,11 @@ const Index = () => {
           <div className="text-3xl font-mplus font-thin mb-8 text-center text-gradient">
             Price
           </div>
+          <div className="mb-8 text-center">
+            <p className="text-sm font-mplus text-sauna-stone/90 border border-sauna-stone/20 rounded-lg p-4 inline-block">
+              プレオープン期間（3月）は、1名様5000円、オリジナルビールのお土産付きで、2名様からご予約いただけます。
+            </p>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
