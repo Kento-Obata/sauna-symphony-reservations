@@ -1,3 +1,4 @@
+
 import { Header } from "@/components/Header";
 import ReservationForm from "@/components/ReservationForm";
 import Map from "@/components/Map";
@@ -81,7 +82,7 @@ const Index = () => {
             </table>
           </div>
           <div className="mt-4 text-sm text-black/90 space-y-2">
-            <p className="bg-white/60 p-4 rounded-lg">
+            <p className="bg-sauna-base p-4 rounded-lg border border-sauna-stone/20">
               【option】<br />
               水温10℃ ~ 14℃ +3000円<br />
               水温5℃ ~ 10℃ +5000円
