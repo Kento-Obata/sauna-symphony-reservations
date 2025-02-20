@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import {
   startOfWeek,
@@ -107,7 +108,9 @@ export const AdminCalendar = ({
           guest_count: 1,
           phone: "00000000000",
           water_temperature: 15,
-          status: "confirmed"
+          status: "confirmed",
+          is_confirmed: true, // 確認済みとして設定
+          expires_at: null    // 期限切れを無効化
         });
 
       if (insertError) throw insertError;
