@@ -1,3 +1,4 @@
+
 import { TIME_SLOTS } from "@/components/TimeSlotSelect";
 import { TimeSlot } from "@/types/reservation";
 import { useReservations } from "@/hooks/useReservations";
@@ -30,7 +31,11 @@ export const ReservationTimeSelect = ({
     if (!reservations) return false;
 
     const slotReservations = reservations.filter(
-      (r) => r.date === date && r.time_slot === slot && r.id !== currentReservationId
+      (r) => 
+        r.date === date && 
+        r.time_slot === slot && 
+        r.id !== currentReservationId &&
+        (r.status === "confirmed" || r.status === "pending")
     );
 
     return slotReservations.length >= 1;

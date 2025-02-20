@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Reservation } from "@/types/reservation";
@@ -12,6 +13,7 @@ export const useReservations = () => {
         .from("reservations")
         .select("*")
         .gte('date', today)
+        .in('status', ['confirmed', 'pending'])
         .order('date', { ascending: true });
 
       if (error) throw error;
