@@ -35,9 +35,9 @@ export const getPriceSettings = async (): Promise<PriceSetting[]> => {
 };
 
 export const getPricePerPerson = async (guestCount: number, date?: Date): Promise<number> => {
-  // プレオープン期間の場合は一律4000円/人
+  // プレオープン期間の場合は一律5000円/人
   if (date && isPreOpeningPeriod(date)) {
-    return 4000;
+    return 5000;
   }
 
   const settings = await getPriceSettings();
@@ -46,7 +46,8 @@ export const getPricePerPerson = async (guestCount: number, date?: Date): Promis
 };
 
 export const getTotalPrice = async (guestCount: number, temperature: string, date?: Date): Promise<number> => {
-  const pricePerPerson = await getPricePerPerson(guestCount, date);
+  const dateObj = date ? new Date(date) : undefined;
+  const pricePerPerson = await getPricePerPerson(guestCount, dateObj);
   const basePrice = pricePerPerson * guestCount;
   const surcharge = getSurcharge(temperature);
   return basePrice + surcharge;
