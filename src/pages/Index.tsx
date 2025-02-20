@@ -5,11 +5,11 @@ import Map from "@/components/Map";
 
 const Index = () => {
   const priceData = [
-    { people: 2, perPerson: 4000, total: 8000 },
-    { people: 3, perPerson: 4000, total: 12000 },
-    { people: 4, perPerson: 4000, total: 16000 },
-    { people: 5, perPerson: 4000, total: 20000 },
-    { people: 6, perPerson: 4000, total: 24000 },
+    { people: 2, perPerson: 7500, total: 15000 },
+    { people: 3, perPerson: 7000, total: 21000 },
+    { people: 4, perPerson: 7000, total: 28000 },
+    { people: 5, perPerson: 6000, total: 30000 },
+    { people: 6, perPerson: 6000, total: 36000 },
   ];
 
   return (
@@ -43,9 +43,6 @@ const Index = () => {
           <div className="text-3xl font-mplus font-thin mb-8 text-center text-gradient">
             Price
           </div>
-          <p className="text-center mb-6 text-sm text-muted-foreground">
-            プレオープン期間は、一律一人4,000円となります
-          </p>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
