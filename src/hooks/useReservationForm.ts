@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { TimeSlot } from "@/types/reservation";
 import { toast } from "sonner";
@@ -11,7 +10,7 @@ export const useReservationForm = () => {
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [timeSlot, setTimeSlot] = useState<TimeSlot | "">("");
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] useState("");
   const [phone, setPhone] = useState("");
   const [people, setPeople] = useState("");
   const [temperature, setTemperature] = useState("15");
@@ -77,6 +76,13 @@ export const useReservationForm = () => {
         return;
       }
 
+      // Calculate total price
+      const totalPrice = await getTotalPrice(
+        parseInt(people),
+        temperature,
+        date
+      );
+
       const reservationData = {
         date: format(date, "yyyy-MM-dd"),
         time_slot: timeSlot as TimeSlot,
@@ -86,6 +92,7 @@ export const useReservationForm = () => {
         phone: phone,
         water_temperature: parseInt(temperature),
         status: "pending" as const,
+        total_price: totalPrice,
       };
 
       console.log("Submitting reservation data:", reservationData);
@@ -132,16 +139,10 @@ export const useReservationForm = () => {
         "send-pending-notification",
         {
           body: {
-            date: reservationData.date,
-            timeSlot: reservationData.time_slot,
-            guestName: reservationData.guest_name,
-            guestCount: reservationData.guest_count,
-            email: reservationData.email,
-            phone: reservationData.phone,
-            waterTemperature: reservationData.water_temperature,
+            ...reservationData,
             reservationCode: newReservation.reservation_code,
             confirmationToken: newReservation.confirmation_token,
-            reservationDate: date.toISOString(), // Add this line to pass the date for price calculation
+            totalPrice: totalPrice,
           },
         }
       );

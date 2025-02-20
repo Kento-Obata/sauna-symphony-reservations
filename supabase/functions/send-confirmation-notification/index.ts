@@ -1,168 +1,121 @@
 
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "https://esm.sh/resend@2.0.0";
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
+import { corsHeaders } from "../_shared/cors.ts"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { Resend } from "https://esm.sh/resend@1.1.0"
+import { Twilio } from "https://esm.sh/twilio@4.19.0"
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const resend = new Resend(Deno.env.get('RESEND_API_KEY'))
+const twilioClient = new Twilio(
+  Deno.env.get('TWILIO_ACCOUNT_SID')!,
+  Deno.env.get('TWILIO_AUTH_TOKEN')!
+);
+const twilioPhoneNumber = Deno.env.get('TWILIO_PHONE_NUMBER')!;
 
-interface ReservationNotification {
-  date: string;
-  timeSlot: string;
-  guestName: string;
-  guestCount: number;
-  email: string | null;
-  phone: string;
-  waterTemperature: number;
-  reservationCode: string;
-  reservationDate: string;
-}
-
-const TIME_SLOTS = {
-  morning: "10:00-12:30",
-  afternoon: "13:30-16:00",
-  evening: "17:00-19:30",
-};
-
-const formatPhoneNumber = (phone: string): string => {
-  const digits = phone.replace(/\D/g, '');
-  return digits.startsWith('0') ? '+81' + digits.slice(1) : digits;
-};
-
-const getSurcharge = (temp: number): number => {
-  if (temp <= 7) return 5000;
-  if (temp <= 10) return 3000;
-  return 0;
-};
-
-const isPreOpeningPeriod = (date: Date): boolean => {
-  return date.getFullYear() === 2025 && date.getMonth() === 2;
-};
-
-const getPricePerPerson = (date: Date): number => {
-  return isPreOpeningPeriod(date) ? 5000 : 40000;
-};
-
-const formatPrice = (price: number): string => {
-  return `¥${price.toLocaleString()}`;
-};
-
-const handler = async (req: Request): Promise<Response> => {
-  console.log("Confirmation notification function called");
-
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
-    const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID');
-    const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN');
-    const TWILIO_PHONE_NUMBER = Deno.env.get('TWILIO_PHONE_NUMBER');
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    )
 
-    if (!RESEND_API_KEY || !TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
-      throw new Error("Missing required environment variables");
+    const { token } = await req.json()
+
+    // Get reservation details
+    const { data: reservation, error: fetchError } = await supabase
+      .from('reservations')
+      .select('*')
+      .eq('confirmation_token', token)
+      .single()
+
+    if (fetchError || !reservation) {
+      throw new Error('Reservation not found')
     }
 
-    const resend = new Resend(RESEND_API_KEY);
-    const reservation: ReservationNotification = await req.json();
-    const notifications = [];
+    const formattedDate = new Date(reservation.date).toLocaleDateString('ja-JP', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
 
-    const reservationDate = new Date(reservation.reservationDate);
-    const pricePerPerson = getPricePerPerson(reservationDate);
-    const basePrice = pricePerPerson * reservation.guestCount;
-    const surcharge = getSurcharge(reservation.waterTemperature);
-    const totalPrice = basePrice + surcharge;
+    const timeSlotMap = {
+      morning: '10:00-12:30',
+      afternoon: '13:30-16:00',
+      evening: '17:00-19:30'
+    }
 
-    const messageContent = `
-ご予約が確定しました。
+    const formattedTimeSlot = timeSlotMap[reservation.time_slot]
 
-【ご予約内容】
-予約コード: ${reservation.reservationCode}
-日付: ${reservation.date}
-時間: ${TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]}
-人数: ${reservation.guestCount}名様
-水風呂温度: ${reservation.waterTemperature}°C
+    // Update reservation status
+    const { error: updateError } = await supabase
+      .from('reservations')
+      .update({
+        status: 'confirmed',
+        is_confirmed: true,
+      })
+      .eq('confirmation_token', token)
 
-【料金】
-${formatPrice(totalPrice)} (税込)${surcharge > 0 ? `\n※ 水温オプション料金 +${formatPrice(surcharge)} を含む` : ''}
+    if (updateError) {
+      throw updateError
+    }
 
-【水風呂温度について】
-水風呂温度は4月以降ご指定いただけますが、プレ期間でもinstagramのDMにて希望の温度をお伝えいただければ、可能な限り対応させていただきます。
-
-【アクセス】
-〒811-2127
-福岡県糟屋郡宇美町障子岳6-8-4
-Google Maps: https://www.google.com/maps?q=8Q5GHG7V%2BJ5
-
-【当日の注意事項】
-・ご予約時間の15分前から受付開始いたします。
-・予約コードをご提示ください。
-・水風呂の温度は${reservation.waterTemperature}°Cでご用意いたします。
-・タオル、水着はご用意しております。
-・アメニティは、シャンプー / リンス / フェイシャルパック / 化粧水 を用意しております。
-
-ご不明な点がございましたら、お気軽にお問い合わせください。
-
-心よりお待ちしております。
-`;
-
+    // Send email if email is provided
     if (reservation.email) {
-      try {
-        const emailRes = await resend.emails.send({
-          from: "Sauna U <onboarding@resend.dev>",
-          to: [reservation.email],
-          subject: "サウナのご予約確定のお知らせ",
-          html: messageContent.split('\n').map(line => `<p>${line}</p>`).join(''),
-        });
-        console.log("Email sent successfully:", emailRes);
-        notifications.push("email");
-      } catch (error) {
-        console.error("Email sending error:", error);
-      }
+      await resend.emails.send({
+        from: 'sync <noreply@sync-sauna.com>',
+        to: reservation.email,
+        subject: '【sync】ご予約の確定',
+        html: `
+          <p>${reservation.guest_name}様</p>
+          <p>syncのご予約が確定いたしました。</p>
+          <p>予約番号：${reservation.reservation_code}</p>
+          <p>日時：${formattedDate} ${formattedTimeSlot}<br>
+          人数：${reservation.guest_count}名様<br>
+          水風呂温度：${reservation.water_temperature}℃<br>
+          料金：${reservation.total_price.toLocaleString()}円（税込）</p>
+          <p>当日は予約番号をご提示ください。<br>
+          受付開始は、ご予約時間の15分前からとなります。</p>
+        `
+      })
     }
 
-    try {
-      const formattedPhone = formatPhoneNumber(reservation.phone);
-      const formData = new URLSearchParams();
-      formData.append('To', formattedPhone);
-      formData.append('From', TWILIO_PHONE_NUMBER);
-      formData.append('Body', messageContent);
+    // Send SMS
+    const smsBody = `
+【sync】ご予約の確定
+${reservation.guest_name}様
 
-      const twilioResponse = await fetch(
-        `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Authorization': `Basic ${btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)}`,
-          },
-          body: formData,
-        }
-      );
+予約番号：${reservation.reservation_code}
+日時：${formattedDate} ${formattedTimeSlot}
+人数：${reservation.guest_count}名様
+水風呂温度：${reservation.water_temperature}℃
+料金：${reservation.total_price.toLocaleString()}円（税込）
 
-      const twilioResult = await twilioResponse.json();
-      if (!twilioResponse.ok) {
-        throw new Error(`Twilio API error: ${JSON.stringify(twilioResult)}`);
-      }
-      console.log("SMS sent successfully");
-      notifications.push("sms");
-    } catch (error) {
-      console.error("SMS sending error:", error);
-    }
+当日は予約番号をご提示ください。
+受付開始は、ご予約時間の15分前からとなります。
+`.trim()
+
+    await twilioClient.messages.create({
+      body: smsBody,
+      to: reservation.phone,
+      from: twilioPhoneNumber
+    })
 
     return new Response(
-      JSON.stringify({ success: true, notifications }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+      JSON.stringify({ success: true, reservation_code: reservation.reservation_code }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+    )
   } catch (error) {
-    console.error("Function error:", error);
+    console.error('Error:', error)
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
-    );
+      JSON.stringify({ error: error.message }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400 
+      },
+    )
   }
-};
-
-serve(handler);
+})

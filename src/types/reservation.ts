@@ -1,3 +1,4 @@
+
 export type TimeSlot = "morning" | "afternoon" | "evening";
 
 export interface Reservation {
@@ -15,6 +16,7 @@ export interface Reservation {
   is_confirmed: boolean | null;
   confirmation_token: string | null;
   expires_at: string | null;
+  total_price: number;
 }
 
 export interface ReservationFormData {
