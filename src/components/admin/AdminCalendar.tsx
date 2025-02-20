@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   startOfWeek,
@@ -89,25 +88,14 @@ export const AdminCalendar = ({
     const dateStr = format(selectedDate, "yyyy-MM-dd");
 
     try {
-      // まず現在のアクティブな予約を取得
-      const { data: existingReservations, error: fetchError } = await supabase
+      // 既存の予約を削除
+      const { error: deleteError } = await supabase
         .from('reservations')
-        .select('*')
+        .delete()
         .eq('date', dateStr)
-        .eq('time_slot', selectedTimeSlot)
-        .in('status', ['confirmed', 'pending']);
+        .eq('time_slot', selectedTimeSlot);
 
-      if (fetchError) throw fetchError;
-
-      // 既存の予約があれば、それらをキャンセル
-      if (existingReservations && existingReservations.length > 0) {
-        const { error: cancelError } = await supabase
-          .from('reservations')
-          .update({ status: 'cancelled' })
-          .in('id', existingReservations.map(r => r.id));
-
-        if (cancelError) throw cancelError;
-      }
+      if (deleteError) throw deleteError;
 
       // 休枠を設定
       const { error: insertError } = await supabase
