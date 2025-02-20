@@ -1,3 +1,4 @@
+
 import { Header } from "@/components/Header";
 import ReservationForm from "@/components/ReservationForm";
 import Map from "@/components/Map";
@@ -54,7 +55,7 @@ const Index = () => {
             Price
           </div>
           <div className="mb-8 text-center">
-            <p className="text-sm font-mplus text-sauna-stone/90 border border-sauna-stone/20 rounded-lg p-4 inline-block">
+            <p className="text-base font-mplus text-black bg-white/80 shadow-sm border border-sauna-stone/20 rounded-lg p-6 inline-block">
               プレオープン期間（3月）は、1名様5000円、オリジナルビールのお土産付きで、2名様からご予約いただけます。
             </p>
           </div>
@@ -80,11 +81,12 @@ const Index = () => {
               </tbody>
             </table>
           </div>
-          <div className="mt-4 text-sm text-muted-foreground space-y-2">
-            <p>【option】
-水温10℃ ~ 14℃ +3000円
-水温5℃ ~ 10℃ +5000円
-          </p>
+          <div className="mt-4 text-sm text-black/90 space-y-2">
+            <p className="bg-white/60 p-4 rounded-lg">
+              【option】<br />
+              水温10℃ ~ 14℃ +3000円<br />
+              水温5℃ ~ 10℃ +5000円
+            </p>
             <p>※ 1名様でのご利用をご希望の場合は、お電話にてご予約ください。</p>
           </div>
         </div>
