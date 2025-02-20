@@ -123,6 +123,7 @@ export type Database = {
           reservation_code: string | null
           status: string
           time_slot: Database["public"]["Enums"]["time_slot"]
+          total_price: number
           water_temperature: number
         }
         Insert: {
@@ -139,6 +140,7 @@ export type Database = {
           reservation_code?: string | null
           status?: string
           time_slot: Database["public"]["Enums"]["time_slot"]
+          total_price?: number
           water_temperature: number
         }
         Update: {
@@ -155,6 +157,7 @@ export type Database = {
           reservation_code?: string | null
           status?: string
           time_slot?: Database["public"]["Enums"]["time_slot"]
+          total_price?: number
           water_temperature?: number
         }
         Relationships: []
