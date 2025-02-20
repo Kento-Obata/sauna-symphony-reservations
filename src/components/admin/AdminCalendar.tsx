@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import {
   startOfWeek,
@@ -86,7 +87,18 @@ export const AdminCalendar = ({
     if (!selectedDate || !selectedTimeSlot) return;
 
     try {
-      const { error } = await supabase
+      // 既存の予約をキャンセル状態に更新
+      const { error: updateError } = await supabase
+        .from('reservations')
+        .update({ status: 'cancelled' })
+        .eq('date', format(selectedDate, "yyyy-MM-dd"))
+        .eq('time_slot', selectedTimeSlot)
+        .in('status', ['confirmed', 'pending']);
+
+      if (updateError) throw updateError;
+
+      // 新しい休枠を設定
+      const { error: insertError } = await supabase
         .from("reservations")
         .insert({
           date: format(selectedDate, "yyyy-MM-dd"),
@@ -98,7 +110,7 @@ export const AdminCalendar = ({
           status: "confirmed"
         });
 
-      if (error) throw error;
+      if (insertError) throw insertError;
 
       toast.success("休枠を設定しました");
       setShowBlockDialog(false);
