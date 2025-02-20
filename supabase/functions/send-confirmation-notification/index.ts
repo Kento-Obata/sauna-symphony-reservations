@@ -16,7 +16,6 @@ interface ReservationNotification {
   phone: string;
   waterTemperature: number;
   reservationCode: string;
-  reservationDate: string;
 }
 
 const TIME_SLOTS = {
@@ -31,28 +30,46 @@ const formatPhoneNumber = (phone: string): string => {
 };
 
 const getSurcharge = (temp: number): number => {
-  if (temp <= 7) return 5000;
-  if (temp <= 10) return 3000;
+  if (temp <= 10) return 5000;
+  if (temp <= 14) return 3000;
   return 0;
 };
 
+// プレオープン期間（2025年3月）かどうかを判定
 const isPreOpeningPeriod = (date: Date): boolean => {
   return date.getFullYear() === 2025 && date.getMonth() === 2;
 };
 
-const getPricePerPerson = (date: Date): number => {
-  return isPreOpeningPeriod(date) ? 5000 : 40000;
+// 人数に応じた一人あたりの料金を計算
+const getPricePerPersonRegular = (guestCount: number): number => {
+  if (guestCount === 2) return 7500;
+  if (guestCount === 3 || guestCount === 4) return 7000;
+  if (guestCount === 5 || guestCount === 6) return 6000;
+  return 7500; // デフォルト料金（2名料金）
 };
 
-const formatPrice = (price: number): string => {
-  return `¥${price.toLocaleString()}`;
+const getPricePerPerson = (guestCount: number, date: Date): number => {
+  // プレオープン期間の場合は一律5000円/人
+  if (isPreOpeningPeriod(date)) {
+    return 5000;
+  }
+  return getPricePerPersonRegular(guestCount);
+};
+
+const calculateTotalPrice = (guestCount: number, waterTemperature: number, date: Date): number => {
+  const pricePerPerson = getPricePerPerson(guestCount, date);
+  const basePrice = pricePerPerson * guestCount;
+  const surcharge = getSurcharge(waterTemperature);
+  return basePrice + surcharge;
 };
 
 const handler = async (req: Request): Promise<Response> => {
   console.log("Confirmation notification function called");
 
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { 
+      headers: { ...corsHeaders }
+    });
   }
 
   try {
@@ -61,60 +78,75 @@ const handler = async (req: Request): Promise<Response> => {
     const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN');
     const TWILIO_PHONE_NUMBER = Deno.env.get('TWILIO_PHONE_NUMBER');
 
+    console.log("Environment variables check:", {
+      hasResendKey: !!RESEND_API_KEY,
+      hasTwilioSid: !!TWILIO_ACCOUNT_SID,
+      hasTwilioToken: !!TWILIO_AUTH_TOKEN,
+      hasPhoneNumber: !!TWILIO_PHONE_NUMBER
+    });
+
     if (!RESEND_API_KEY || !TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
-      throw new Error("Missing required environment variables");
+      console.error("Missing required environment variables");
+      throw new Error("Server configuration error");
     }
 
     const resend = new Resend(RESEND_API_KEY);
     const reservation: ReservationNotification = await req.json();
-    const notifications = [];
+    console.log("Received reservation data:", {
+      ...reservation,
+      phone: "REDACTED"
+    });
 
-    const reservationDate = new Date(reservation.reservationDate);
-    const pricePerPerson = getPricePerPerson(reservationDate);
-    const basePrice = pricePerPerson * reservation.guestCount;
-    const surcharge = getSurcharge(reservation.waterTemperature);
-    const totalPrice = basePrice + surcharge;
+    const notifications = [];
+    const GOOGLE_MAPS_URL = "https://maps.google.com/maps?q=8Q5GHG7V%2BJ5";
+
+    // 料金計算
+    const reservationDate = new Date(reservation.date);
+    const totalPrice = calculateTotalPrice(
+      reservation.guestCount,
+      reservation.waterTemperature,
+      reservationDate
+    );
+
+    console.log("Price calculation:", {
+      date: reservationDate,
+      guestCount: reservation.guestCount,
+      waterTemperature: reservation.waterTemperature,
+      totalPrice: totalPrice
+    });
 
     const messageContent = `
-ご予約が確定しました。
-
 【ご予約内容】
 予約コード: ${reservation.reservationCode}
 日付: ${reservation.date}
 時間: ${TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]}
 人数: ${reservation.guestCount}名様
 水風呂温度: ${reservation.waterTemperature}°C
+料金: ¥${totalPrice.toLocaleString()} (税込)
 
-【料金】
-${formatPrice(totalPrice)} (税込)${surcharge > 0 ? `\n※ 水温オプション料金 +${formatPrice(surcharge)} を含む` : ''}
-
-【水風呂温度について】
-水風呂温度は4月以降ご指定いただけますが、プレ期間でもinstagramのDMにて希望の温度をお伝えいただければ、可能な限り対応させていただきます。
+【受付時間】
+ご予約時間の15分前からご案内いたします。
 
 【アクセス】
-〒811-2127
-福岡県糟屋郡宇美町障子岳6-8-4
-Google Maps: https://www.google.com/maps?q=8Q5GHG7V%2BJ5
-
-【当日の注意事項】
-・ご予約時間の15分前から受付開始いたします。
-・予約コードをご提示ください。
-・水風呂の温度は${reservation.waterTemperature}°Cでご用意いたします。
-・タオル、水着はご用意しております。
-・アメニティは、シャンプー / リンス / フェイシャルパック / 化粧水 を用意しております。
-
-ご不明な点がございましたら、お気軽にお問い合わせください。
+住所: 〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4
+Plus Code: 8Q5GHG7V+J5
+Google Maps: ${GOOGLE_MAPS_URL}
 
 心よりお待ちしております。
 `;
 
     if (reservation.email) {
       try {
+        console.log("Attempting to send email to:", reservation.email);
         const emailRes = await resend.emails.send({
           from: "Sauna U <onboarding@resend.dev>",
           to: [reservation.email],
           subject: "サウナのご予約確定のお知らせ",
-          html: messageContent.split('\n').map(line => `<p>${line}</p>`).join(''),
+          html: `
+            <h1>ご予約ありがとうございます</h1>
+            <p>${reservation.guestName}様</p>
+            ${messageContent.split('\n').map(line => `<p>${line}</p>`).join('')}
+          `,
         });
         console.log("Email sent successfully:", emailRes);
         notifications.push("email");
@@ -125,6 +157,8 @@ Google Maps: https://www.google.com/maps?q=8Q5GHG7V%2BJ5
 
     try {
       const formattedPhone = formatPhoneNumber(reservation.phone);
+      console.log("Attempting to send SMS to formatted number:", formattedPhone);
+
       const formData = new URLSearchParams();
       formData.append('To', formattedPhone);
       formData.append('From', TWILIO_PHONE_NUMBER);
@@ -143,9 +177,12 @@ Google Maps: https://www.google.com/maps?q=8Q5GHG7V%2BJ5
       );
 
       const twilioResult = await twilioResponse.json();
+      console.log("Twilio API Response:", twilioResult);
+
       if (!twilioResponse.ok) {
         throw new Error(`Twilio API error: ${JSON.stringify(twilioResult)}`);
       }
+
       console.log("SMS sent successfully");
       notifications.push("sms");
     } catch (error) {
@@ -153,14 +190,26 @@ Google Maps: https://www.google.com/maps?q=8Q5GHG7V%2BJ5
     }
 
     return new Response(
-      JSON.stringify({ success: true, notifications }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({
+        success: true,
+        notifications: notifications,
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      }
     );
   } catch (error) {
     console.error("Function error:", error);
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      JSON.stringify({
+        success: false,
+        error: error.message,
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+      }
     );
   }
 };
