@@ -1,4 +1,3 @@
-
 import { Header } from "@/components/Header";
 import ReservationForm from "@/components/ReservationForm";
 import Map from "@/components/Map";
@@ -87,7 +86,7 @@ const Index = () => {
               水温5℃ ~ 10℃ +5000円<br />
               ※ 水風呂温度は4月以降ご指定いただけますが、プレ期間でもinstagramのDMにて希望の温度をお伝えいただければ、可能な限り対応させていただきます。
             </p>
-            <p>※ 1名様でのご利用をご希望の場合は、お電話にてご予約ください。</p>
+            <p>※ 1名様でのご利用をご希望の際は、2名様料金でご利用いただけます。</p>
           </div>
         </div>
       </div>
@@ -105,12 +104,7 @@ const Index = () => {
                   〒811-2127<br />
                   福岡県糟屋郡宇美町障子岳6-8-4
                 </p>
-                <a 
-                  href="https://www.google.com/maps?q=8Q5GHG7V%2BJ5" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="text-black hover:underline mt-2 inline-block"
-                >
+                <a href="https://www.google.com/maps?q=8Q5GHG7V%2BJ5" target="_blank" rel="noopener noreferrer" className="text-black hover:underline mt-2 inline-block">
                   Google Mapsで見る
                 </a>
               </div>
