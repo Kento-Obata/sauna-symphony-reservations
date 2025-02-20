@@ -1,7 +1,7 @@
-
 import { format } from "date-fns";
 import { Reservation } from "@/types/reservation";
-import { formatPrice } from "@/utils/priceCalculations";
+import { getTotalPrice, getSurcharge, formatPrice } from "@/utils/priceCalculations";
+import { useEffect, useState } from "react";
 
 const TIME_SLOTS = {
   morning: "10:00-12:30",
@@ -14,6 +14,30 @@ interface ReservationInfoProps {
 }
 
 export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
+  const [totalPrice, setTotalPrice] = useState<number>(0);
+  const surcharge = getSurcharge(reservation.water_temperature.toString());
+
+  useEffect(() => {
+    const calculatePrice = async () => {
+      try {
+        // 日付文字列をDateオブジェクトに変換
+        const dateObj = reservation.date ? new Date(reservation.date) : undefined;
+        console.log('ReservationInfo - Calculating price for date:', dateObj);
+        
+        const price = await getTotalPrice(
+          reservation.guest_count,
+          reservation.water_temperature.toString(),
+          dateObj
+        );
+        setTotalPrice(price);
+      } catch (error) {
+        console.error("料金の計算に失敗しました:", error);
+      }
+    };
+
+    calculatePrice();
+  }, [reservation.guest_count, reservation.water_temperature, reservation.date]);
+
   const getStatusDisplay = (status: string) => {
     switch (status) {
       case "pending":
@@ -59,15 +83,10 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
 
       <div className="text-sauna-stone">料金:</div>
       <div>
-        {formatPrice(reservation.total_price)} (税込)
-        {reservation.water_temperature <= 10 && (
+        {formatPrice(totalPrice)} (税込)
+        {surcharge > 0 && (
           <div className="text-xs text-muted-foreground">
-            ※ 水温オプション料金 +{formatPrice(5000)} を含む
-          </div>
-        )}
-        {reservation.water_temperature <= 14 && reservation.water_temperature > 10 && (
-          <div className="text-xs text-muted-foreground">
-            ※ 水温オプション料金 +{formatPrice(3000)} を含む
+            ※ 水温オプション料金 +{formatPrice(surcharge)} を含む
           </div>
         )}
       </div>
