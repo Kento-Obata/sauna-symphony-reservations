@@ -1,3 +1,4 @@
+
 import { Header } from "@/components/Header";
 import ReservationForm from "@/components/ReservationForm";
 import Map from "@/components/Map";
@@ -55,7 +56,7 @@ const Index = () => {
           </div>
           <div className="mb-8 text-center">
             <p className="text-base font-mplus text-black bg-sauna-base shadow-sm border border-sauna-stone/20 rounded-lg p-6 inline-block">プレオープン期間（3月）のみ 
-オリジナルビールのお土産付きで1名様5000円でご利用いただけます</p>
+お一人様5000円でご利用いただけます</p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
