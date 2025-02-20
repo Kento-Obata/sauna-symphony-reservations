@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { TimeSlot } from "@/types/reservation";
 import { toast } from "sonner";
@@ -140,6 +141,7 @@ export const useReservationForm = () => {
             waterTemperature: reservationData.water_temperature,
             reservationCode: newReservation.reservation_code,
             confirmationToken: newReservation.confirmation_token,
+            reservationDate: date.toISOString(), // Add this line to pass the date for price calculation
           },
         }
       );

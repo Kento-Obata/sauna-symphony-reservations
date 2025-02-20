@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
@@ -16,6 +17,7 @@ interface ReservationNotification {
   waterTemperature: number;
   reservationCode: string;
   confirmationToken: string;
+  reservationDate: string; // Add this field
 }
 
 const TIME_SLOTS = {
@@ -33,6 +35,14 @@ const getSurcharge = (temp: number): number => {
   if (temp <= 7) return 5000;
   if (temp <= 10) return 3000;
   return 0;
+};
+
+const isPreOpeningPeriod = (date: Date): boolean => {
+  return date.getFullYear() === 2025 && date.getMonth() === 2;
+};
+
+const getPricePerPerson = (date: Date): number => {
+  return isPreOpeningPeriod(date) ? 5000 : 40000;
 };
 
 const formatPrice = (price: number): string => {
@@ -63,7 +73,9 @@ const handler = async (req: Request): Promise<Response> => {
     const BASE_URL = "https://www.u-sauna-private.com";
     const CONFIRMATION_URL = `${BASE_URL}/reservation/confirm/${reservation.confirmationToken}`;
 
-    const basePrice = 40000;
+    const reservationDate = new Date(reservation.reservationDate);
+    const pricePerPerson = getPricePerPerson(reservationDate);
+    const basePrice = pricePerPerson * reservation.guestCount;
     const surcharge = getSurcharge(reservation.waterTemperature);
     const totalPrice = basePrice + surcharge;
 
