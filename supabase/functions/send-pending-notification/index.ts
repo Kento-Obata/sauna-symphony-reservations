@@ -17,7 +17,7 @@ interface ReservationNotification {
   waterTemperature: number;
   reservationCode: string;
   confirmationToken: string;
-  reservationDate: string; // Add this field
+  reservationDate: string;
 }
 
 const TIME_SLOTS = {
@@ -31,22 +31,39 @@ const formatPhoneNumber = (phone: string): string => {
   return digits.startsWith('0') ? '+81' + digits.slice(1) : digits;
 };
 
+// 水温による追加料金の計算
 const getSurcharge = (temp: number): number => {
-  if (temp <= 7) return 5000;
-  if (temp <= 10) return 3000;
+  if (temp <= 10) return 5000;
+  if (temp <= 14) return 3000;
   return 0;
 };
 
+// プレオープン期間（2025年3月）かどうかを判定
 const isPreOpeningPeriod = (date: Date): boolean => {
   return date.getFullYear() === 2025 && date.getMonth() === 2;
 };
 
-const getPricePerPerson = (date: Date): number => {
-  return isPreOpeningPeriod(date) ? 5000 : 40000;
+// 人数に応じた一人あたりの料金を計算
+const getPricePerPersonRegular = (guestCount: number): number => {
+  if (guestCount === 2) return 7500;
+  if (guestCount === 3 || guestCount === 4) return 7000;
+  if (guestCount === 5 || guestCount === 6) return 6000;
+  return 7500; // デフォルト料金（2名料金）
 };
 
-const formatPrice = (price: number): string => {
-  return `¥${price.toLocaleString()}`;
+const getPricePerPerson = (guestCount: number, date: Date): number => {
+  // プレオープン期間の場合は一律5000円/人
+  if (isPreOpeningPeriod(date)) {
+    return 5000;
+  }
+  return getPricePerPersonRegular(guestCount);
+};
+
+const calculateTotalPrice = (guestCount: number, waterTemperature: number, date: Date): number => {
+  const pricePerPerson = getPricePerPerson(guestCount, date);
+  const basePrice = pricePerPerson * guestCount;
+  const surcharge = getSurcharge(waterTemperature);
+  return basePrice + surcharge;
 };
 
 const handler = async (req: Request): Promise<Response> => {
@@ -74,10 +91,14 @@ const handler = async (req: Request): Promise<Response> => {
     const CONFIRMATION_URL = `${BASE_URL}/reservation/confirm/${reservation.confirmationToken}`;
 
     const reservationDate = new Date(reservation.reservationDate);
-    const pricePerPerson = getPricePerPerson(reservationDate);
-    const basePrice = pricePerPerson * reservation.guestCount;
-    const surcharge = getSurcharge(reservation.waterTemperature);
-    const totalPrice = basePrice + surcharge;
+    console.log('Calculating price for date:', reservationDate);
+    
+    const totalPrice = calculateTotalPrice(
+      reservation.guestCount,
+      reservation.waterTemperature,
+      reservationDate
+    );
+    console.log('Calculated total price:', totalPrice);
 
     const messageContent = `
 仮予約を受け付けました。
@@ -90,7 +111,7 @@ const handler = async (req: Request): Promise<Response> => {
 水風呂温度: ${reservation.waterTemperature}°C
 
 【料金】
-${formatPrice(totalPrice)} (税込)${surcharge > 0 ? `\n※ 水温オプション料金 +${formatPrice(surcharge)} を含む` : ''}
+¥${totalPrice.toLocaleString()} (税込)${getSurcharge(reservation.waterTemperature) > 0 ? `\n※ 水温オプション料金 +¥${getSurcharge(reservation.waterTemperature).toLocaleString()} を含む` : ''}
 
 以下のリンクから20分以内に予約を確定してください。
 ${CONFIRMATION_URL}
