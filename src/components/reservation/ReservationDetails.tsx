@@ -1,3 +1,4 @@
+
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -172,7 +173,7 @@ export const ReservationDetails = ({
             </div>
             <Input
               type="text"
-              value="15°C"
+              value="16°C"
               readOnly
               className="bg-gray-100"
             />
@@ -180,39 +181,41 @@ export const ReservationDetails = ({
         ) : (
           <>
             <div className="text-sm text-muted-foreground mb-2">
-              ※ 午前の部のみ水温選択が可能です（7-10℃）
+              ※ 午前の部のみ水温選択が可能です（5-14℃）
             </div>
             {timeSlot === "morning" ? (
               <Select 
                 onValueChange={setTemperature} 
-                value={temperature || "15"}
-                defaultValue="15"
+                value={temperature || "16"}
+                defaultValue="16"
               >
                 <SelectTrigger>
                   <SelectValue placeholder="温度を選択" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Array.from({ length: 4 }, (_, i) => i + 7).map((temp) => {
-                    const surcharge = temp <= 7 ? 5000 : temp <= 10 ? 3000 : 0;
-                    return (
-                      <SelectItem key={temp} value={temp.toString()}>
-                        <div className="flex justify-between items-center w-full">
-                          <span>{temp}°C</span>
-                          {surcharge > 0 && (
-                            <span className="text-sm text-muted-foreground ml-2">
-                              (+¥{surcharge.toLocaleString()})
-                            </span>
-                          )}
-                        </div>
-                      </SelectItem>
-                    );
-                  })}
+                  <SelectItem value="5-10">
+                    <div className="flex justify-between items-center w-full">
+                      <span>5-10℃</span>
+                      <span className="text-sm text-muted-foreground ml-2">
+                        (+¥5,000)
+                      </span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="10-14">
+                    <div className="flex justify-between items-center w-full">
+                      <span>10-14℃</span>
+                      <span className="text-sm text-muted-foreground ml-2">
+                        (+¥3,000)
+                      </span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="16">16℃</SelectItem>
                 </SelectContent>
               </Select>
             ) : (
               <Input
                 type="text"
-                value="15°C"
+                value="16°C"
                 readOnly
                 className="bg-gray-100"
               />
