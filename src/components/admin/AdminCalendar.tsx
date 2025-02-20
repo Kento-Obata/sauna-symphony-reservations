@@ -86,22 +86,34 @@ export const AdminCalendar = ({
   const handleBlockTimeSlot = async () => {
     if (!selectedDate || !selectedTimeSlot) return;
 
+    const dateStr = format(selectedDate, "yyyy-MM-dd");
+
     try {
-      // 既存の予約をキャンセル状態に更新
-      const { error: updateError } = await supabase
+      // まず現在のアクティブな予約を取得
+      const { data: existingReservations, error: fetchError } = await supabase
         .from('reservations')
-        .update({ status: 'cancelled' })
-        .eq('date', format(selectedDate, "yyyy-MM-dd"))
+        .select('*')
+        .eq('date', dateStr)
         .eq('time_slot', selectedTimeSlot)
         .in('status', ['confirmed', 'pending']);
 
-      if (updateError) throw updateError;
+      if (fetchError) throw fetchError;
 
-      // 新しい休枠を設定
+      // 既存の予約があれば、それらをキャンセル
+      if (existingReservations && existingReservations.length > 0) {
+        const { error: cancelError } = await supabase
+          .from('reservations')
+          .update({ status: 'cancelled' })
+          .in('id', existingReservations.map(r => r.id));
+
+        if (cancelError) throw cancelError;
+      }
+
+      // 休枠を設定
       const { error: insertError } = await supabase
         .from("reservations")
         .insert({
-          date: format(selectedDate, "yyyy-MM-dd"),
+          date: dateStr,
           time_slot: selectedTimeSlot,
           guest_name: "休枠",
           guest_count: 1,
