@@ -1,11 +1,13 @@
 
+
 import { supabase } from "@/integrations/supabase/client";
 import { PriceSetting } from "@/types/price";
 
 // 水温による追加料金の計算
 export const getSurcharge = (temp: string): number => {
-  if (temp === "5-10") return 5000;
-  if (temp === "10-14") return 3000;
+  const temperature = parseInt(temp);
+  if (temperature <= 7) return 5000;
+  if (temperature <= 10) return 3000;
   return 0;
 };
 

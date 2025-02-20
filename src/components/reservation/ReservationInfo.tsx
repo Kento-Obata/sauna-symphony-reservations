@@ -1,3 +1,4 @@
+
 import { format } from "date-fns";
 import { Reservation } from "@/types/reservation";
 import { getTotalPrice, getSurcharge, formatPrice } from "@/utils/priceCalculations";
@@ -79,7 +80,14 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
       )}
       
       <div className="text-sauna-stone">水風呂温度:</div>
-      <div>{reservation.water_temperature}°C</div>
+      <div>
+        {reservation.water_temperature}°C
+        {surcharge > 0 && (
+          <div className="text-xs text-muted-foreground">
+            ※ 水温オプション料金 +{formatPrice(surcharge)} が適用されます
+          </div>
+        )}
+      </div>
 
       <div className="text-sauna-stone">料金:</div>
       <div>
