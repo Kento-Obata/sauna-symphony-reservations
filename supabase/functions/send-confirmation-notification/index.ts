@@ -88,6 +88,14 @@ const handler = async (req: Request): Promise<Response> => {
 【料金】
 ${formatPrice(totalPrice)} (税込)${surcharge > 0 ? `\n※ 水温オプション料金 +${formatPrice(surcharge)} を含む` : ''}
 
+【水風呂温度について】
+水風呂温度は4月以降ご指定いただけますが、プレ期間でもinstagramのDMにて希望の温度をお伝えいただければ、可能な限り対応させていただきます。
+
+【アクセス】
+〒811-2127
+福岡県糟屋郡宇美町障子岳6-8-4
+Google Maps: https://www.google.com/maps?q=8Q5GHG7V%2BJ5
+
 【当日の注意事項】
 ・ご予約時間の15分前から受付開始いたします。
 ・予約コードをご提示ください。
