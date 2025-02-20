@@ -87,6 +87,8 @@ export const AdminCalendar = ({
     if (!selectedDate || !selectedTimeSlot) return;
 
     const dateStr = format(selectedDate, "yyyy-MM-dd");
+    const selectedDateTime = new Date(dateStr);
+    const isPreOpening = selectedDateTime.getFullYear() === 2025 && selectedDateTime.getMonth() === 2; // 3月は2（0-based）
 
     try {
       // 既存の予約を削除
@@ -109,8 +111,9 @@ export const AdminCalendar = ({
           phone: "00000000000",
           water_temperature: 15,
           status: "confirmed",
-          is_confirmed: true, // 確認済みとして設定
-          expires_at: null    // 期限切れを無効化
+          is_confirmed: true,
+          expires_at: null,
+          price_per_person: isPreOpening ? 4000 : null // プレオープン期間は4000円
         });
 
       if (insertError) throw insertError;
