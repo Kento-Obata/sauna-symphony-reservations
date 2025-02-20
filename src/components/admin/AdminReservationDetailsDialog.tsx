@@ -1,3 +1,4 @@
+
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Reservation, TimeSlot } from "@/types/reservation";
@@ -10,6 +11,8 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { ReservationDateSelect } from "./reservation-details/ReservationDateSelect";
 import { ReservationTimeSelect } from "./reservation-details/ReservationTimeSelect";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { XCircle } from "lucide-react";
 
 interface AdminReservationDetailsDialogProps {
   open: boolean;
@@ -126,6 +129,24 @@ export const AdminReservationDetailsDialog = ({
     }
   };
 
+  const handleCancel = async () => {
+    try {
+      const { error } = await supabase
+        .from("reservations")
+        .update({ status: "cancelled" })
+        .eq("id", reservation.id);
+
+      if (error) throw error;
+
+      toast.success("予約をキャンセルしました");
+      await queryClient.invalidateQueries({ queryKey: ["reservations"] });
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Error cancelling reservation:", error);
+      toast.error("予約のキャンセルに失敗しました");
+    }
+  };
+
   const handleDateChange = (newDate: Date) => {
     setDate(format(newDate, "yyyy-MM-dd"));
   };
@@ -236,6 +257,34 @@ export const AdminReservationDetailsDialog = ({
                   キャンセル
                 </Button>
                 <Button onClick={handleSave}>保存</Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="destructive"
+                      className="flex items-center gap-2"
+                    >
+                      <XCircle className="h-4 w-4" />
+                      予約をキャンセル
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>予約をキャンセルしますか？</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        この操作は取り消すことができません。予約をキャンセルしてもよろしいですか？
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>戻る</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleCancel}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        キャンセルする
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </>
             ) : (
               <Button onClick={() => setIsEditing(true)}>編集</Button>
