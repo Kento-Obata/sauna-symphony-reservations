@@ -1,4 +1,3 @@
-
 import { format } from "date-fns";
 import { Reservation } from "@/types/reservation";
 import { getTotalPrice, getSurcharge, formatPrice } from "@/utils/priceCalculations";
@@ -21,9 +20,14 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
   useEffect(() => {
     const calculatePrice = async () => {
       try {
+        // 日付文字列をDateオブジェクトに変換
+        const dateObj = reservation.date ? new Date(reservation.date) : undefined;
+        console.log('ReservationInfo - Calculating price for date:', dateObj);
+        
         const price = await getTotalPrice(
           reservation.guest_count,
-          reservation.water_temperature.toString()
+          reservation.water_temperature.toString(),
+          dateObj
         );
         setTotalPrice(price);
       } catch (error) {
@@ -32,7 +36,7 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
     };
 
     calculatePrice();
-  }, [reservation.guest_count, reservation.water_temperature]);
+  }, [reservation.guest_count, reservation.water_temperature, reservation.date]);
 
   const getStatusDisplay = (status: string) => {
     switch (status) {

@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { TimeSlot, ReservationFormData } from "@/types/reservation";
@@ -39,9 +38,14 @@ export const ReservationConfirmDialog = ({
   useEffect(() => {
     const calculatePrice = async () => {
       try {
+        // 日付文字列をDateオブジェクトに変換
+        const dateObj = reservation.date ? new Date(reservation.date) : undefined;
+        console.log('Calculating price for date:', dateObj);
+        
         const price = await getTotalPrice(
           reservation.guest_count,
-          reservation.water_temperature.toString()
+          reservation.water_temperature.toString(),
+          dateObj
         );
         setTotalPrice(price);
       } catch (error) {
@@ -50,7 +54,7 @@ export const ReservationConfirmDialog = ({
     };
 
     calculatePrice();
-  }, [reservation.guest_count, reservation.water_temperature]);
+  }, [reservation.guest_count, reservation.water_temperature, reservation.date]);
 
   const formattedDate = reservation.date
     ? format(new Date(reservation.date), "yyyy年MM月dd日 (E)", {
