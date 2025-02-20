@@ -15,24 +15,12 @@ const isPreOpeningPeriod = (date: Date): boolean => {
   return date.getFullYear() === 2025 && date.getMonth() === 2; // 3月は2（0-based）
 };
 
-let cachedPriceSettings: PriceSetting[] | null = null;
-
-export const getPriceSettings = async (): Promise<PriceSetting[]> => {
-  if (cachedPriceSettings) {
-    return cachedPriceSettings;
-  }
-
-  const { data, error } = await supabase
-    .from("price_settings")
-    .select("*")
-    .order("guest_count");
-
-  if (error) {
-    throw new Error("料金設定の取得に失敗しました");
-  }
-
-  cachedPriceSettings = data;
-  return data;
+// 人数に応じた一人あたりの料金を計算
+const getPricePerPersonRegular = (guestCount: number): number => {
+  if (guestCount === 2) return 7500;
+  if (guestCount === 3 || guestCount === 4) return 7000;
+  if (guestCount === 5 || guestCount === 6) return 6000;
+  return 7500; // デフォルト料金（2名料金）
 };
 
 export const getPricePerPerson = async (guestCount: number, date?: Date): Promise<number> => {
@@ -43,9 +31,9 @@ export const getPricePerPerson = async (guestCount: number, date?: Date): Promis
   }
 
   console.log('Regular price period');
-  const settings = await getPriceSettings();
-  const setting = settings.find(s => s.guest_count === guestCount);
-  return setting ? setting.price_per_person : 40000; // デフォルト価格
+  const pricePerPerson = getPricePerPersonRegular(guestCount);
+  console.log('Price per person:', pricePerPerson);
+  return pricePerPerson;
 };
 
 export const getTotalPrice = async (guestCount: number, temperature: string, date?: Date): Promise<number> => {
