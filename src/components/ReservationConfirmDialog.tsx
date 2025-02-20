@@ -34,14 +34,14 @@ export const ReservationConfirmDialog = ({
   reservationCode,
 }: ReservationConfirmDialogProps) => {
   const [totalPrice, setTotalPrice] = useState<number>(0);
-  const surcharge = getSurcharge(reservation.water_temperature);
+  const surcharge = getSurcharge(reservation.water_temperature.toString());
 
   useEffect(() => {
     const calculatePrice = async () => {
       try {
         const price = await getTotalPrice(
           reservation.guest_count,
-          reservation.water_temperature
+          reservation.water_temperature.toString()
         );
         setTotalPrice(price);
       } catch (error) {

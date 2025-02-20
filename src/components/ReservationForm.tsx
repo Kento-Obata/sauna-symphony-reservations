@@ -50,7 +50,11 @@ const ReservationForm = () => {
     const updatePrice = async () => {
       if (people && temperature) {
         try {
-          const price = await getTotalPrice(parseInt(people), parseInt(temperature));
+          const price = await getTotalPrice(
+            parseInt(people), 
+            temperature,
+            date
+          );
           setTotalPrice(price);
         } catch (error) {
           console.error("料金の計算に失敗しました:", error);
@@ -61,7 +65,7 @@ const ReservationForm = () => {
       }
     };
     updatePrice();
-  }, [people, temperature]);
+  }, [people, temperature, date]);
 
   const handleDateChange = (newDate: Date | undefined) => {
     setDate(newDate);
