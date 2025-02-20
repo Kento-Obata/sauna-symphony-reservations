@@ -43,17 +43,9 @@ export const getPricePerPerson = async (guestCount: number, date?: Date): Promis
   }
 
   console.log('Regular price period');
-  // 通常期間の料金テーブル（人数に応じた1人あたりの料金）
-  const regularPrices: { [key: number]: number } = {
-    2: 7500,
-    3: 7000,
-    4: 7000,
-    5: 6000,
-    6: 6000
-  };
-
-  // デフォルト価格を7500円に設定（料金テーブルに該当しない場合）
-  return regularPrices[guestCount] || 7500;
+  const settings = await getPriceSettings();
+  const setting = settings.find(s => s.guest_count === guestCount);
+  return setting ? setting.price_per_person : 40000; // デフォルト価格
 };
 
 export const getTotalPrice = async (guestCount: number, temperature: string, date?: Date): Promise<number> => {
