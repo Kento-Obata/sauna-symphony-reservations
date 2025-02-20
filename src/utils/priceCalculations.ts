@@ -2,9 +2,16 @@
 import { supabase } from "@/integrations/supabase/client";
 import { PriceSetting } from "@/types/price";
 
-export const getSurcharge = (temp: number): number => {
-  if (temp <= 7) return 5000;
+// 水温による追加料金の計算
+export const getSurcharge = (temp: string): number => {
+  if (temp === "5-10") return 5000;
+  if (temp === "10-14") return 3000;
   return 0;
+};
+
+// プレオープン期間（2025年3月）かどうかを判定
+const isPreOpeningPeriod = (date: Date): boolean => {
+  return date.getFullYear() === 2025 && date.getMonth() === 2; // 3月は2（0-based）
 };
 
 let cachedPriceSettings: PriceSetting[] | null = null;
@@ -27,16 +34,21 @@ export const getPriceSettings = async (): Promise<PriceSetting[]> => {
   return data;
 };
 
-export const getPricePerPerson = async (guestCount: number): Promise<number> => {
+export const getPricePerPerson = async (guestCount: number, date?: Date): Promise<number> => {
+  // プレオープン期間の場合は一律4000円/人
+  if (date && isPreOpeningPeriod(date)) {
+    return 4000;
+  }
+
   const settings = await getPriceSettings();
   const setting = settings.find(s => s.guest_count === guestCount);
   return setting ? setting.price_per_person : 40000; // デフォルト価格
 };
 
-export const getTotalPrice = async (guestCount: number, waterTemperature: number): Promise<number> => {
-  const pricePerPerson = await getPricePerPerson(guestCount);
+export const getTotalPrice = async (guestCount: number, temperature: string, date?: Date): Promise<number> => {
+  const pricePerPerson = await getPricePerPerson(guestCount, date);
   const basePrice = pricePerPerson * guestCount;
-  const surcharge = getSurcharge(waterTemperature);
+  const surcharge = getSurcharge(temperature);
   return basePrice + surcharge;
 };
 
