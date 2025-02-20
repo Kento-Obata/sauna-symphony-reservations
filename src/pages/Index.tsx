@@ -25,8 +25,10 @@ const Index = () => {
               詳細非公開体験型サウナ
             </div>
             <p className="text-xs text-black/90 mt-2 font-mplus font-extralight">
-              pre-opening<br />
-              2025.02.20
+              pre-open<br />
+              2025.03.01<br />
+              grand-open<br />
+              2025.04.01
             </p>
           </div>
         </div>
