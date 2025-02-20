@@ -113,7 +113,7 @@ export const AdminCalendar = ({
           status: "confirmed",
           is_confirmed: true,
           expires_at: null,
-          price_per_person: isPreOpening ? 4000 : null // プレオープン期間は4000円
+          price_per_person: isPreOpening ? 5000 : null // プレオープン期間は5000円
         });
 
       if (insertError) throw insertError;
