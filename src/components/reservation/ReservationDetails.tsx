@@ -83,11 +83,11 @@ export const ReservationDetails = ({
     }
   };
 
-  // 4月以降かどうかを判定する関数
-  const isAfterApril = (selectedDate: Date | undefined): boolean => {
+  // 3月か4月以降かを判定する関数
+  const isAfterMarch = (selectedDate: Date | undefined): boolean => {
     if (!selectedDate) return false;
     const month = selectedDate.getMonth() + 1; // JavaScriptの月は0から始まるため+1
-    return month >= 4;
+    return month >= 3; // 3月以降を許可
   };
 
   return (
@@ -166,10 +166,10 @@ export const ReservationDetails = ({
         <label className="block text-sm mb-2">
           水風呂温度 <span className="text-red-500">*</span>
         </label>
-        {!date || !isAfterApril(date) ? (
+        {!date || !isAfterMarch(date) ? (
           <>
             <div className="text-sm text-muted-foreground mb-2">
-              ※ 水温選択は4月以降のご予約から可能となります
+              ※ 水温選択は3月以降のご予約から可能となります
             </div>
             <Input
               type="text"
