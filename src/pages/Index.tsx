@@ -23,7 +23,7 @@ const Index = () => {
     perPerson: 6000,
     total: 36000
   }];
-  return <div className="min-h-screen flex flex-col">
+  return <div className="min-h-screen flex flex-col bg-sauna-base">
       <Header />
       <div className="h-[30vh] relative bg-sauna-base">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-w-4xl w-full px-4">
