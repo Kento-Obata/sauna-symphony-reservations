@@ -32,7 +32,11 @@ export const router = createBrowserRouter([
   },
   {
     path: "/shift/request",
-    element: <ShiftRequest />,
+    element: (
+      <ShiftGuard>
+        <ShiftRequest />
+      </ShiftGuard>
+    ),
   },
   {
     path: "/admin/login",
