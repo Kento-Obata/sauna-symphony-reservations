@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
@@ -116,6 +115,8 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     const messageContent = `
+ご予約いただきありがとうございます！
+
 【ご予約内容】
 予約コード: ${reservation.reservationCode}
 日付: ${reservation.date}
@@ -126,6 +127,10 @@ const handler = async (req: Request): Promise<Response> => {
 
 【受付時間】
 ご予約時間の15分前からご案内いたします。
+
+【設備・アメニティ】
+タオル、水着はご用意しております。
+アメニティは、シャンプー / リンス / フェイシャルパック / 化粧水 を用意しております。
 
 【アクセス】
 住所: 〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4
