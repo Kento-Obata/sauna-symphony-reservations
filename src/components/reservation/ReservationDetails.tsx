@@ -173,7 +173,7 @@ export const ReservationDetails = ({
             </div>
             <Input
               type="text"
-              value="16°C"
+              value="15°C"
               readOnly
               className="bg-gray-100"
             />
@@ -186,8 +186,8 @@ export const ReservationDetails = ({
             {timeSlot === "morning" ? (
               <Select 
                 onValueChange={setTemperature} 
-                value={temperature || "16"}
-                defaultValue="16"
+                value={temperature || "15"}
+                defaultValue="15"
               >
                 <SelectTrigger>
                   <SelectValue placeholder="温度を選択" />
@@ -209,13 +209,13 @@ export const ReservationDetails = ({
                       </span>
                     </div>
                   </SelectItem>
-                  <SelectItem value="16">16℃</SelectItem>
+                  <SelectItem value="15">15℃</SelectItem>
                 </SelectContent>
               </Select>
             ) : (
               <Input
                 type="text"
-                value="16°C"
+                value="15°C"
                 readOnly
                 className="bg-gray-100"
               />
