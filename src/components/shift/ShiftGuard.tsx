@@ -1,10 +1,12 @@
+
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const ShiftGuard = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -14,13 +16,19 @@ export const ShiftGuard = ({ children }: { children: React.ReactNode }) => {
         
         if (sessionError) {
           console.error("Session error:", sessionError);
-          navigate("/shift/login", { replace: true });
+          navigate("/shift/login", { 
+            replace: true,
+            state: { from: location.pathname }
+          });
           return;
         }
 
         if (!session) {
           setIsLoading(false);
-          navigate("/shift/login", { replace: true });
+          navigate("/shift/login", { 
+            replace: true,
+            state: { from: location.pathname }
+          });
           return;
         }
 
@@ -36,7 +44,10 @@ export const ShiftGuard = ({ children }: { children: React.ReactNode }) => {
           toast.error("プロフィールの取得に失敗しました");
           await supabase.auth.signOut();
           setIsLoading(false);
-          navigate("/shift/login", { replace: true });
+          navigate("/shift/login", { 
+            replace: true,
+            state: { from: location.pathname }
+          });
           return;
         }
 
@@ -44,7 +55,10 @@ export const ShiftGuard = ({ children }: { children: React.ReactNode }) => {
           toast.error("シフト管理画面へのアクセス権限がありません");
           await supabase.auth.signOut();
           setIsLoading(false);
-          navigate("/shift/login", { replace: true });
+          navigate("/shift/login", { 
+            replace: true,
+            state: { from: location.pathname }
+          });
           return;
         }
 
@@ -54,7 +68,10 @@ export const ShiftGuard = ({ children }: { children: React.ReactNode }) => {
         toast.error("認証エラーが発生しました");
         await supabase.auth.signOut();
         setIsLoading(false);
-        navigate("/shift/login", { replace: true });
+        navigate("/shift/login", { 
+          replace: true,
+          state: { from: location.pathname }
+        });
       }
     };
 
@@ -63,7 +80,10 @@ export const ShiftGuard = ({ children }: { children: React.ReactNode }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
         if (!session) {
-          navigate("/shift/login", { replace: true });
+          navigate("/shift/login", { 
+            replace: true,
+            state: { from: location.pathname }
+          });
         } else {
           checkAuth();
         }
@@ -73,7 +93,7 @@ export const ShiftGuard = ({ children }: { children: React.ReactNode }) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, location]);
 
   if (isLoading) {
     return (
