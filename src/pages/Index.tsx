@@ -1,19 +1,29 @@
-
 import { Header } from "@/components/Header";
 import ReservationForm from "@/components/ReservationForm";
 import Map from "@/components/Map";
-
 const Index = () => {
-  const priceData = [
-    { people: 2, perPerson: 7500, total: 15000 },
-    { people: 3, perPerson: 7000, total: 21000 },
-    { people: 4, perPerson: 7000, total: 28000 },
-    { people: 5, perPerson: 6000, total: 30000 },
-    { people: 6, perPerson: 6000, total: 36000 },
-  ];
-
-  return (
-    <div className="min-h-screen flex flex-col">
+  const priceData = [{
+    people: 2,
+    perPerson: 7500,
+    total: 15000
+  }, {
+    people: 3,
+    perPerson: 7000,
+    total: 21000
+  }, {
+    people: 4,
+    perPerson: 7000,
+    total: 28000
+  }, {
+    people: 5,
+    perPerson: 6000,
+    total: 30000
+  }, {
+    people: 6,
+    perPerson: 6000,
+    total: 36000
+  }];
+  return <div className="min-h-screen flex flex-col">
       <Header />
       <div className="h-[30vh] relative bg-sauna-base">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-w-4xl w-full px-4">
@@ -58,18 +68,23 @@ const Index = () => {
                 </tr>
               </thead>
               <tbody>
-                {priceData.map(({ people, perPerson, total }) => (
-                  <tr key={people} className="border-b border-sauna-stone/10">
+                {priceData.map(({
+                people,
+                perPerson,
+                total
+              }) => <tr key={people} className="border-b border-sauna-stone/10">
                     <td className="py-4 px-6 text-left">{people}</td>
                     <td className="py-4 px-6 text-right">¥{perPerson.toLocaleString()}</td>
                     <td className="py-4 px-6 text-right">¥{total.toLocaleString()}</td>
-                  </tr>
-                ))}
+                  </tr>)}
               </tbody>
             </table>
           </div>
           <div className="mt-4 text-sm text-muted-foreground space-y-2">
-            <p>※ 水温7℃以下をご希望の場合は、別途¥5,000を頂戴いたします。</p>
+            <p>【option】
+水温10℃ ~ 14℃ +3000円
+水温5℃ ~ 10℃ +5000円
+          </p>
             <p>※ 1名様でのご利用をご希望の場合は、お電話にてご予約ください。</p>
           </div>
         </div>
@@ -87,12 +102,7 @@ const Index = () => {
                 <p className="text-black">
                   〒811-2127<br />福岡県糟屋郡宇美町障子岳6-8-4
                 </p>
-                <a 
-                  href="https://maps.google.com/maps?q=8Q5GHG7V%2BJ5" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-black hover:underline mt-2 inline-block"
-                >
+                <a href="https://maps.google.com/maps?q=8Q5GHG7V%2BJ5" target="_blank" rel="noopener noreferrer" className="text-black hover:underline mt-2 inline-block">
                   Google Mapsで見る
                 </a>
               </div>
@@ -120,8 +130,6 @@ const Index = () => {
           </p>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
