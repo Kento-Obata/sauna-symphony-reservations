@@ -1,3 +1,4 @@
+
 import { Header } from "@/components/Header";
 import ReservationForm from "@/components/ReservationForm";
 import Map from "@/components/Map";
@@ -83,7 +84,8 @@ const Index = () => {
             <p className="bg-sauna-base p-4 rounded-lg border border-sauna-stone/20">
               【option】<br />
               水温10℃ ~ 14℃ +3000円<br />
-              水温5℃ ~ 10℃ +5000円
+              水温5℃ ~ 10℃ +5000円<br />
+              ※ 水風呂温度は4月以降ご指定いただけますが、プレ期間でもinstagramのDMにて希望の温度をお伝えいただければ、可能な限り対応させていただきます。
             </p>
             <p>※ 1名様でのご利用をご希望の場合は、お電話にてご予約ください。</p>
           </div>
@@ -100,9 +102,15 @@ const Index = () => {
             <div className="text-center space-y-4">
               <div>
                 <p className="text-black">
-                  〒811-2127<br />福岡県糟屋郡宇美町障子岳6-8-4
+                  〒811-2127<br />
+                  福岡県糟屋郡宇美町障子岳6-8-4
                 </p>
-                <a href="https://maps.google.com/maps?q=8Q5GHG7V%2BJ5" target="_blank" rel="noopener noreferrer" className="text-black hover:underline mt-2 inline-block">
+                <a 
+                  href="https://www.google.com/maps?q=8Q5GHG7V%2BJ5" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-black hover:underline mt-2 inline-block"
+                >
                   Google Mapsで見る
                 </a>
               </div>
@@ -119,6 +127,8 @@ const Index = () => {
                 </p>
               </div>
             </div>
+            
+            <Map />
           </div>
         </div>
       </section>
