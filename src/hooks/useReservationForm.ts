@@ -3,7 +3,7 @@ import { useState } from "react";
 import { TimeSlot } from "@/types/reservation";
 import { toast } from "sonner";
 import { format, isValid } from "date-fns";
-import { utcToZonedTime } from "date-fns-tz";
+import { toZonedTime } from "date-fns-tz"; // utcToZonedTimeからtoZonedTimeに変更
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -129,7 +129,7 @@ export const useReservationForm = () => {
       setReservationCode(newReservation.reservation_code);
 
       // JSTに変換してからISOString形式に
-      const jstDate = utcToZonedTime(date, 'Asia/Tokyo');
+      const jstDate = toZonedTime(date, 'Asia/Tokyo'); // utcToZonedTimeからtoZonedTimeに変更
 
       // Send pending notification
       const notificationResponse = await supabase.functions.invoke(
