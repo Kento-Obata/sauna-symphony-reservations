@@ -3,7 +3,7 @@ import { useState } from "react";
 import { TimeSlot } from "@/types/reservation";
 import { toast } from "sonner";
 import { format, isValid } from "date-fns";
-import { toZonedTime } from "date-fns-tz"; // utcToZonedTimeからtoZonedTimeに変更
+import { toZonedTime, formatInTimeZone } from "date-fns-tz"; // formatInTimeZoneを追加
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -128,8 +128,8 @@ export const useReservationForm = () => {
 
       setReservationCode(newReservation.reservation_code);
 
-      // JSTに変換してからISOString形式に
-      const jstDate = toZonedTime(date, 'Asia/Tokyo'); // utcToZonedTimeからtoZonedTimeに変更
+      // 日本時間での日付文字列を生成
+      const jstDateStr = formatInTimeZone(date, 'Asia/Tokyo', "yyyy-MM-dd'T'HH:mm:ssXXX");
 
       // Send pending notification
       const notificationResponse = await supabase.functions.invoke(
@@ -145,7 +145,7 @@ export const useReservationForm = () => {
             waterTemperature: reservationData.water_temperature,
             reservationCode: newReservation.reservation_code,
             confirmationToken: newReservation.confirmation_token,
-            reservationDate: jstDate.toISOString(), // JSTでの日付を送信
+            reservationDate: jstDateStr, // JSTでの日付文字列を送信
           },
         }
       );
