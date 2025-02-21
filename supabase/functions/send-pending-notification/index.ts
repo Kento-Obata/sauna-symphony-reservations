@@ -33,14 +33,15 @@ const formatPhoneNumber = (phone: string): string => {
 
 // 水温による追加料金の計算
 const getSurcharge = (temp: number): number => {
-  if (temp <= 10) return 5000;
-  if (temp <= 14) return 3000;
+  if (temp <= 7) return 5000;
+  if (temp <= 10) return 3000;
   return 0;
 };
 
 // プレオープン期間（2025年3月）かどうかを判定
 const isPreOpeningPeriod = (date: Date): boolean => {
-  return date.getFullYear() === 2025 && date.getMonth() === 2;
+  console.log('Checking pre-opening period for date:', date.toISOString());
+  return date.getFullYear() === 2025 && date.getMonth() === 2; // 3月は2（0-based）
 };
 
 // 人数に応じた一人あたりの料金を計算
@@ -54,15 +55,24 @@ const getPricePerPersonRegular = (guestCount: number): number => {
 const getPricePerPerson = (guestCount: number, date: Date): number => {
   // プレオープン期間の場合は一律5000円/人
   if (isPreOpeningPeriod(date)) {
+    console.log('Pre-opening period price applied: 5000 yen per person');
     return 5000;
   }
-  return getPricePerPersonRegular(guestCount);
+  const regularPrice = getPricePerPersonRegular(guestCount);
+  console.log('Regular period price applied:', regularPrice, 'yen per person');
+  return regularPrice;
 };
 
 const calculateTotalPrice = (guestCount: number, waterTemperature: number, date: Date): number => {
   const pricePerPerson = getPricePerPerson(guestCount, date);
   const basePrice = pricePerPerson * guestCount;
   const surcharge = getSurcharge(waterTemperature);
+  console.log('Price calculation:', {
+    pricePerPerson,
+    basePrice,
+    surcharge,
+    total: basePrice + surcharge
+  });
   return basePrice + surcharge;
 };
 
@@ -90,8 +100,10 @@ const handler = async (req: Request): Promise<Response> => {
     const BASE_URL = "https://www.u-sauna-private.com";
     const CONFIRMATION_URL = `${BASE_URL}/reservation/confirm/${reservation.confirmationToken}`;
 
+    // ISO文字列から日付オブジェクトを作成
     const reservationDate = new Date(reservation.reservationDate);
-    console.log('Calculating price for date:', reservationDate);
+    console.log('Parsing reservation date:', reservation.reservationDate);
+    console.log('Parsed date object:', reservationDate);
     
     const totalPrice = calculateTotalPrice(
       reservation.guestCount,
