@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { corsHeaders } from '../_shared/cors'
 import { generateConfirmationEmail, sendEmail } from '../_shared/email'
 import { sendSMS } from '../_shared/twilio'
-import { zonedTimeToUtc, parseJSON } from 'date-fns-tz'
+import { parseJSON, zonedTimeToUtc } from 'https://esm.sh/date-fns-tz@3.0.1'
 
 const handler = async (req: Request) => {
   if (req.method === 'OPTIONS') {
