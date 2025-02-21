@@ -1,6 +1,7 @@
+
 import { Header } from "@/components/Header";
 import ReservationForm from "@/components/ReservationForm";
-import Map from "@/components/Map";
+
 const Index = () => {
   const priceData = [{
     people: 2,
@@ -121,8 +122,6 @@ const Index = () => {
                 </p>
               </div>
             </div>
-            
-            <Map />
           </div>
         </div>
       </section>
