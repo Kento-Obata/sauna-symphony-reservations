@@ -1,8 +1,9 @@
 
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { corsHeaders } from '../_shared/cors'
-import { generateConfirmationEmail, sendEmail } from '../_shared/email'
-import { sendSMS } from '../_shared/twilio'
+import { corsHeaders } from '../_shared/cors.ts'
+import { generateConfirmationEmail, sendEmail } from '../_shared/email.ts'
+import { sendSMS } from '../_shared/twilio.ts'
 import { parseJSON, zonedTimeToUtc } from 'https://esm.sh/date-fns-tz@3.0.1'
 
 const handler = async (req: Request) => {
@@ -74,4 +75,4 @@ const handler = async (req: Request) => {
   }
 }
 
-Deno.serve(handler)
+serve(handler)
