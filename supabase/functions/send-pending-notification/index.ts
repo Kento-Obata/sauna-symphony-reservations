@@ -1,7 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from '../_shared/cors.ts'
-import { generateConfirmationEmail, sendEmail } from '../_shared/email.ts'
+import { generatePendingEmail, sendEmail } from '../_shared/email.ts'
 import { sendSMS } from '../_shared/twilio.ts'
 
 const handler = async (req: Request) => {
@@ -20,7 +20,6 @@ const handler = async (req: Request) => {
       waterTemperature,
       reservationCode,
       confirmationToken,
-      reservationDate,
     } = await req.json()
 
     console.log('Received reservation data:', {
@@ -29,14 +28,13 @@ const handler = async (req: Request) => {
       guestName,
       guestCount,
       waterTemperature,
-      reservationCode,
-      reservationDate
+      reservationCode
     })
 
     // Email notification
     if (email) {
       try {
-        const emailContent = generateConfirmationEmail({
+        const emailContent = generatePendingEmail({
           reservationCode,
           confirmationToken,
           guestName,
