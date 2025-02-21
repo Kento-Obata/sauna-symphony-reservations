@@ -1,5 +1,5 @@
 
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors'
 import { generateConfirmationEmail, sendEmail } from '../_shared/email'
 import { sendSMS } from '../_shared/twilio'
