@@ -1,42 +1,6 @@
-
-export const generateConfirmationEmail = ({
-  reservationCode,
-  confirmationToken,
-  guestName,
-  date,
-  timeSlot,
-  guestCount,
-  waterTemperature,
-}: {
-  reservationCode: string;
-  confirmationToken: string;
-  guestName: string;
-  date: string;
-  timeSlot: string;
-  guestCount: number;
-  waterTemperature: number;
-}) => {
-  return `
-    こんにちは、${guestName}様
-
-    サウナの予約を受け付けました。
-    以下の内容で予約を承りましたので、ご確認ください。
-
-    予約コード: ${reservationCode}
-    予約日: ${date}
-    時間帯: ${timeSlot}
-    人数: ${guestCount}名様
-    水風呂温度: ${waterTemperature}℃
-
-    予約を確定するには、以下のリンクをクリックしてください：
-    https://sauna-reservation.netlify.app/reservation/confirm/${confirmationToken}
-
-    ※このリンクの有効期限は20分です。
-  `;
-};
-
 export const sendEmail = async (to: string, subject: string, message: string) => {
   const resendApiKey = Deno.env.get('RESEND_API_KEY');
+
   if (!resendApiKey) {
     throw new Error('Missing Resend API key');
   }

@@ -1,4 +1,3 @@
-
 export const sendSMS = async (to: string, message: string) => {
   const accountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
   const authToken = Deno.env.get('TWILIO_AUTH_TOKEN');
@@ -14,7 +13,7 @@ export const sendSMS = async (to: string, message: string) => {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
-      'Authorization': `Basic ${btoa(`${accountSid}:${authToken}`)}`,
+      Authorization: `Basic ${btoa(`${accountSid}:${authToken}`)}`,
     },
     body: new URLSearchParams({
       To: to,
