@@ -54,7 +54,7 @@ const handler = async (req: Request) => {
     if (phone) {
       try {
         const confirmationUrl = `https://sauna-reservation.netlify.app/reservation/confirm/${confirmationToken}`
-        await sendSMS(phone, confirmationUrl)
+        await sendSMS(phone, confirmationUrl, reservationCode)
       } catch (error) {
         console.error('Failed to send SMS:', error)
       }

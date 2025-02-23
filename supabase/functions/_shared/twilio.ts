@@ -1,5 +1,5 @@
 
-export const sendSMS = async (to: string, message: string) => {
+export const sendSMS = async (to: string, message: string, reservationCode: string) => {
   const accountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
   const authToken = Deno.env.get('TWILIO_AUTH_TOKEN');
   const fromNumber = Deno.env.get('TWILIO_PHONE_NUMBER');
