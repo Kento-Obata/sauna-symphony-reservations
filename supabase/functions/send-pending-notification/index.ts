@@ -100,8 +100,11 @@ const handler = async (req: Request): Promise<Response> => {
     );
     console.log('Calculated total price:', totalPrice);
 
-    const messageContent = `
-仮予約を受け付けました。
+    const messageContent = `※ まだ予約は完了していません。
+※20分を過ぎると予約は自動的にキャンセルされます。
+以下のリンクから20分以内に予約を確定してください。
+${CONFIRMATION_URL}
+
 
 【ご予約内容】
 予約コード: ${reservation.reservationCode}
@@ -111,13 +114,7 @@ const handler = async (req: Request): Promise<Response> => {
 水風呂温度: ${reservation.waterTemperature}°C
 
 【料金】
-¥${totalPrice.toLocaleString()} (税込)${getSurcharge(reservation.waterTemperature) > 0 ? `\n※ 水温オプション料金 +¥${getSurcharge(reservation.waterTemperature).toLocaleString()} を含む` : ''}
-
-以下のリンクから20分以内に予約を確定してください。
-${CONFIRMATION_URL}
-
-※20分を過ぎると予約は自動的にキャンセルされます。
-`;
+¥${totalPrice.toLocaleString()} (税込)${getSurcharge(reservation.waterTemperature) > 0 ? `\n※ 水温オプション料金 +¥${getSurcharge(reservation.waterTemperature).toLocaleString()} を含む` : ''}`;
 
     if (reservation.email) {
       try {
@@ -134,33 +131,36 @@ ${CONFIRMATION_URL}
       }
     }
 
-    try {
-      const formattedPhone = formatPhoneNumber(reservation.phone);
-      const formData = new URLSearchParams();
-      formData.append('To', formattedPhone);
-      formData.append('From', TWILIO_PHONE_NUMBER);
-      formData.append('Body', messageContent);
+    // SMS notification
+    if (reservation.phone) {
+      try {
+        const formattedPhone = formatPhoneNumber(reservation.phone);
+        const formData = new URLSearchParams();
+        formData.append('To', formattedPhone);
+        formData.append('From', TWILIO_PHONE_NUMBER);
+        formData.append('Body', messageContent);
 
-      const twilioResponse = await fetch(
-        `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Authorization': `Basic ${btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)}`,
-          },
-          body: formData,
+        const twilioResponse = await fetch(
+          `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'Authorization': `Basic ${btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)}`,
+            },
+            body: formData,
+          }
+        );
+
+        const twilioResult = await twilioResponse.json();
+        if (!twilioResponse.ok) {
+          throw new Error(`Twilio API error: ${JSON.stringify(twilioResult)}`);
         }
-      );
-
-      const twilioResult = await twilioResponse.json();
-      if (!twilioResponse.ok) {
-        throw new Error(`Twilio API error: ${JSON.stringify(twilioResult)}`);
+        console.log("SMS sent successfully");
+        notifications.push("sms");
+      } catch (error) {
+        console.error("SMS sending error:", error);
       }
-      console.log("SMS sent successfully");
-      notifications.push("sms");
-    } catch (error) {
-      console.error("SMS sending error:", error);
     }
 
     return new Response(
