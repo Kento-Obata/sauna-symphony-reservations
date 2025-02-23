@@ -100,9 +100,10 @@ const handler = async (req: Request): Promise<Response> => {
     );
     console.log('Calculated total price:', totalPrice);
 
-    const messageContent = `※ まだ予約は完了していません。
-※20分を過ぎると予約は自動的にキャンセルされます。
-以下のリンクから20分以内に予約を確定してください。
+    const messageContent = `⚠︎ まだ予約は完了していません。
+⚠︎20分を過ぎると予約は自動的にキャンセルされます。
+以下のリンクをクリックして、20分以内に予約を確定してください。
+↓↓↓サウナU予約完了link↓↓↓
 ${CONFIRMATION_URL}
 
 
