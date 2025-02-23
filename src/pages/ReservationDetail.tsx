@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -84,12 +85,14 @@ export const ReservationDetail = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-4 space-y-4">
-        <Skeleton className="h-8 w-64" />
-        <div className="space-y-2">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-3/4" />
+      <div className="container mx-auto p-4">
+        <div className="max-w-2xl mx-auto space-y-4">
+          <Skeleton className="h-8 w-64 mx-auto" />
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4 mx-auto" />
+          </div>
         </div>
       </div>
     );
@@ -98,18 +101,20 @@ export const ReservationDetail = () => {
   if (error) {
     return (
       <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-bold text-red-500">
-          予約情報の取得に失敗しました
-        </h1>
-        <p className="mt-2 text-gray-600">
-          もう一度お試しいただくか、管理者にお問い合わせください。
-        </p>
-        <Button 
-          className="mt-4"
-          onClick={() => navigate('/')}
-        >
-          トップページへ戻る
-        </Button>
+        <div className="max-w-2xl mx-auto text-center">
+          <h1 className="text-2xl font-bold text-red-500">
+            予約情報の取得に失敗しました
+          </h1>
+          <p className="mt-2 text-gray-600">
+            もう一度お試しいただくか、管理者にお問い合わせください。
+          </p>
+          <Button 
+            className="mt-4"
+            onClick={() => navigate('/')}
+          >
+            トップページへ戻る
+          </Button>
+        </div>
       </div>
     );
   }
@@ -117,18 +122,20 @@ export const ReservationDetail = () => {
   if (!reservation) {
     return (
       <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-bold text-red-500">
-          予約が見つかりませんでした
-        </h1>
-        <p className="mt-2 text-gray-600">
-          予約コードをご確認の上、もう一度お試しください。
-        </p>
-        <Button 
-          className="mt-4"
-          onClick={() => navigate('/')}
-        >
-          トップページへ戻る
-        </Button>
+        <div className="max-w-2xl mx-auto text-center">
+          <h1 className="text-2xl font-bold text-red-500">
+            予約が見つかりませんでした
+          </h1>
+          <p className="mt-2 text-gray-600">
+            予約コードをご確認の上、もう一度お試しください。
+          </p>
+          <Button 
+            className="mt-4"
+            onClick={() => navigate('/')}
+          >
+            トップページへ戻る
+          </Button>
+        </div>
       </div>
     );
   }
