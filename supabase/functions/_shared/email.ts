@@ -1,38 +1,3 @@
-export const generatePendingEmail = ({
-  reservationCode,
-  confirmationToken,
-  guestName,
-  date,
-  timeSlot,
-  guestCount,
-  waterTemperature,
-}: {
-  reservationCode: string;
-  confirmationToken: string;
-  guestName: string;
-  date: string;
-  timeSlot: string;
-  guestCount: number;
-  waterTemperature: number;
-}) => {
-  return `
-    ${guestName}様
-
-    ※ まだ予約は完了していません。
-    以下のリンクから20分以内に予約を確定してください。
-    https://sauna-reservation.netlify.app/reservation/confirm/${confirmationToken}
-
-    【ご予約内容】
-    予約コード: ${reservationCode}
-    予約日: ${date}
-    時間帯: ${timeSlot}
-    人数: ${guestCount}名様
-    水風呂温度: ${waterTemperature}℃
-
-    ※ 20分を過ぎると予約は自動的にキャンセルされます。
-  `;
-};
-
 export const sendEmail = async (to: string, subject: string, message: string) => {
   const resendApiKey = Deno.env.get('RESEND_API_KEY');
 
