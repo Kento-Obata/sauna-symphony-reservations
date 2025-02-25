@@ -100,16 +100,13 @@ const handler = async (req: Request): Promise<Response> => {
     );
     console.log('Calculated total price:', totalPrice);
 
-    const messageContent = `以下のリンクをクリックして、20分以内に予約を確定してください。
-↓↓↓サウナU予約完了link↓↓↓
-${CONFIRMATION_URL}
-
-※まだ予約は完了していません。
-
-⚠︎20分を過ぎると予約は自動的にキャンセルされます。
+    const messageContent = `【Sauna U】 仮予約ありがとうございます。
+最終確認のため、下記リンクより予約確定手続きをお願いいたします。
+予約コード: ${reservation.reservationCode}
+URL：${CONFIRMATION_URL}
+※本リンクは1時間有効です。
 
 【ご予約内容】
-予約コード: ${reservation.reservationCode}
 日付: ${reservation.date}
 時間: ${TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]}
 人数: ${reservation.guestCount}名様
