@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { TimeSlot } from "@/types/reservation";
@@ -81,23 +82,42 @@ export const AdminReservationDialog = ({
   }, [defaultTimeSlot]);
 
   const handleSubmit = async () => {
+    // デバッグ用のログを追加
+    console.log('Submit values:', {
+      date,
+      timeSlot,
+      name,
+      phone,
+      email,
+      people,
+      temperature,
+    });
+
     if (!date || !timeSlot || !name || !phone || !people || !temperature) {
+      console.log('Missing fields:', {
+        date: !date,
+        timeSlot: !timeSlot,
+        name: !name,
+        phone: !phone,
+        people: !people,
+        temperature: !temperature
+      });
       toast.error("必須項目をすべて入力してください。");
       return;
     }
 
     try {
-      // Check for existing reservations
-      const { data: existingReservations } = await supabase
-        .from("reservations")
-        .select("*")
-        .eq("date", format(date, "yyyy-MM-dd"))
-        .eq("time_slot", timeSlot);
-
-      if (existingReservations && existingReservations.length > 0) {
-        toast.error("申し訳ありませんが、この時間帯はすでに予約が入っています。");
-        return;
-      }
+      // エラーの詳細をログに出力
+      console.log('Attempting to insert reservation with:', {
+        date: format(date, "yyyy-MM-dd"),
+        time_slot: timeSlot,
+        guest_name: name,
+        guest_count: parseInt(people),
+        email: email || null,
+        phone: phone,
+        water_temperature: parseInt(temperature),
+        status: 'confirmed' // 管理者からの予約は直接confirmedになる
+      });
 
       const { error } = await supabase.from("reservations").insert({
         date: format(date, "yyyy-MM-dd"),
@@ -107,9 +127,13 @@ export const AdminReservationDialog = ({
         email: email || null,
         phone: phone,
         water_temperature: parseInt(temperature),
+        status: 'confirmed' // 管理者からの予約は直接confirmedになる
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Reservation error:", error);
+        throw error;
+      }
 
       toast.success("予約を登録しました");
       queryClient.invalidateQueries({ queryKey: ["reservations"] });
