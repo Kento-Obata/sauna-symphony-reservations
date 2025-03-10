@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { TimeSlot } from "@/types/reservation";
@@ -10,6 +9,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { ReservationCalendar } from "@/components/reservation/ReservationCalendar";
 import { useReservations } from "@/hooks/useReservations";
+import { useShopClosures } from "@/hooks/useShopClosures";
+import { isShopClosed } from "@/utils/dateUtils";
 
 interface AdminReservationDialogProps {
   open: boolean;
@@ -39,6 +40,7 @@ export const AdminReservationDialog = ({
   });
 
   const { data: reservations } = useReservations();
+  const { closures } = useShopClosures();
 
   useEffect(() => {
     if (date) {
@@ -103,6 +105,12 @@ export const AdminReservationDialog = ({
         temperature: !temperature
       });
       toast.error("必須項目をすべて入力してください。");
+      return;
+    }
+
+    // 休業日チェックを追加
+    if (isShopClosed(date, closures)) {
+      toast.error("選択された日付は休業日です。別の日を選択してください。");
       return;
     }
 

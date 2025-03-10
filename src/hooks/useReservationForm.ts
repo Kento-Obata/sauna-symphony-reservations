@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { TimeSlot } from "@/types/reservation";
 import { toast } from "sonner";
@@ -6,6 +5,8 @@ import { format, isValid } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import { useShopClosures } from "@/hooks/useShopClosures";
+import { isShopClosed } from "@/utils/dateUtils";
 
 export const useReservationForm = () => {
   const [date, setDate] = useState<Date | undefined>(undefined);
@@ -20,6 +21,7 @@ export const useReservationForm = () => {
   const [reservationCode, setReservationCode] = useState<string>();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { closures } = useShopClosures();
 
   const resetForm = () => {
     setDate(undefined);
@@ -39,6 +41,13 @@ export const useReservationForm = () => {
       toast.error("有効な日付を選択してください。");
       return false;
     }
+
+    // 休業日チェックを追加
+    if (isShopClosed(date, closures)) {
+      toast.error("選択された日付は休業日です。別の日を選択してください。");
+      return false;
+    }
+
     if (!timeSlot) {
       toast.error("時間帯を選択してください。");
       return false;
@@ -74,6 +83,13 @@ export const useReservationForm = () => {
 
       if (!date || !isValid(date)) {
         toast.error("無効な日付です。");
+        return;
+      }
+
+      // 予約確定前に再度休業日チェック
+      if (isShopClosed(date, closures)) {
+        toast.error("選択された日付は休業日です。別の日を選択してください。");
+        setIsSubmitting(false);
         return;
       }
 
