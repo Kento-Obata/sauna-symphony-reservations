@@ -12,6 +12,7 @@ import { ReservationCalendar } from "@/components/reservation/ReservationCalenda
 import { useReservations } from "@/hooks/useReservations";
 import { useShopClosures } from "@/hooks/useShopClosures";
 import { isShopClosed } from "@/utils/dateUtils";
+import { getTotalPrice } from "@/utils/priceCalculations";
 
 interface AdminReservationDialogProps {
   open: boolean;
@@ -116,6 +117,13 @@ export const AdminReservationDialog = ({
     }
 
     try {
+      // 料金を計算
+      const totalPrice = await getTotalPrice(
+        parseInt(people),
+        temperature,
+        date
+      );
+
       // エラーの詳細をログに出力
       console.log('Attempting to insert reservation with:', {
         date: format(date, "yyyy-MM-dd"),
@@ -125,7 +133,8 @@ export const AdminReservationDialog = ({
         email: email || null,
         phone: phone,
         water_temperature: 15, // 常に15°Cに固定
-        status: 'confirmed' // 管理者からの予約は直接confirmedになる
+        status: 'confirmed', // 管理者からの予約は直接confirmedになる
+        total_price: totalPrice // 計算した料金を保存
       });
 
       const { error } = await supabase.from("reservations").insert({
@@ -136,7 +145,8 @@ export const AdminReservationDialog = ({
         email: email || null,
         phone: phone,
         water_temperature: 15, // 常に15°Cに固定
-        status: 'confirmed' // 管理者からの予約は直接confirmedになる
+        status: 'confirmed', // 管理者からの予約は直接confirmedになる
+        total_price: totalPrice // 計算した料金を保存
       });
 
       if (error) {

@@ -21,7 +21,13 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
   useEffect(() => {
     const calculatePrice = async () => {
       try {
-        // 日付文字列をDateオブジェクトに変換
+        // 予約に料金が設定されている場合はその値を使用
+        if (reservation.total_price && reservation.total_price > 0) {
+          setTotalPrice(reservation.total_price);
+          return;
+        }
+
+        // 料金が設定されていない場合は計算して設定
         const dateObj = reservation.date ? new Date(reservation.date) : undefined;
         console.log('ReservationInfo - Calculating price for date:', dateObj);
         
@@ -37,7 +43,7 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
     };
 
     calculatePrice();
-  }, [reservation.guest_count, reservation.water_temperature, reservation.date]);
+  }, [reservation.guest_count, reservation.water_temperature, reservation.date, reservation.total_price]);
 
   const getStatusDisplay = (status: string) => {
     switch (status) {

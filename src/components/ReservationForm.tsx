@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { TimeSlot, ReservationFormData } from "@/types/reservation";
 import { format, isValid } from "date-fns";
@@ -10,7 +11,7 @@ import { useState, useEffect } from "react";
 import { Checkbox } from "./ui/checkbox";
 import { TermsDialog } from "./TermsDialog";
 import { toast } from "sonner";
-import { getTotalPrice, formatPrice } from "@/utils/priceCalculations";
+import { getTotalPrice, formatPrice, getGroupPrice } from "@/utils/priceCalculations";
 
 const ReservationForm = () => {
   const {
@@ -39,6 +40,7 @@ const ReservationForm = () => {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showTermsDialog, setShowTermsDialog] = useState(false);
   const [totalPrice, setTotalPrice] = useState<number | null>(null);
+  const [groupPrice, setGroupPrice] = useState<number | null>(null);
 
   const {
     data: reservations,
@@ -48,7 +50,7 @@ const ReservationForm = () => {
 
   useEffect(() => {
     const updatePrice = async () => {
-      if (people && temperature) {
+      if (people) {
         try {
           const price = await getTotalPrice(
             parseInt(people), 
@@ -56,12 +58,17 @@ const ReservationForm = () => {
             date
           );
           setTotalPrice(price);
+
+          // グループ全体の料金も表示
+          const gPrice = getGroupPrice(parseInt(people));
+          setGroupPrice(gPrice);
         } catch (error) {
           console.error("料金の計算に失敗しました:", error);
           toast.error("料金の計算に失敗しました");
         }
       } else {
         setTotalPrice(null);
+        setGroupPrice(null);
       }
     };
     updatePrice();
@@ -170,12 +177,18 @@ const ReservationForm = () => {
         <div className="text-center mt-8">
           <div className="mb-4">
             <p className="text-lg font-semibold text-sauna-stone">料金</p>
-            <p className="text-2xl font-bold text-stone-600">
-              {totalPrice !== null ? formatPrice(totalPrice) : "---"}
-            </p>
-            {temperature && parseInt(temperature) <= 7 && (
-              <p className="text-sm text-muted-foreground mt-1">
-                ※ 水温7℃以下のオプション料金 +¥5,000を含む
+            {people && groupPrice !== null ? (
+              <>
+                <p className="text-2xl font-bold text-stone-600">
+                  {formatPrice(groupPrice)}（{people}名）
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  一人あたり： {formatPrice(Math.round(groupPrice / parseInt(people)))}
+                </p>
+              </>
+            ) : (
+              <p className="text-2xl font-bold text-stone-600">
+                ---
               </p>
             )}
           </div>

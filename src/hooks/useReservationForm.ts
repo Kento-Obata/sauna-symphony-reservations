@@ -7,6 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useShopClosures } from "@/hooks/useShopClosures";
 import { isShopClosed } from "@/utils/dateUtils";
+import { getTotalPrice } from "@/utils/priceCalculations";
 
 export const useReservationForm = () => {
   const [date, setDate] = useState<Date | undefined>(undefined);
@@ -95,6 +96,13 @@ export const useReservationForm = () => {
         return;
       }
 
+      // 料金を計算
+      const totalPrice = await getTotalPrice(
+        parseInt(people),
+        temperature,
+        date
+      );
+
       const reservationData = {
         date: format(date, "yyyy-MM-dd"),
         time_slot: timeSlot as TimeSlot,
@@ -105,6 +113,7 @@ export const useReservationForm = () => {
         // 水温を常に15°Cに固定
         water_temperature: 15,
         status: "pending" as const,
+        total_price: totalPrice // 計算した料金を保存
       };
 
       console.log("Submitting reservation data:", reservationData);
@@ -161,6 +170,7 @@ export const useReservationForm = () => {
             reservationCode: newReservation.reservation_code,
             confirmationToken: newReservation.confirmation_token,
             reservationDate: date.toISOString(), // Add this line to pass the date for price calculation
+            totalPrice: totalPrice // Send calculated price to notification
           },
         }
       );
