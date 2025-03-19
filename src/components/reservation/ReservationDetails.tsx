@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -171,7 +172,7 @@ export const ReservationDetails = ({
           水風呂温度 <span className="text-red-500">*</span>
         </label>
         <div className="text-sm text-muted-foreground mb-2 text-amber-600 font-medium">
-          ※ 水温選択は2024年9月より導入予定です
+          ※ 水温選択は2025年9月より導入予定です
         </div>
         <Select 
           value="15" 

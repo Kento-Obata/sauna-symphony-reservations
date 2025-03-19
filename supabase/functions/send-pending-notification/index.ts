@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
@@ -31,28 +30,24 @@ const formatPhoneNumber = (phone: string): string => {
   return digits.startsWith('0') ? '+81' + digits.slice(1) : digits;
 };
 
-// 水温による追加料金の計算
 const getSurcharge = (temp: number): number => {
   if (temp <= 10) return 5000;
   if (temp <= 14) return 3000;
   return 0;
 };
 
-// プレオープン期間（2025年3月）かどうかを判定
 const isPreOpeningPeriod = (date: Date): boolean => {
   return date.getFullYear() === 2025 && date.getMonth() === 2;
 };
 
-// 人数に応じた一人あたりの料金を計算
 const getPricePerPersonRegular = (guestCount: number): number => {
   if (guestCount === 2) return 7500;
   if (guestCount === 3 || guestCount === 4) return 7000;
   if (guestCount === 5 || guestCount === 6) return 6000;
-  return 7500; // デフォルト料金（2名料金）
+  return 7500;
 };
 
 const getPricePerPerson = (guestCount: number, date: Date): number => {
-  // プレオープン期間の場合は一律5000円/人
   if (isPreOpeningPeriod(date)) {
     return 5000;
   }
@@ -95,7 +90,7 @@ const handler = async (req: Request): Promise<Response> => {
     
     const totalPrice = calculateTotalPrice(
       reservation.guestCount,
-      reservation.waterTemperature,
+      15,
       reservationDate
     );
     console.log('Calculated total price:', totalPrice);
@@ -110,10 +105,10 @@ URL：${CONFIRMATION_URL}
 日付: ${reservation.date}
 時間: ${TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]}
 人数: ${reservation.guestCount}名様
-水風呂温度: ${reservation.waterTemperature}°C
+水風呂温度: 15°C
 
 【料金】
-¥${totalPrice.toLocaleString()} (税込)${getSurcharge(reservation.waterTemperature) > 0 ? `\n※ 水温オプション料金 +¥${getSurcharge(reservation.waterTemperature).toLocaleString()} を含む` : ''}`;
+¥${totalPrice.toLocaleString()} (税込)`;
 
     if (reservation.email) {
       try {
@@ -130,7 +125,6 @@ URL：${CONFIRMATION_URL}
       }
     }
 
-    // SMS notification
     if (reservation.phone) {
       try {
         const formattedPhone = formatPhoneNumber(reservation.phone);

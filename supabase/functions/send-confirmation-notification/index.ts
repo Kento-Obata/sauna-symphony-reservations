@@ -34,21 +34,18 @@ const getSurcharge = (temp: number): number => {
   return 0;
 };
 
-// プレオープン期間（2025年3月）かどうかを判定
 const isPreOpeningPeriod = (date: Date): boolean => {
   return date.getFullYear() === 2025 && date.getMonth() === 2;
 };
 
-// 人数に応じた一人あたりの料金を計算
 const getPricePerPersonRegular = (guestCount: number): number => {
   if (guestCount === 2) return 7500;
   if (guestCount === 3 || guestCount === 4) return 7000;
   if (guestCount === 5 || guestCount === 6) return 6000;
-  return 7500; // デフォルト料金（2名料金）
+  return 7500;
 };
 
 const getPricePerPerson = (guestCount: number, date: Date): number => {
-  // プレオープン期間の場合は一律5000円/人
   if (isPreOpeningPeriod(date)) {
     return 5000;
   }
@@ -99,18 +96,17 @@ const handler = async (req: Request): Promise<Response> => {
     const notifications = [];
     const GOOGLE_MAPS_URL = "https://maps.google.com/maps?q=8Q5GHG7V%2BJ5";
 
-    // 料金計算
     const reservationDate = new Date(reservation.date);
     const totalPrice = calculateTotalPrice(
       reservation.guestCount,
-      reservation.waterTemperature,
+      15,
       reservationDate
     );
 
     console.log("Price calculation:", {
       date: reservationDate,
       guestCount: reservation.guestCount,
-      waterTemperature: reservation.waterTemperature,
+      waterTemperature: 15,
       totalPrice: totalPrice
     });
 
@@ -122,7 +118,7 @@ const handler = async (req: Request): Promise<Response> => {
 日付: ${reservation.date}
 時間: ${TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]}
 人数: ${reservation.guestCount}名様
-水風呂温度: ${reservation.waterTemperature}°C
+水風呂温度: 15°C
 料金: ¥${totalPrice.toLocaleString()} (税込)
 
 【受付時間】

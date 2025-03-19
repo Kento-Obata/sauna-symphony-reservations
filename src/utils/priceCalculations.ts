@@ -1,13 +1,10 @@
 
-
 import { supabase } from "@/integrations/supabase/client";
 import { PriceSetting } from "@/types/price";
 
 // 水温による追加料金の計算
 export const getSurcharge = (temp: string): number => {
-  const temperature = parseInt(temp);
-  if (temperature <= 7) return 5000;
-  if (temperature <= 10) return 3000;
+  // 水温機能は2025年9月から導入のため、現在は常に0円を返す
   return 0;
 };
 
@@ -48,7 +45,8 @@ export const getTotalPrice = async (guestCount: number, temperature: string, dat
   console.log('Price per person:', pricePerPerson);
   
   const basePrice = pricePerPerson * guestCount;
-  const surcharge = getSurcharge(temperature);
+  // 水温機能は2025年9月から導入のため、サーチャージは常に0円
+  const surcharge = 0;
   console.log('Base price:', basePrice, 'Surcharge:', surcharge);
   
   return basePrice + surcharge;
