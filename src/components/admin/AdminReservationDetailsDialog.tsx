@@ -1,4 +1,3 @@
-
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Reservation, TimeSlot } from "@/types/reservation";
@@ -13,7 +12,6 @@ import { ReservationDateSelect } from "./reservation-details/ReservationDateSele
 import { ReservationTimeSelect } from "./reservation-details/ReservationTimeSelect";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { XCircle } from "lucide-react";
-import { getTotalPrice, formatPrice } from "@/utils/priceCalculations";
 
 interface AdminReservationDetailsDialogProps {
   open: boolean;
@@ -35,7 +33,6 @@ export const AdminReservationDetailsDialog = ({
   const [timeSlot, setTimeSlot] = useState<TimeSlot>("morning");
   const [date, setDate] = useState("");
   const [isEditing, setIsEditing] = useState(false);
-  const [totalPrice, setTotalPrice] = useState<number>(0);
 
   useEffect(() => {
     if (reservation) {
@@ -46,7 +43,6 @@ export const AdminReservationDetailsDialog = ({
       setWaterTemperature(reservation.water_temperature.toString());
       setTimeSlot(reservation.time_slot);
       setDate(reservation.date);
-      setTotalPrice(reservation.total_price);
     }
   }, [reservation]);
 
@@ -63,32 +59,10 @@ export const AdminReservationDetailsDialog = ({
     }
   };
 
-  // 料金を計算（編集時のみ）
-  useEffect(() => {
-    if (isEditing && guestCount) {
-      const calculateNewPrice = async () => {
-        try {
-          const dateObj = date ? new Date(date) : undefined;
-          const price = await getTotalPrice(
-            parseInt(guestCount),
-            waterTemperature,
-            dateObj
-          );
-          // 既存の予約の料金は変更しない（編集中でも表示のみ更新）
-          setTotalPrice(price);
-        } catch (error) {
-          console.error("料金の計算に失敗しました:", error);
-        }
-      };
-      calculateNewPrice();
-    }
-  }, [isEditing, guestCount, date]);
-
   if (!reservation) return null;
 
   const handleSave = async () => {
     try {
-      // 既存の予約の料金は維持
       console.log("Updating reservation with data:", {
         guest_name: guestName,
         guest_count: parseInt(guestCount),
@@ -97,7 +71,6 @@ export const AdminReservationDetailsDialog = ({
         water_temperature: 15,
         time_slot: timeSlot,
         date: date,
-        total_price: reservation.total_price // 既存の予約の料金を維持
       });
 
       const { error } = await supabase
@@ -110,8 +83,6 @@ export const AdminReservationDetailsDialog = ({
           water_temperature: 15,
           time_slot: timeSlot,
           date: date,
-          // 既存の料金を維持
-          total_price: reservation.total_price
         })
         .eq("id", reservation.id);
 
@@ -132,7 +103,6 @@ export const AdminReservationDetailsDialog = ({
             phone: phone,
             waterTemperature: 15,
             reservationCode: reservation.reservation_code,
-            totalPrice: reservation.total_price
           },
         }
       );
@@ -253,7 +223,7 @@ export const AdminReservationDetailsDialog = ({
               {isEditing ? (
                 <>
                   <div className="text-sm text-muted-foreground mb-2 text-amber-600 font-medium">
-                    ※ 水温選択は2025年9月より導入予定です
+                    ※ 水温選択は2024年9月より導入予定です
                   </div>
                   <Select value="15" onValueChange={setWaterTemperature} disabled>
                     <SelectTrigger>
@@ -266,16 +236,6 @@ export const AdminReservationDetailsDialog = ({
                 </>
               ) : (
                 `${reservation.water_temperature}°C`
-              )}
-            </div>
-
-            <div className="text-muted-foreground">料金:</div>
-            <div className="font-semibold">
-              {formatPrice(reservation.total_price)} (税込)
-              {isEditing && (
-                <div className="text-xs text-muted-foreground mt-1">
-                  ※ 予約時の料金が適用されます。現在の新規予約料金: {formatPrice(totalPrice)}
-                </div>
               )}
             </div>
 
