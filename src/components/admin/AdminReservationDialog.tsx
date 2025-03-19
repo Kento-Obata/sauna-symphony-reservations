@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { TimeSlot } from "@/types/reservation";
@@ -32,7 +33,8 @@ export const AdminReservationDialog = ({
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [people, setPeople] = useState("");
-  const [temperature, setTemperature] = useState("");
+  // 水温は常に15°Cに固定
+  const [temperature, setTemperature] = useState("15");
   const [timeSlotReservations, setTimeSlotReservations] = useState<Record<TimeSlot, number>>({
     morning: 0,
     afternoon: 0,
@@ -95,14 +97,13 @@ export const AdminReservationDialog = ({
       temperature,
     });
 
-    if (!date || !timeSlot || !name || !phone || !people || !temperature) {
+    if (!date || !timeSlot || !name || !phone || !people) {
       console.log('Missing fields:', {
         date: !date,
         timeSlot: !timeSlot,
         name: !name,
         phone: !phone,
-        people: !people,
-        temperature: !temperature
+        people: !people
       });
       toast.error("必須項目をすべて入力してください。");
       return;
@@ -123,7 +124,7 @@ export const AdminReservationDialog = ({
         guest_count: parseInt(people),
         email: email || null,
         phone: phone,
-        water_temperature: parseInt(temperature),
+        water_temperature: 15, // 常に15°Cに固定
         status: 'confirmed' // 管理者からの予約は直接confirmedになる
       });
 
@@ -134,7 +135,7 @@ export const AdminReservationDialog = ({
         guest_count: parseInt(people),
         email: email || null,
         phone: phone,
-        water_temperature: parseInt(temperature),
+        water_temperature: 15, // 常に15°Cに固定
         status: 'confirmed' // 管理者からの予約は直接confirmedになる
       });
 

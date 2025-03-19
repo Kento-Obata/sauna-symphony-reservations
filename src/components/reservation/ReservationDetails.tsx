@@ -77,31 +77,21 @@ export const ReservationDetails = ({
     }
   };
 
-  // 4月以降かどうかを判定する関数
   const isAfterApril = (selectedDate: Date | undefined): boolean => {
     if (!selectedDate) return false;
     const month = selectedDate.getMonth() + 1; // JavaScriptの月は0から始まるため+1
     return month >= 4;
   };
 
-  // 水温の初期値を設定する関数
   const getDefaultTemperature = () => {
-    if (!date || !isAfterApril(date)) {
-      return "15";
-    }
-    if (timeSlot !== "morning") {
-      return "15";
-    }
-    return temperature || "15";
+    return "15";
   };
 
-  // 水温が変更された時に呼ばれる関数
   const handleTemperatureChange = (value: string) => {
     console.log('Temperature changed to:', value);
     setTemperature(value);
   };
 
-  // time_slotが変更された時に水温を適切に設定
   React.useEffect(() => {
     setTemperature(getDefaultTemperature());
   }, [timeSlot, date]);
@@ -180,59 +170,21 @@ export const ReservationDetails = ({
         <label className="block text-sm mb-2">
           水風呂温度 <span className="text-red-500">*</span>
         </label>
-        {!date || !isAfterApril(date) ? (
-          <>
-            <div className="text-sm text-muted-foreground mb-2">
-              ※ 水温選択は4月以降のご予約から可能となります
-            </div>
-            <Select 
-              value={getDefaultTemperature()} 
-              onValueChange={handleTemperatureChange}
-              disabled
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="15">15℃</SelectItem>
-              </SelectContent>
-            </Select>
-          </>
-        ) : (
-          <>
-            <div className="text-sm text-muted-foreground mb-2">
-              ※ 午前の部のみ水温選択が可能です（5-14℃）
-            </div>
-            <Select
-              value={getDefaultTemperature()}
-              onValueChange={handleTemperatureChange}
-              disabled={timeSlot !== "morning"}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="5-10">
-                  <div className="flex justify-between items-center w-full">
-                    <span>5-10℃</span>
-                    <span className="text-sm text-muted-foreground ml-2">
-                      (+¥5,000)
-                    </span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="10-14">
-                  <div className="flex justify-between items-center w-full">
-                    <span>10-14℃</span>
-                    <span className="text-sm text-muted-foreground ml-2">
-                      (+¥3,000)
-                    </span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="15">15℃</SelectItem>
-              </SelectContent>
-            </Select>
-          </>
-        )}
+        <div className="text-sm text-muted-foreground mb-2 text-amber-600 font-medium">
+          ※ 水温選択は2024年9月より導入予定です
+        </div>
+        <Select 
+          value="15" 
+          onValueChange={handleTemperatureChange}
+          disabled
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="15">15℃</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );

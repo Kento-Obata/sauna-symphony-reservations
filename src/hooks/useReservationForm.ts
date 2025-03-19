@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { TimeSlot } from "@/types/reservation";
 import { toast } from "sonner";
@@ -15,6 +16,7 @@ export const useReservationForm = () => {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [people, setPeople] = useState("");
+  // 水温を常に15°Cに固定
   const [temperature, setTemperature] = useState("15");
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,6 +32,7 @@ export const useReservationForm = () => {
     setEmail("");
     setPhone("");
     setPeople("");
+    // リセット時も15°Cに固定
     setTemperature("15");
     setShowConfirmDialog(false);
     setIsSubmitting(false);
@@ -100,7 +103,8 @@ export const useReservationForm = () => {
         guest_count: parseInt(people),
         email: email || null,
         phone: phone,
-        water_temperature: parseInt(temperature),
+        // 水温を常に15°Cに固定
+        water_temperature: 15,
         status: "pending" as const,
       };
 

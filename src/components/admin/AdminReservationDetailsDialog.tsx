@@ -1,4 +1,3 @@
-
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Reservation, TimeSlot } from "@/types/reservation";
@@ -30,7 +29,7 @@ export const AdminReservationDetailsDialog = ({
   const [guestCount, setGuestCount] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [waterTemperature, setWaterTemperature] = useState("");
+  const [waterTemperature, setWaterTemperature] = useState("15");
   const [timeSlot, setTimeSlot] = useState<TimeSlot>("morning");
   const [date, setDate] = useState("");
   const [isEditing, setIsEditing] = useState(false);
@@ -69,7 +68,7 @@ export const AdminReservationDetailsDialog = ({
         guest_count: parseInt(guestCount),
         phone: phone,
         email: email || null,
-        water_temperature: parseInt(waterTemperature),
+        water_temperature: 15,
         time_slot: timeSlot,
         date: date,
       });
@@ -81,7 +80,7 @@ export const AdminReservationDetailsDialog = ({
           guest_count: parseInt(guestCount),
           phone: phone,
           email: email || null,
-          water_temperature: parseInt(waterTemperature),
+          water_temperature: 15,
           time_slot: timeSlot,
           date: date,
         })
@@ -92,7 +91,6 @@ export const AdminReservationDetailsDialog = ({
         throw error;
       }
 
-      // Send update notification
       const notificationResponse = await supabase.functions.invoke(
         "send-update-notification",
         {
@@ -103,7 +101,7 @@ export const AdminReservationDetailsDialog = ({
             guestCount: parseInt(guestCount),
             email: email || null,
             phone: phone,
-            waterTemperature: parseInt(waterTemperature),
+            waterTemperature: 15,
             reservationCode: reservation.reservation_code,
           },
         }
@@ -116,7 +114,6 @@ export const AdminReservationDetailsDialog = ({
         toast.success("予約情報を更新しました");
       }
 
-      // Invalidate both the reservations list and the single reservation query
       await queryClient.invalidateQueries({ queryKey: ["reservations"] });
       await queryClient.invalidateQueries({ 
         queryKey: ["reservation", reservation.reservation_code] 
@@ -224,18 +221,19 @@ export const AdminReservationDetailsDialog = ({
             <div className="text-muted-foreground">水風呂温度:</div>
             <div>
               {isEditing ? (
-                <Select value={waterTemperature} onValueChange={setWaterTemperature}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 16 }, (_, i) => i + 2).map((temp) => (
-                      <SelectItem key={temp} value={temp.toString()}>
-                        {temp}°C
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <>
+                  <div className="text-sm text-muted-foreground mb-2 text-amber-600 font-medium">
+                    ※ 水温選択は2024年9月より導入予定です
+                  </div>
+                  <Select value="15" onValueChange={setWaterTemperature} disabled>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="15">15°C</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </>
               ) : (
                 `${reservation.water_temperature}°C`
               )}
