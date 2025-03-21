@@ -1,3 +1,4 @@
+
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { useState } from "react";
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { XCircle, Edit } from "lucide-react";
 import { AdminReservationDetailsDialog } from "./AdminReservationDetailsDialog";
+import { formatPrice } from "@/utils/priceCalculations";
 
 interface AdminSearchResultsProps {
   reservations: Reservation[];
@@ -36,6 +38,7 @@ export const AdminSearchResults = ({
                 <TableHead>お客様名</TableHead>
                 <TableHead>人数</TableHead>
                 <TableHead>電話番号</TableHead>
+                <TableHead>料金</TableHead>
                 <TableHead>ステータス</TableHead>
                 <TableHead></TableHead>
               </TableRow>
@@ -55,6 +58,7 @@ export const AdminSearchResults = ({
                   <TableCell>{reservation.guest_name}様</TableCell>
                   <TableCell>{reservation.guest_count}名</TableCell>
                   <TableCell>{reservation.phone}</TableCell>
+                  <TableCell>{formatPrice(reservation.total_price)}</TableCell>
                   <TableCell>
                     {reservation.status === "cancelled" ? "キャンセル済" : "予約済"}
                   </TableCell>
@@ -105,7 +109,7 @@ export const AdminSearchResults = ({
               ))}
               {reservations.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-4">
+                  <TableCell colSpan={8} className="text-center py-4">
                     検索結果はありません
                   </TableCell>
                 </TableRow>

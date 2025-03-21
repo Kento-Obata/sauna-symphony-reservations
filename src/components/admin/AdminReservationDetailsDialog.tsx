@@ -1,3 +1,4 @@
+
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Reservation, TimeSlot } from "@/types/reservation";
@@ -12,6 +13,7 @@ import { ReservationDateSelect } from "./reservation-details/ReservationDateSele
 import { ReservationTimeSelect } from "./reservation-details/ReservationTimeSelect";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { XCircle } from "lucide-react";
+import { formatPrice } from "@/utils/priceCalculations";
 
 interface AdminReservationDetailsDialogProps {
   open: boolean;
@@ -245,6 +247,11 @@ export const AdminReservationDetailsDialog = ({
             <div className="text-muted-foreground">ステータス:</div>
             <div>
               {getStatusDisplay(reservation.status)}
+            </div>
+
+            <div className="text-muted-foreground">料金:</div>
+            <div>
+              {formatPrice(reservation.total_price)} (税込)
             </div>
           </div>
 
