@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
@@ -55,8 +56,12 @@ const handler = async (req: Request): Promise<Response> => {
     const BASE_URL = "https://www.u-sauna-private.com";
     const CONFIRMATION_URL = `${BASE_URL}/reservation/confirm/${reservation.confirmationToken}`;
 
+    // Make sure we're using the total_price from the database, not calculating it again
+    // Log to verify we're receiving the correct total_price value
+    console.log('Using stored total price:', reservation.total_price);
+    
+    // Ensure total_price is a number and handle default
     const totalPrice = reservation.total_price || 0;
-    console.log('Using stored total price:', totalPrice);
 
     const messageContent = `【Sauna U】 仮予約ありがとうございます。
 最終確認のため、下記リンクより予約確定手続きをお願いいたします。
