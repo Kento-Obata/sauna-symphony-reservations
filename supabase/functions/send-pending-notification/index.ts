@@ -17,6 +17,7 @@ interface ReservationNotification {
   reservationCode: string;
   confirmationToken: string;
   reservationDate: string;
+  total_price: number;
 }
 
 const TIME_SLOTS = {
@@ -28,37 +29,6 @@ const TIME_SLOTS = {
 const formatPhoneNumber = (phone: string): string => {
   const digits = phone.replace(/\D/g, '');
   return digits.startsWith('0') ? '+81' + digits.slice(1) : digits;
-};
-
-const getSurcharge = (temp: number): number => {
-  if (temp <= 10) return 5000;
-  if (temp <= 14) return 3000;
-  return 0;
-};
-
-const isPreOpeningPeriod = (date: Date): boolean => {
-  return date.getFullYear() === 2025 && date.getMonth() === 2;
-};
-
-const getPricePerPersonRegular = (guestCount: number): number => {
-  if (guestCount === 2) return 7500;
-  if (guestCount === 3 || guestCount === 4) return 7000;
-  if (guestCount === 5 || guestCount === 6) return 6000;
-  return 7500;
-};
-
-const getPricePerPerson = (guestCount: number, date: Date): number => {
-  if (isPreOpeningPeriod(date)) {
-    return 5000;
-  }
-  return getPricePerPersonRegular(guestCount);
-};
-
-const calculateTotalPrice = (guestCount: number, waterTemperature: number, date: Date): number => {
-  const pricePerPerson = getPricePerPerson(guestCount, date);
-  const basePrice = pricePerPerson * guestCount;
-  const surcharge = getSurcharge(waterTemperature);
-  return basePrice + surcharge;
 };
 
 const handler = async (req: Request): Promise<Response> => {
@@ -85,15 +55,8 @@ const handler = async (req: Request): Promise<Response> => {
     const BASE_URL = "https://www.u-sauna-private.com";
     const CONFIRMATION_URL = `${BASE_URL}/reservation/confirm/${reservation.confirmationToken}`;
 
-    const reservationDate = new Date(reservation.reservationDate);
-    console.log('Calculating price for date:', reservationDate);
-    
-    const totalPrice = calculateTotalPrice(
-      reservation.guestCount,
-      15,
-      reservationDate
-    );
-    console.log('Calculated total price:', totalPrice);
+    const totalPrice = reservation.total_price || 0;
+    console.log('Using stored total price:', totalPrice);
 
     const messageContent = `【Sauna U】 仮予約ありがとうございます。
 最終確認のため、下記リンクより予約確定手続きをお願いいたします。
