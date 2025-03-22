@@ -14,6 +14,21 @@ const isPreOpeningPeriod = (date: Date): boolean => {
   return date.getFullYear() === 2025 && date.getMonth() === 2; // 3月は2（0-based）
 };
 
+// データベースから料金設定を取得
+export const fetchPriceSettings = async (): Promise<PriceSetting[]> => {
+  const { data, error } = await supabase
+    .from("price_settings")
+    .select("*")
+    .order("guest_count");
+
+  if (error) {
+    console.error("Error fetching price settings:", error);
+    return [];
+  }
+
+  return data || [];
+};
+
 // 人数に応じた一人あたりの料金を計算
 const getPricePerPersonRegular = (guestCount: number): number => {
   if (guestCount === 2) return 7500;
@@ -29,7 +44,21 @@ export const getPricePerPerson = async (guestCount: number, date?: Date): Promis
     return 5000;
   }
 
-  console.log('Regular price period');
+  // 通常期間の場合はデータベースから料金を取得
+  try {
+    const priceSettings = await fetchPriceSettings();
+    const setting = priceSettings.find(p => p.guest_count === guestCount);
+    
+    if (setting) {
+      console.log(`Price from database for ${guestCount} guests:`, setting.price_per_person);
+      return setting.price_per_person;
+    }
+  } catch (error) {
+    console.error("Error getting price from database:", error);
+  }
+
+  // データベースから取得できない場合はデフォルト値を使用
+  console.log('Using default pricing logic');
   const pricePerPerson = getPricePerPersonRegular(guestCount);
   console.log('Price per person:', pricePerPerson);
   return pricePerPerson;

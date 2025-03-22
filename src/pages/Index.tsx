@@ -1,29 +1,66 @@
 
 import { Header } from "@/components/Header";
 import ReservationForm from "@/components/ReservationForm";
+import { useEffect, useState } from "react";
+import { fetchPriceSettings } from "@/utils/priceCalculations";
+import { PriceSetting } from "@/types/price";
 
 const Index = () => {
-  const priceData = [{
-    people: 2,
-    perPerson: 7500,
-    total: 15000
-  }, {
-    people: 3,
-    perPerson: 7000,
-    total: 21000
-  }, {
-    people: 4,
-    perPerson: 7000,
-    total: 28000
-  }, {
-    people: 5,
-    perPerson: 6000,
-    total: 30000
-  }, {
-    people: 6,
-    perPerson: 6000,
-    total: 36000
-  }];
+  const [priceData, setPriceData] = useState<{
+    people: number;
+    perPerson: number;
+    total: number;
+  }[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadPriceData = async () => {
+      try {
+        setIsLoading(true);
+        const priceSettings = await fetchPriceSettings();
+        
+        if (priceSettings.length > 0) {
+          // データベースから取得した料金設定を使用
+          const formattedData = priceSettings.map(setting => ({
+            people: setting.guest_count,
+            perPerson: setting.price_per_person,
+            total: setting.guest_count * setting.price_per_person
+          }));
+          setPriceData(formattedData);
+        } else {
+          // 料金設定がない場合はデフォルト値を使用
+          setPriceData([{
+            people: 2,
+            perPerson: 7500,
+            total: 15000
+          }, {
+            people: 3,
+            perPerson: 7000,
+            total: 21000
+          }, {
+            people: 4,
+            perPerson: 7000,
+            total: 28000
+          }, {
+            people: 5,
+            perPerson: 6000,
+            total: 30000
+          }, {
+            people: 6,
+            perPerson: 6000,
+            total: 36000
+          }]);
+        }
+      } catch (error) {
+        console.error("Error loading price data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadPriceData();
+  }, []);
+
   return <div className="min-h-screen flex flex-col bg-sauna-base">
       <Header />
       <div className="h-[30vh] relative bg-sauna-base">
@@ -68,15 +105,27 @@ const Index = () => {
                 </tr>
               </thead>
               <tbody>
-                {priceData.map(({
-                people,
-                perPerson,
-                total
-              }) => <tr key={people} className="border-b border-sauna-stone/10">
-                    <td className="py-4 px-6 text-left">{people}</td>
-                    <td className="py-4 px-6 text-right">¥{perPerson.toLocaleString()}</td>
-                    <td className="py-4 px-6 text-right">¥{total.toLocaleString()}</td>
-                  </tr>)}
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={3} className="py-4 px-6 text-center">
+                      <div className="flex justify-center">
+                        <div className="animate-pulse h-4 w-24 bg-sauna-stone/10 rounded"></div>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  priceData.map(({
+                    people,
+                    perPerson,
+                    total
+                  }) => (
+                    <tr key={people} className="border-b border-sauna-stone/10">
+                      <td className="py-4 px-6 text-left">{people}</td>
+                      <td className="py-4 px-6 text-right">¥{perPerson.toLocaleString()}</td>
+                      <td className="py-4 px-6 text-right">¥{total.toLocaleString()}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
