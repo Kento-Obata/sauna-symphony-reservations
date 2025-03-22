@@ -160,6 +160,7 @@ export const useReservationForm = () => {
       setReservationCode(newReservation.reservation_code);
 
       // Send pending notification
+      // 重要な修正: ここでtotal_priceを追加
       const notificationResponse = await supabase.functions.invoke(
         "send-pending-notification",
         {
@@ -173,7 +174,8 @@ export const useReservationForm = () => {
             waterTemperature: reservationData.water_temperature,
             reservationCode: newReservation.reservation_code,
             confirmationToken: newReservation.confirmation_token,
-            reservationDate: date.toISOString(), // Add this line to pass the date for price calculation
+            reservationDate: date.toISOString(),
+            total_price: newReservation.total_price // 修正: データベースに保存された料金を渡す
           },
         }
       );
