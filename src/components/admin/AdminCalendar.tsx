@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   startOfWeek,
@@ -91,16 +90,6 @@ export const AdminCalendar = ({
     const isPreOpening = selectedDateTime.getFullYear() === 2025 && selectedDateTime.getMonth() === 2; // 3月は2（0-based）
 
     try {
-      // 既存の予約を削除
-      const { error: deleteError } = await supabase
-        .from('reservations')
-        .delete()
-        .eq('date', dateStr)
-        .eq('time_slot', selectedTimeSlot);
-
-      if (deleteError) throw deleteError;
-
-      // 休枠を設定
       const { error: insertError } = await supabase
         .from("reservations")
         .insert({
@@ -113,7 +102,7 @@ export const AdminCalendar = ({
           status: "confirmed",
           is_confirmed: true,
           expires_at: null,
-          price_per_person: isPreOpening ? 5000 : null // プレオープン期間は5000円
+          total_price: 0 // 休枠は料金なし
         });
 
       if (insertError) throw insertError;
