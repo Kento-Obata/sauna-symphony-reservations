@@ -154,7 +154,7 @@ const Index = () => {
                   〒811-2127<br />
                   福岡県糟屋郡宇美町障子岳6-8-4
                 </p>
-                <a href="https://www.google.com/maps?q=8Q5GHG7V%2BJ5" target="_blank" rel="noopener noreferrer" className="text-black hover:underline mt-2 inline-block">
+                <a href="https://g.co/kgs/9f4Eqdv" target="_blank" rel="noopener noreferrer" className="text-black hover:underline mt-2 inline-block">
                   Google Mapsで見る
                 </a>
               </div>
