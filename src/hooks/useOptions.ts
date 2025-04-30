@@ -3,15 +3,20 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Option } from "@/types/option";
 
-export const useOptions = () => {
+export const useOptions = (onlyActive = true) => {
   return useQuery({
-    queryKey: ["options"],
+    queryKey: ["options", { onlyActive }],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("options")
-        .select("*")
-        .eq("is_active", true)
-        .order("price_per_person", { ascending: true });
+        .select("*");
+        
+      // Only filter by is_active if onlyActive is true
+      if (onlyActive) {
+        query = query.eq("is_active", true);
+      }
+      
+      const { data, error } = await query.order("price_per_person", { ascending: true });
 
       if (error) {
         console.error("Error fetching options:", error);

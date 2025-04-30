@@ -106,6 +106,7 @@ export const OptionManager = () => {
     
     setIsLoading(true);
     try {
+      // Update only the options table
       const { error } = await supabase
         .from("options")
         .update({
