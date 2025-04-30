@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { TimeSlot } from "@/types/reservation";
@@ -94,7 +93,7 @@ export const AdminReservationDialog = ({
       phone,
       email,
       people,
-      temperature,
+      temperature: "15", // 常に15°Cに固定
     });
 
     if (!date || !timeSlot || !name || !phone || !people) {
@@ -161,7 +160,7 @@ export const AdminReservationDialog = ({
     setEmail("");
     setPhone("");
     setPeople("");
-    setTemperature("");
+    setTemperature("15"); // リセット時も15°Cに固定
   };
 
   return (

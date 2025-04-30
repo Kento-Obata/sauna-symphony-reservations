@@ -78,24 +78,10 @@ export const ReservationDetails = ({
     }
   };
 
-  const isAfterApril = (selectedDate: Date | undefined): boolean => {
-    if (!selectedDate) return false;
-    const month = selectedDate.getMonth() + 1; // JavaScriptの月は0から始まるため+1
-    return month >= 4;
-  };
-
-  const getDefaultTemperature = () => {
-    return "15";
-  };
-
-  const handleTemperatureChange = (value: string) => {
-    console.log('Temperature changed to:', value);
-    setTemperature(value);
-  };
-
+  // 水温は常に15度に固定
   React.useEffect(() => {
-    setTemperature(getDefaultTemperature());
-  }, [timeSlot, date]);
+    setTemperature("15");
+  }, [timeSlot, date, setTemperature]);
 
   return (
     <div className="space-y-4">
@@ -167,26 +153,7 @@ export const ReservationDetails = ({
         </p>
       </div>
 
-      <div>
-        <label className="block text-sm mb-2">
-          水風呂温度 <span className="text-red-500">*</span>
-        </label>
-        <div className="text-sm text-muted-foreground mb-2 text-amber-600 font-medium">
-          ※ 水温選択は2025年9月より導入予定です
-        </div>
-        <Select 
-          value="15" 
-          onValueChange={handleTemperatureChange}
-          disabled
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="15">15℃</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      {/* 水風呂温度フォームを非表示にする（値は内部的には15度で固定） */}
     </div>
   );
 };

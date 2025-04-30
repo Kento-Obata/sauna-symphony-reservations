@@ -51,14 +51,10 @@ export const TimeSlotSelect = ({
         </SelectTrigger>
         <SelectContent>
           {[
-            { 
-              value: 'morning', 
-              label: '午前 10:00-12:30',
-              description: '※ 朝限定で水風呂の温度を5℃から選択できます'
-            },
+            { value: 'morning', label: '午前 10:00-12:30' },
             { value: 'afternoon', label: '午後 13:30-16:00' },
             { value: 'evening', label: '夕方 17:00-19:30' }
-          ].map(({ value, label, description }) => {
+          ].map(({ value, label }) => {
             const reservationCount = timeSlotReservations[value as TimeSlot];
             const isDisabled = selectedDate 
               ? (isTimeSlotDisabled(value as TimeSlot, selectedDate) || 
@@ -76,11 +72,6 @@ export const TimeSlotSelect = ({
               >
                 <div>
                   <div>{label} {statusLabel}</div>
-                  {description && (
-                    <div className="text-sm text-muted-foreground mt-1">
-                      {description}
-                    </div>
-                  )}
                 </div>
               </SelectItem>
             );
