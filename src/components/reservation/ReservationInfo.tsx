@@ -25,6 +25,8 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
   useEffect(() => {
     const fetchReservationOptions = async () => {
       try {
+        console.log("Fetching options for reservation ID:", reservation.id);
+        
         const { data: reservationOptions, error } = await supabase
           .from("reservation_options")
           .select(`
@@ -42,11 +44,14 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
 
         // オプション情報を整形
         if (reservationOptions && reservationOptions.length > 0) {
+          console.log("Found reservation options:", reservationOptions);
           const formattedOptions = reservationOptions.map(item => ({
             option: item.options as Option,
             quantity: item.quantity
           }));
           setOptions(formattedOptions);
+        } else {
+          console.log("No options found for this reservation");
         }
       } catch (error) {
         console.error("オプション情報の取得中にエラーが発生しました:", error);

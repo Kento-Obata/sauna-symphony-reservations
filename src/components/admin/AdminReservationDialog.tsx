@@ -158,6 +158,8 @@ export const AdminReservationDialog = ({
 
       // オプションが選択されている場合は予約オプションを保存
       if (selectedOptions.length > 0) {
+        console.log("Saving admin reservation options:", selectedOptions, "for reservation ID:", newReservation.id);
+        
         const reservationOptionsData = selectedOptions.map(option => ({
           reservation_id: newReservation.id,
           option_id: option.option_id,
@@ -172,6 +174,8 @@ export const AdminReservationDialog = ({
           console.error("Error inserting reservation options:", optionsError);
           // オプション保存エラーの場合でも予約自体は確定させるため、ここではthrowしない
           toast.error("オプション情報の保存に失敗しました");
+        } else {
+          console.log("Successfully saved reservation options");
         }
       }
 
