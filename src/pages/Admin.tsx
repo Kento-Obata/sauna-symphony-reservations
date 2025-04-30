@@ -13,7 +13,7 @@ import { AdminUpcomingReservations } from "@/components/admin/AdminUpcomingReser
 import { AdminSearchResults } from "@/components/admin/AdminSearchResults";
 import { ShopClosureManager } from "@/components/admin/ShopClosureManager";
 import { PriceSettingsManager } from "@/components/admin/PriceSettingsManager";
-import { OptionManager } from "@/components/admin/OptionManager"; // 追加
+import { OptionManager } from "@/components/admin/OptionManager";
 import { useReservations } from "@/hooks/useReservations";
 
 const Admin = () => {

@@ -47,8 +47,7 @@ export const fetchOptions = async (): Promise<Option[]> => {
 
 // 選択されたオプションの合計金額を計算
 export const calculateOptionsTotal = async (
-  selectedOptions: ReservationOption[] = [],
-  guestCount: number
+  selectedOptions: ReservationOption[] = []
 ): Promise<number> => {
   if (!selectedOptions || selectedOptions.length === 0) return 0;
 
@@ -57,7 +56,7 @@ export const calculateOptionsTotal = async (
     return selectedOptions.reduce((total, selectedOption) => {
       const option = options.find(o => o.id === selectedOption.option_id);
       if (option) {
-        // オプションの料金 × 数量（通常は人数）
+        // オプションの料金 × 数量
         return total + (option.price_per_person * selectedOption.quantity);
       }
       return total;
@@ -122,7 +121,7 @@ export const getTotalPrice = async (
   const surcharge = 0;
   
   // オプション料金を計算
-  const optionsTotal = await calculateOptionsTotal(selectedOptions, guestCount);
+  const optionsTotal = await calculateOptionsTotal(selectedOptions);
   
   console.log('Base price:', basePrice, 'Surcharge:', surcharge, 'Options total:', optionsTotal);
   

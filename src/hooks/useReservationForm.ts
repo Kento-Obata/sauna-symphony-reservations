@@ -109,6 +109,7 @@ export const useReservationForm = () => {
       );
       
       console.log("Calculated total price:", totalPrice);
+      console.log("Selected options:", selectedOptions);
 
       const guestCount = parseInt(people);
       
@@ -184,7 +185,6 @@ export const useReservationForm = () => {
       }
 
       // Send pending notification
-      // 重要な修正: ここでtotal_priceを追加
       const notificationResponse = await supabase.functions.invoke(
         "send-pending-notification",
         {
@@ -199,7 +199,7 @@ export const useReservationForm = () => {
             reservationCode: newReservation.reservation_code,
             confirmationToken: newReservation.confirmation_token,
             reservationDate: date.toISOString(),
-            total_price: newReservation.total_price, // 修正: データベースに保存された料金を渡す
+            total_price: newReservation.total_price,
             options: selectedOptions
           },
         }

@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { TimeSlot } from "@/types/reservation";
@@ -11,6 +12,9 @@ import { ReservationCalendar } from "@/components/reservation/ReservationCalenda
 import { useReservations } from "@/hooks/useReservations";
 import { useShopClosures } from "@/hooks/useShopClosures";
 import { isShopClosed } from "@/utils/dateUtils";
+import { ReservationOption } from "@/types/option";
+import { ReservationOptions } from "@/components/reservation/ReservationOptions";
+import { getTotalPrice } from "@/utils/priceCalculations";
 
 interface AdminReservationDialogProps {
   open: boolean;
@@ -34,6 +38,7 @@ export const AdminReservationDialog = ({
   const [people, setPeople] = useState("");
   // 水温は常に15°Cに固定
   const [temperature, setTemperature] = useState("15");
+  const [selectedOptions, setSelectedOptions] = useState<ReservationOption[]>([]);
   const [timeSlotReservations, setTimeSlotReservations] = useState<Record<TimeSlot, number>>({
     morning: 0,
     afternoon: 0,
@@ -94,6 +99,7 @@ export const AdminReservationDialog = ({
       email,
       people,
       temperature: "15", // 常に15°Cに固定
+      selectedOptions
     });
 
     if (!date || !timeSlot || !name || !phone || !people) {
@@ -115,32 +121,58 @@ export const AdminReservationDialog = ({
     }
 
     try {
+      // 料金計算
+      const guestCount = parseInt(people);
+      const totalPrice = await getTotalPrice(guestCount, temperature, date, selectedOptions);
+
       // エラーの詳細をログに出力
       console.log('Attempting to insert reservation with:', {
         date: format(date, "yyyy-MM-dd"),
         time_slot: timeSlot,
         guest_name: name,
-        guest_count: parseInt(people),
+        guest_count: guestCount,
         email: email || null,
         phone: phone,
         water_temperature: 15, // 常に15°Cに固定
-        status: 'confirmed' // 管理者からの予約は直接confirmedになる
+        status: 'confirmed', // 管理者からの予約は直接confirmedになる
+        total_price: totalPrice,
+        selectedOptions
       });
 
-      const { error } = await supabase.from("reservations").insert({
+      const { data: newReservation, error } = await supabase.from("reservations").insert({
         date: format(date, "yyyy-MM-dd"),
         time_slot: timeSlot,
         guest_name: name,
-        guest_count: parseInt(people),
+        guest_count: guestCount,
         email: email || null,
         phone: phone,
         water_temperature: 15, // 常に15°Cに固定
-        status: 'confirmed' // 管理者からの予約は直接confirmedになる
-      });
+        status: 'confirmed', // 管理者からの予約は直接confirmedになる
+        total_price: totalPrice
+      }).select().single();
 
       if (error) {
         console.error("Reservation error:", error);
         throw error;
+      }
+
+      // オプションが選択されている場合は予約オプションを保存
+      if (selectedOptions.length > 0) {
+        const reservationOptionsData = selectedOptions.map(option => ({
+          reservation_id: newReservation.id,
+          option_id: option.option_id,
+          quantity: option.quantity
+        }));
+
+        const { error: optionsError } = await supabase
+          .from("reservation_options")
+          .insert(reservationOptionsData);
+
+        if (optionsError) {
+          console.error("Error inserting reservation options:", optionsError);
+          // オプション保存エラーの場合でも予約自体は確定させるため、ここではthrowしない
+          toast.error("オプション情報の保存に失敗しました");
+        }
       }
 
       toast.success("予約を登録しました");
@@ -161,6 +193,7 @@ export const AdminReservationDialog = ({
     setPhone("");
     setPeople("");
     setTemperature("15"); // リセット時も15°Cに固定
+    setSelectedOptions([]);
   };
 
   return (
@@ -197,6 +230,16 @@ export const AdminReservationDialog = ({
             setDate={setDate}
             timeSlotReservations={timeSlotReservations}
           />
+
+          {people && parseInt(people) > 0 && (
+            <div className="border-t border-sauna-stone/10 pt-4">
+              <ReservationOptions 
+                selectedOptions={selectedOptions}
+                setSelectedOptions={setSelectedOptions}
+                guestCount={parseInt(people)}
+              />
+            </div>
+          )}
 
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
