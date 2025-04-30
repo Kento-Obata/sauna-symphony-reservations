@@ -46,9 +46,24 @@ export const ReservationOptions = ({
     setSelectedOptions(updatedOptions);
   };
 
+  // オプションの合計金額を計算
+  const calculateTotalOptionPrice = () => {
+    if (!options || !selectedOptions.length) return 0;
+    
+    return selectedOptions.reduce((total, selectedOption) => {
+      const option = options.find(o => o.id === selectedOption.option_id);
+      if (option) {
+        return total + (option.price_per_person * selectedOption.quantity);
+      }
+      return total;
+    }, 0);
+  };
+
   if (isLoading || !options || options.length === 0) {
     return null;
   }
+
+  const totalOptionPrice = calculateTotalOptionPrice();
 
   return (
     <div className="space-y-4">
@@ -118,7 +133,7 @@ export const ReservationOptions = ({
                         </Button>
                       </div>
                     </div>
-                    <p className="text-xs text-sauna-button">
+                    <p className="text-xs text-sauna-button font-medium">
                       合計: {formatPrice(option.price_per_person * selectedOption.quantity)}
                     </p>
                   </div>
@@ -128,6 +143,18 @@ export const ReservationOptions = ({
           );
         })}
       </div>
+      
+      {/* オプション合計金額の表示を追加 - 視認性を改善 */}
+      {totalOptionPrice > 0 && (
+        <div className="mt-4 bg-sauna-stone/10 p-3 rounded-lg border border-sauna-stone/20">
+          <div className="flex justify-between items-center">
+            <span className="font-medium text-sm">オプション合計</span>
+            <span className="font-bold text-sauna-button text-lg">
+              {formatPrice(totalOptionPrice)}
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
