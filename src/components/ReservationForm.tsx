@@ -11,6 +11,7 @@ import { Checkbox } from "./ui/checkbox";
 import { TermsDialog } from "./TermsDialog";
 import { toast } from "sonner";
 import { getTotalPrice, formatPrice } from "@/utils/priceCalculations";
+import { CreditCard, Wallet } from "lucide-react";
 
 const ReservationForm = () => {
   const {
@@ -173,11 +174,13 @@ const ReservationForm = () => {
             <p className="text-2xl font-bold text-stone-600">
               {totalPrice !== null ? formatPrice(totalPrice) : "---"}
             </p>
-            {temperature && parseInt(temperature) <= 7 && (
-              <p className="text-sm text-muted-foreground mt-1">
-                ※ 水温7℃以下のオプション料金 +¥5,000を含む
+            <div className="flex items-center justify-center gap-2 mt-2">
+              <p className="text-sm text-muted-foreground flex items-center">
+                <span className="mr-1">お支払い方法：</span>
+                <CreditCard className="h-4 w-4 mr-1" /> カードまたは 
+                <Wallet className="h-4 w-4 mx-1" /> 現金
               </p>
-            )}
+            </div>
           </div>
           <Button type="submit" className="w-full md:w-auto hover-lift bg-sauna-button hover:bg-sauna-button/90">
             予約する

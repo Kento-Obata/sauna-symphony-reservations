@@ -1,8 +1,10 @@
+
 import { Header } from "@/components/Header";
 import ReservationForm from "@/components/ReservationForm";
 import { useEffect, useState } from "react";
 import { fetchPriceSettings } from "@/utils/priceCalculations";
 import { PriceSetting } from "@/types/price";
+import { CreditCard, Wallet } from "lucide-react";
 
 const Index = () => {
   const [priceData, setPriceData] = useState<{
@@ -129,8 +131,9 @@ const Index = () => {
             </table>
           </div>
           <div className="mt-4 text-sm text-black/90 space-y-2">
-            <p className="bg-sauna-base p-4 rounded-lg border border-sauna-stone/20">
-              ※ お支払いは当日現金でお願いいたします。
+            <p className="bg-sauna-base p-4 rounded-lg border border-sauna-stone/20 flex items-center justify-center flex-wrap gap-2">
+              <span>お支払い方法：</span>
+              <span className="inline-flex items-center"><CreditCard className="h-4 w-4 mr-1" /> カードまたは <Wallet className="h-4 w-4 mx-1" /> 現金</span>
             </p>
             <p>※ 1名様でのご利用をご希望の際は、2名様料金でご利用いただけます。</p>
           </div>
