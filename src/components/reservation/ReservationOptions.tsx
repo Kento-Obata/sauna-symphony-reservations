@@ -106,7 +106,7 @@ export const ReservationOptions = ({
       {totalOptionPrice > 0 && <div className="mt-4 bg-sauna-stone/10 p-3 rounded-lg border border-sauna-stone/20">
           <div className="flex justify-between items-center">
             <span className="font-medium text-sm">オプション合計</span>
-            <span className="font-bold text-sauna-button text-lg">
+            <span className="font-bold text-lg text-neutral-600">
               {formatPrice(totalOptionPrice)}
             </span>
           </div>
