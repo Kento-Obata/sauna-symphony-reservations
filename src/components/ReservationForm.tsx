@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { TimeSlot, ReservationFormData } from "@/types/reservation";
 import { format, isValid } from "date-fns";
@@ -12,6 +13,7 @@ import { TermsDialog } from "./TermsDialog";
 import { toast } from "sonner";
 import { getTotalPrice, formatPrice } from "@/utils/priceCalculations";
 import { CreditCard, Wallet } from "lucide-react";
+import { ReservationOptions } from "./reservation/ReservationOptions";
 
 const ReservationForm = () => {
   const {
@@ -29,6 +31,8 @@ const ReservationForm = () => {
     setPeople,
     temperature,
     setTemperature,
+    selectedOptions,
+    setSelectedOptions,
     showConfirmDialog,
     setShowConfirmDialog,
     handleSubmit,
@@ -54,7 +58,8 @@ const ReservationForm = () => {
           const price = await getTotalPrice(
             parseInt(people), 
             temperature,
-            date
+            date,
+            selectedOptions
           );
           setTotalPrice(price);
         } catch (error) {
@@ -66,7 +71,7 @@ const ReservationForm = () => {
       }
     };
     updatePrice();
-  }, [people, temperature, date]);
+  }, [people, temperature, date, selectedOptions]);
 
   const handleDateChange = (newDate: Date | undefined) => {
     setDate(newDate);
@@ -127,7 +132,8 @@ const ReservationForm = () => {
     guest_count: parseInt(people) || 0,
     email: email || null,
     phone: phone,
-    water_temperature: parseInt(temperature) || 0
+    water_temperature: parseInt(temperature) || 0,
+    options: selectedOptions
   } : null;
 
   return (
@@ -160,6 +166,17 @@ const ReservationForm = () => {
             timeSlotReservations={timeSlotReservations}
           />
         </div>
+        
+        {/* オプション選択コンポーネント */}
+        {people && parseInt(people) > 0 && (
+          <div className="border-t border-sauna-stone/10 pt-6">
+            <ReservationOptions 
+              selectedOptions={selectedOptions}
+              setSelectedOptions={setSelectedOptions}
+              guestCount={parseInt(people)}
+            />
+          </div>
+        )}
 
         <div className="flex items-center space-x-2">
           <Checkbox id="terms" checked={termsAccepted} onCheckedChange={() => setShowTermsDialog(true)} />

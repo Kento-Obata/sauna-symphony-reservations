@@ -1,17 +1,82 @@
 
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Option } from "@/types/option";
+import { formatPrice } from "@/utils/priceCalculations";
+
+interface ReservationDetails {
+  total_price: number;
+  options?: {
+    option: Option;
+    quantity: number;
+  }[];
+}
 
 export default function ReservationComplete() {
   const location = useLocation();
   const navigate = useNavigate();
   const reservationCode = location.state?.reservationCode;
+  const [details, setDetails] = useState<ReservationDetails | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!reservationCode) {
       navigate('/');
+      return;
     }
+
+    // 予約詳細とオプション情報を取得
+    const fetchReservationDetails = async () => {
+      try {
+        setIsLoading(true);
+        
+        // 予約情報を取得
+        const { data: reservation, error } = await supabase
+          .from("reservations")
+          .select("id, total_price")
+          .eq("reservation_code", reservationCode)
+          .single();
+
+        if (error || !reservation) {
+          console.error("予約情報取得エラー:", error);
+          return;
+        }
+
+        // 予約オプション情報を取得
+        const { data: reservationOptions, error: optionsError } = await supabase
+          .from("reservation_options")
+          .select(`
+            quantity,
+            options:option_id (
+              id, name, description, price_per_person
+            )
+          `)
+          .eq("reservation_id", reservation.id);
+
+        if (optionsError) {
+          console.error("オプション取得エラー:", optionsError);
+        }
+
+        // オプション情報を整形
+        const formattedOptions = reservationOptions?.map(item => ({
+          option: item.options as Option,
+          quantity: item.quantity
+        })) || [];
+
+        setDetails({
+          total_price: reservation.total_price,
+          options: formattedOptions.length > 0 ? formattedOptions : undefined
+        });
+      } catch (err) {
+        console.error("詳細情報取得エラー:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchReservationDetails();
   }, [reservationCode, navigate]);
 
   if (!reservationCode) return null;
@@ -26,6 +91,27 @@ export default function ReservationComplete() {
             <p className="text-lg">予約コード</p>
             <p className="text-2xl font-bold">{reservationCode}</p>
           </div>
+
+          {!isLoading && details && (
+            <div className="space-y-2">
+              <p className="text-lg">料金</p>
+              <p className="text-2xl font-bold">{formatPrice(details.total_price)}</p>
+              
+              {details.options && details.options.length > 0 && (
+                <div className="mt-2 text-sm">
+                  <p className="font-medium mb-1">選択オプション:</p>
+                  <ul className="space-y-1">
+                    {details.options.map((item, index) => (
+                      <li key={index} className="flex justify-between">
+                        <span>{item.option.name}</span>
+                        <span>{formatPrice(item.option.price_per_person)} × {item.quantity}名様</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="space-y-4 text-sauna-stone">
             <p>予約内容の確認メールをお送りしました。</p>

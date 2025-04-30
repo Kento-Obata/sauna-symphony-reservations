@@ -60,6 +60,36 @@ export type Database = {
         }
         Relationships: []
       }
+      options: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          price_per_person: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          price_per_person: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          price_per_person?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       price_settings: {
         Row: {
           created_at: string
@@ -107,6 +137,45 @@ export type Database = {
           username?: string | null
         }
         Relationships: []
+      }
+      reservation_options: {
+        Row: {
+          created_at: string
+          id: string
+          option_id: string
+          quantity: number
+          reservation_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          option_id: string
+          quantity?: number
+          reservation_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          option_id?: string
+          quantity?: number
+          reservation_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservation_options_option_id_fkey"
+            columns: ["option_id"]
+            isOneToOne: false
+            referencedRelation: "options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservation_options_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reservations: {
         Row: {

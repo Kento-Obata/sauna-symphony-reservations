@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { useShopClosures } from "@/hooks/useShopClosures";
 import { isShopClosed } from "@/utils/dateUtils";
 import { getTotalPrice } from "@/utils/priceCalculations";
+import { ReservationOption } from "@/types/option";
 
 export const useReservationForm = () => {
   const [date, setDate] = useState<Date | undefined>(undefined);
@@ -19,6 +20,7 @@ export const useReservationForm = () => {
   const [people, setPeople] = useState("");
   // 水温を常に15°Cに固定
   const [temperature, setTemperature] = useState("15");
+  const [selectedOptions, setSelectedOptions] = useState<ReservationOption[]>([]);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reservationCode, setReservationCode] = useState<string>();
@@ -35,6 +37,7 @@ export const useReservationForm = () => {
     setPeople("");
     // リセット時も15°Cに固定
     setTemperature("15");
+    setSelectedOptions([]);
     setShowConfirmDialog(false);
     setIsSubmitting(false);
     setReservationCode(undefined);
@@ -97,20 +100,23 @@ export const useReservationForm = () => {
         return;
       }
 
-      // Calculate total price before creating the reservation
+      // Calculate total price including options before creating the reservation
       const totalPrice = await getTotalPrice(
         parseInt(people),
         temperature,
-        date
+        date,
+        selectedOptions
       );
       
       console.log("Calculated total price:", totalPrice);
 
+      const guestCount = parseInt(people);
+      
       const reservationData = {
         date: format(date, "yyyy-MM-dd"),
         time_slot: timeSlot as TimeSlot,
         guest_name: name,
-        guest_count: parseInt(people),
+        guest_count: guestCount,
         email: email || null,
         phone: phone,
         // 水温を常に15°Cに固定
@@ -159,6 +165,24 @@ export const useReservationForm = () => {
 
       setReservationCode(newReservation.reservation_code);
 
+      // オプションが選択されている場合は予約オプションを保存
+      if (selectedOptions.length > 0) {
+        const reservationOptionsData = selectedOptions.map(option => ({
+          reservation_id: newReservation.id,
+          option_id: option.option_id,
+          quantity: option.quantity
+        }));
+
+        const { error: optionsError } = await supabase
+          .from("reservation_options")
+          .insert(reservationOptionsData);
+
+        if (optionsError) {
+          console.error("Error inserting reservation options:", optionsError);
+          // オプション保存エラーの場合でも予約自体は確定させるため、ここではthrowしない
+        }
+      }
+
       // Send pending notification
       // 重要な修正: ここでtotal_priceを追加
       const notificationResponse = await supabase.functions.invoke(
@@ -175,7 +199,8 @@ export const useReservationForm = () => {
             reservationCode: newReservation.reservation_code,
             confirmationToken: newReservation.confirmation_token,
             reservationDate: date.toISOString(),
-            total_price: newReservation.total_price // 修正: データベースに保存された料金を渡す
+            total_price: newReservation.total_price, // 修正: データベースに保存された料金を渡す
+            options: selectedOptions
           },
         }
       );
@@ -215,6 +240,8 @@ export const useReservationForm = () => {
     setPeople,
     temperature,
     setTemperature,
+    selectedOptions,
+    setSelectedOptions,
     showConfirmDialog,
     setShowConfirmDialog,
     handleSubmit,

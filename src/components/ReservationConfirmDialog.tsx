@@ -7,6 +7,8 @@ import { ja } from "date-fns/locale";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getTotalPrice, getSurcharge, formatPrice } from "@/utils/priceCalculations";
+import { useOptions } from "@/hooks/useOptions";
+import { Option } from "@/types/option";
 
 const timeSlotLabels: Record<TimeSlot, string> = {
   morning: "午前",
@@ -35,6 +37,23 @@ export const ReservationConfirmDialog = ({
 }: ReservationConfirmDialogProps) => {
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const surcharge = getSurcharge(reservation.water_temperature.toString());
+  const { data: options } = useOptions();
+
+  // 選択されたオプションの情報を取得
+  const selectedOptions = options?.filter(option => 
+    reservation.options?.some(selectedOption => selectedOption.option_id === option.id)
+  ) || [];
+
+  // オプションの合計金額を計算
+  const calculateOptionsTotalPrice = (options: Option[], selectedOptions: ReservationFormData["options"] = []) => {
+    return selectedOptions.reduce((total, selectedOption) => {
+      const option = options.find(opt => opt.id === selectedOption.option_id);
+      if (option) {
+        return total + (option.price_per_person * selectedOption.quantity);
+      }
+      return total;
+    }, 0);
+  };
 
   useEffect(() => {
     const calculatePrice = async () => {
@@ -43,19 +62,22 @@ export const ReservationConfirmDialog = ({
         const dateObj = reservation.date ? new Date(reservation.date) : undefined;
         console.log('Calculating price for date:', dateObj);
         
-        const price = await getTotalPrice(
+        const basePrice = await getTotalPrice(
           reservation.guest_count,
           reservation.water_temperature.toString(),
           dateObj
         );
-        setTotalPrice(price);
+
+        // オプション料金を加算
+        const optionsPrice = calculateOptionsTotalPrice(options || [], reservation.options);
+        setTotalPrice(basePrice + optionsPrice);
       } catch (error) {
         console.error("料金の計算に失敗しました:", error);
       }
     };
 
     calculatePrice();
-  }, [reservation.guest_count, reservation.water_temperature, reservation.date]);
+  }, [reservation.guest_count, reservation.water_temperature, reservation.date, reservation.options, options]);
 
   const formattedDate = reservation.date
     ? format(new Date(reservation.date), "yyyy年MM月dd日 (E)", {
@@ -103,12 +125,39 @@ export const ReservationConfirmDialog = ({
               )}
             </div>
 
+            {selectedOptions.length > 0 && (
+              <>
+                <div className="text-muted-foreground">オプション</div>
+                <div>
+                  <ul className="space-y-1">
+                    {selectedOptions.map(option => {
+                      const selectedOption = reservation.options?.find(o => o.option_id === option.id);
+                      const quantity = selectedOption?.quantity || 0;
+                      return (
+                        <li key={option.id} className="text-sm">
+                          {option.name} ({formatPrice(option.price_per_person)}/人) × {quantity}名様
+                          <span className="block text-xs text-muted-foreground">
+                            小計: {formatPrice(option.price_per_person * quantity)}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              </>
+            )}
+
             <div className="text-muted-foreground">料金</div>
             <div>
               {formatPrice(totalPrice)}
               {surcharge > 0 && (
                 <span className="block text-xs text-muted-foreground">
                   ※ 水温オプション料金 +{formatPrice(surcharge)}を含む
+                </span>
+              )}
+              {selectedOptions.length > 0 && (
+                <span className="block text-xs text-muted-foreground">
+                  ※ オプション料金 +{formatPrice(calculateOptionsTotalPrice(options || [], reservation.options))}を含む
                 </span>
               )}
             </div>

@@ -27,6 +27,10 @@ export interface ReservationFormData {
   email: string | null;
   phone: string;
   water_temperature: number;
+  options?: {
+    option_id: string;
+    quantity: number;
+  }[];
 }
 
 export interface ShopClosure {

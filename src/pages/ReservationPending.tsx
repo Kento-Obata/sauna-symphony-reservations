@@ -4,12 +4,21 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/utils/priceCalculations";
+import { Option } from "@/types/option";
+
+interface ReservationDetails {
+  total_price: number;
+  options?: {
+    option: Option;
+    quantity: number;
+  }[];
+}
 
 export default function ReservationPending() {
   const location = useLocation();
   const navigate = useNavigate();
   const reservationCode = location.state?.reservationCode;
-  const [totalPrice, setTotalPrice] = useState<number | null>(null);
+  const [details, setDetails] = useState<ReservationDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -19,23 +28,48 @@ export default function ReservationPending() {
       return;
     }
 
-    // Fetch the reservation to get the total price
+    // Fetch the reservation to get the total price and options
     const fetchReservation = async () => {
       try {
         setIsLoading(true);
-        const { data, error } = await supabase
+        
+        // 予約情報を取得
+        const { data: reservation, error } = await supabase
           .from("reservations")
-          .select("total_price")
+          .select("id, total_price")
           .eq("reservation_code", reservationCode)
           .single();
 
-        if (error) {
-          console.error("Error fetching reservation:", error);
+        if (error || !reservation) {
+          console.error("予約情報取得エラー:", error);
           return;
         }
 
-        console.log("Fetched reservation with price:", data);
-        setTotalPrice(data.total_price);
+        // 予約オプション情報を取得
+        const { data: reservationOptions, error: optionsError } = await supabase
+          .from("reservation_options")
+          .select(`
+            quantity,
+            options:option_id (
+              id, name, description, price_per_person
+            )
+          `)
+          .eq("reservation_id", reservation.id);
+
+        if (optionsError) {
+          console.error("オプション取得エラー:", optionsError);
+        }
+
+        // オプション情報を整形
+        const formattedOptions = reservationOptions?.map(item => ({
+          option: item.options as Option,
+          quantity: item.quantity
+        })) || [];
+
+        setDetails({
+          total_price: reservation.total_price,
+          options: formattedOptions.length > 0 ? formattedOptions : undefined
+        });
       } catch (err) {
         console.error("Failed to fetch reservation:", err);
       } finally {
@@ -59,10 +93,24 @@ export default function ReservationPending() {
             <p className="text-2xl font-bold">{reservationCode}</p>
           </div>
 
-          {!isLoading && totalPrice !== null && (
+          {!isLoading && details !== null && (
             <div className="space-y-2">
               <p className="text-lg">料金</p>
-              <p className="text-2xl font-bold">{formatPrice(totalPrice)}</p>
+              <p className="text-2xl font-bold">{formatPrice(details.total_price)}</p>
+              
+              {details.options && details.options.length > 0 && (
+                <div className="mt-2 text-sm">
+                  <p className="font-medium mb-1">選択オプション:</p>
+                  <ul className="space-y-1">
+                    {details.options.map((item, index) => (
+                      <li key={index} className="flex justify-between">
+                        <span>{item.option.name}</span>
+                        <span>{formatPrice(item.option.price_per_person)} × {item.quantity}名様</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
 

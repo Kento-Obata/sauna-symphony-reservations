@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { PriceSetting } from "@/types/price";
+import { Option, ReservationOption } from "@/types/option";
 
 // 水温による追加料金の計算
 export const getSurcharge = (temp: string): number => {
@@ -27,6 +28,44 @@ export const fetchPriceSettings = async (): Promise<PriceSetting[]> => {
   }
 
   return data || [];
+};
+
+// オプション情報を取得する
+export const fetchOptions = async (): Promise<Option[]> => {
+  const { data, error } = await supabase
+    .from("options")
+    .select("*")
+    .eq("is_active", true);
+
+  if (error) {
+    console.error("Error fetching options:", error);
+    return [];
+  }
+
+  return data || [];
+};
+
+// 選択されたオプションの合計金額を計算
+export const calculateOptionsTotal = async (
+  selectedOptions: ReservationOption[] = [],
+  guestCount: number
+): Promise<number> => {
+  if (!selectedOptions || selectedOptions.length === 0) return 0;
+
+  try {
+    const options = await fetchOptions();
+    return selectedOptions.reduce((total, selectedOption) => {
+      const option = options.find(o => o.id === selectedOption.option_id);
+      if (option) {
+        // オプションの料金 × 数量（通常は人数）
+        return total + (option.price_per_person * selectedOption.quantity);
+      }
+      return total;
+    }, 0);
+  } catch (error) {
+    console.error("オプション料金計算エラー:", error);
+    return 0;
+  }
 };
 
 // 人数に応じた一人あたりの料金を計算
@@ -64,7 +103,12 @@ export const getPricePerPerson = async (guestCount: number, date?: Date): Promis
   return pricePerPerson;
 };
 
-export const getTotalPrice = async (guestCount: number, temperature: string, date?: Date): Promise<number> => {
+export const getTotalPrice = async (
+  guestCount: number, 
+  temperature: string, 
+  date?: Date,
+  selectedOptions: ReservationOption[] = []
+): Promise<number> => {
   console.log('Getting total price for date:', date);
   // 文字列の日付をDateオブジェクトに変換
   const dateObj = date ? new Date(date) : undefined;
@@ -76,9 +120,13 @@ export const getTotalPrice = async (guestCount: number, temperature: string, dat
   const basePrice = pricePerPerson * guestCount;
   // 水温機能は2025年9月から導入のため、サーチャージは常に0円
   const surcharge = 0;
-  console.log('Base price:', basePrice, 'Surcharge:', surcharge);
   
-  return basePrice + surcharge;
+  // オプション料金を計算
+  const optionsTotal = await calculateOptionsTotal(selectedOptions, guestCount);
+  
+  console.log('Base price:', basePrice, 'Surcharge:', surcharge, 'Options total:', optionsTotal);
+  
+  return basePrice + surcharge + optionsTotal;
 };
 
 export const formatPrice = (price: number): string => {
