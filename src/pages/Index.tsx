@@ -1,4 +1,3 @@
-
 import { Header } from "@/components/Header";
 import ReservationForm from "@/components/ReservationForm";
 import { useEffect, useState } from "react";
@@ -131,10 +130,7 @@ const Index = () => {
           </div>
           <div className="mt-4 text-sm text-black/90 space-y-2">
             <p className="bg-sauna-base p-4 rounded-lg border border-sauna-stone/20">
-              【option】<br />
-              水温10℃ ~ 14℃ +3000円<br />
-              水温5℃ ~ 10℃ +5000円<br />
-              ※ 水風呂温度は9月以降ご指定いただけますが、プレ期間でもinstagramのDMにて希望の温度をお伝えいただければ、可能な限り対応させていただきます。
+              ※ お支払いは当日現金でお願いいたします。
             </p>
             <p>※ 1名様でのご利用をご希望の際は、2名様料金でご利用いただけます。</p>
           </div>
