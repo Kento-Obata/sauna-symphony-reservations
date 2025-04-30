@@ -3,6 +3,8 @@ import { format } from "date-fns";
 import { Reservation } from "@/types/reservation";
 import { getTotalPrice, getSurcharge, formatPrice } from "@/utils/priceCalculations";
 import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Option } from "@/types/option";
 
 const TIME_SLOTS = {
   morning: "10:00-12:30",
@@ -16,7 +18,45 @@ interface ReservationInfoProps {
 
 export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
   const [totalPrice, setTotalPrice] = useState<number>(0);
+  const [options, setOptions] = useState<{option: Option, quantity: number}[]>([]);
   const surcharge = getSurcharge(reservation.water_temperature.toString());
+
+  // オプション情報を取得
+  useEffect(() => {
+    const fetchReservationOptions = async () => {
+      try {
+        const { data: reservationOptions, error } = await supabase
+          .from("reservation_options")
+          .select(`
+            quantity,
+            options:option_id (
+              id, name, description, price_per_person
+            )
+          `)
+          .eq("reservation_id", reservation.id);
+
+        if (error) {
+          console.error("オプション情報の取得に失敗しました:", error);
+          return;
+        }
+
+        // オプション情報を整形
+        if (reservationOptions && reservationOptions.length > 0) {
+          const formattedOptions = reservationOptions.map(item => ({
+            option: item.options as Option,
+            quantity: item.quantity
+          }));
+          setOptions(formattedOptions);
+        }
+      } catch (error) {
+        console.error("オプション情報の取得中にエラーが発生しました:", error);
+      }
+    };
+
+    if (reservation.id) {
+      fetchReservationOptions();
+    }
+  }, [reservation.id]);
 
   useEffect(() => {
     const calculatePrice = async () => {
@@ -50,6 +90,13 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
       default:
         return status;
     }
+  };
+
+  // オプションの合計金額を計算
+  const calculateOptionsTotal = () => {
+    return options.reduce((total, item) => {
+      return total + (item.option.price_per_person * item.quantity);
+    }, 0);
   };
 
   return (
@@ -89,12 +136,35 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
         )}
       </div>
 
+      {options.length > 0 && (
+        <>
+          <div className="text-sauna-stone">選択オプション:</div>
+          <div>
+            <ul className="space-y-1">
+              {options.map((item, index) => (
+                <li key={index} className="text-sm">
+                  {item.option.name} ({formatPrice(item.option.price_per_person)}/人) × {item.quantity}名様
+                  <span className="block text-xs text-muted-foreground">
+                    小計: {formatPrice(item.option.price_per_person * item.quantity)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </>
+      )}
+
       <div className="text-sauna-stone">料金:</div>
       <div>
-        {formatPrice(totalPrice)} (税込)
-        {surcharge > 0 && (
+        {formatPrice(reservation.total_price)} (税込)
+        {(surcharge > 0 || options.length > 0) && (
           <div className="text-xs text-muted-foreground">
-            ※ 水温オプション料金 +{formatPrice(surcharge)} を含む
+            {surcharge > 0 && (
+              <div>※ 水温オプション料金 +{formatPrice(surcharge)} を含む</div>
+            )}
+            {options.length > 0 && (
+              <div>※ オプション料金 +{formatPrice(calculateOptionsTotal())} を含む</div>
+            )}
           </div>
         )}
       </div>
