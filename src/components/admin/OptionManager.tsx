@@ -42,7 +42,7 @@ interface OptionFormValues {
 }
 
 export const OptionManager = () => {
-  const { data: options, refetch } = useOptions();
+  const { data: options, refetch } = useOptions(false); // Pass false to get all options including inactive ones
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingOption, setEditingOption] = useState<Option | null>(null);
@@ -106,7 +106,7 @@ export const OptionManager = () => {
     
     setIsLoading(true);
     try {
-      // Update only the options table
+      // Only update the options table with exactly the fields we need
       const { error } = await supabase
         .from("options")
         .update({
