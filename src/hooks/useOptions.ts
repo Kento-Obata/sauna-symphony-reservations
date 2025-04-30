@@ -3,6 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Option } from "@/types/option";
 
+/**
+ * Hook to fetch options from the database
+ * @param onlyActive - If true, only fetch active options. Default is true.
+ * @returns Query result with options data
+ */
 export const useOptions = (onlyActive = true) => {
   return useQuery({
     queryKey: ["options", { onlyActive }],

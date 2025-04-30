@@ -33,6 +33,8 @@ import {
 import { useForm } from "react-hook-form";
 import { Option } from "@/types/option";
 import { formatPrice } from "@/utils/priceCalculations";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 
 interface OptionFormValues {
   name: string;
@@ -106,18 +108,25 @@ export const OptionManager = () => {
     
     setIsLoading(true);
     try {
-      // Only update the options table with exactly the fields we need
+      // Extract only the fields we need to update
+      const updateData = {
+        name: values.name,
+        description: values.description || null,
+        price_per_person: values.price_per_person,
+        is_active: values.is_active,
+      };
+      
+      console.log("Updating option:", editingOption.id, "with data:", updateData);
+      
       const { error } = await supabase
         .from("options")
-        .update({
-          name: values.name,
-          description: values.description || null,
-          price_per_person: values.price_per_person,
-          is_active: values.is_active,
-        })
+        .update(updateData)
         .eq("id", editingOption.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error:", error);
+        throw error;
+      }
       
       toast.success("オプションを更新しました");
       setIsEditDialogOpen(false);
@@ -189,7 +198,7 @@ export const OptionManager = () => {
                     <FormItem>
                       <FormLabel>説明（任意）</FormLabel>
                       <FormControl>
-                        <Input placeholder="説明を入力" {...field} />
+                        <Textarea placeholder="説明を入力" {...field} value={field.value || ""} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -212,6 +221,23 @@ export const OptionManager = () => {
                         />
                       </FormControl>
                       <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={addOptionForm.control}
+                  name="is_active"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>有効</FormLabel>
+                      </div>
                     </FormItem>
                   )}
                 />
@@ -314,7 +340,7 @@ export const OptionManager = () => {
                     <FormItem>
                       <FormLabel>説明（任意）</FormLabel>
                       <FormControl>
-                        <Input placeholder="説明を入力" {...field} value={field.value || ""} />
+                        <Textarea placeholder="説明を入力" {...field} value={field.value || ""} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -337,6 +363,23 @@ export const OptionManager = () => {
                         />
                       </FormControl>
                       <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editOptionForm.control}
+                  name="is_active"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>有効</FormLabel>
+                      </div>
                     </FormItem>
                   )}
                 />
