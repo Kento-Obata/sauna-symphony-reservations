@@ -14,6 +14,7 @@ import { ReservationTimeSelect } from "./reservation-details/ReservationTimeSele
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { XCircle } from "lucide-react";
 import { formatPrice } from "@/utils/priceCalculations";
+import { Option } from "@/types/option";
 
 interface AdminReservationDetailsDialogProps {
   open: boolean;
@@ -35,6 +36,7 @@ export const AdminReservationDetailsDialog = ({
   const [timeSlot, setTimeSlot] = useState<TimeSlot>("morning");
   const [date, setDate] = useState("");
   const [isEditing, setIsEditing] = useState(false);
+  const [reservationOptions, setReservationOptions] = useState<{option: Option, quantity: number}[]>([]);
 
   useEffect(() => {
     if (reservation) {
@@ -45,8 +47,40 @@ export const AdminReservationDetailsDialog = ({
       setWaterTemperature(reservation.water_temperature.toString());
       setTimeSlot(reservation.time_slot);
       setDate(reservation.date);
+      fetchReservationOptions(reservation.id);
     }
   }, [reservation]);
+
+  const fetchReservationOptions = async (reservationId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("reservation_options")
+        .select(`
+          quantity,
+          options:option_id (
+            id, name, description, price_per_person, is_active
+          )
+        `)
+        .eq("reservation_id", reservationId);
+
+      if (error) {
+        console.error("Error fetching reservation options:", error);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        const formattedOptions = data.map(item => ({
+          option: item.options as Option,
+          quantity: item.quantity
+        }));
+        setReservationOptions(formattedOptions);
+      } else {
+        setReservationOptions([]);
+      }
+    } catch (error) {
+      console.error("Error in fetchReservationOptions:", error);
+    }
+  };
 
   const getStatusDisplay = (status: string) => {
     switch (status) {
@@ -59,6 +93,13 @@ export const AdminReservationDetailsDialog = ({
       default:
         return status;
     }
+  };
+
+  // Calculate total options price
+  const calculateOptionsTotal = () => {
+    return reservationOptions.reduce((total, item) => {
+      return total + (item.option.price_per_person * item.quantity);
+    }, 0);
   };
 
   if (!reservation) return null;
@@ -240,6 +281,37 @@ export const AdminReservationDetailsDialog = ({
                 `${reservation.water_temperature}°C`
               )}
             </div>
+
+            {reservationOptions.length > 0 && (
+              <>
+                <div className="text-muted-foreground">選択オプション:</div>
+                <div>
+                  <ul className="space-y-2">
+                    {reservationOptions.map((item, index) => (
+                      <li key={index} className="bg-sauna-wood/10 p-2 rounded-lg border border-sauna-stone/10">
+                        <div className="font-medium text-sm">{item.option.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {formatPrice(item.option.price_per_person)}/人 × {item.quantity}人 = {formatPrice(item.option.price_per_person * item.quantity)}
+                        </div>
+                        {item.option.description && (
+                          <div className="text-xs text-muted-foreground mt-1">{item.option.description}</div>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                  {reservationOptions.length > 0 && (
+                    <div className="mt-3 bg-sauna-stone/10 p-2 rounded-lg">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">オプション合計</span>
+                        <span className="font-bold">
+                          {formatPrice(calculateOptionsTotal())}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
 
             <div className="text-muted-foreground">予約コード:</div>
             <div>{reservation.reservation_code}</div>
