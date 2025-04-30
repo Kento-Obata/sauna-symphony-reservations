@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
@@ -81,7 +82,7 @@ const handler = async (req: Request): Promise<Response> => {
 料金: ¥${totalPrice.toLocaleString()} (税込)
 
 【受付時間】
-ご予約時間の15分前からご案内いたします。
+ご予約時間の10分前からご案内いたします。
 
 【設備・アメニティ】
 タオル、水着はご用意しております。

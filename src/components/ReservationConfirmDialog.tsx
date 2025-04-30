@@ -121,7 +121,7 @@ export const ReservationConfirmDialog = ({
                 ※ 10℃以下は本当に冷たいです。入ったことのない方はご注意ください。
               </p>
             )}
-            <p className="mt-2">受付時間: 予約時間の15分前からご案内いたします。</p>
+            <p className="mt-2">受付時間: 予約時間の10分前からご案内いたします。</p>
             <p className="mt-2 text-yellow-600 font-bold">
               ※ 本予約用のSMSとメールが送信されます。
             </p>

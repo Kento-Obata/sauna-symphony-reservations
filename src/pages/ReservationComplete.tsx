@@ -1,3 +1,4 @@
+
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
@@ -29,7 +30,7 @@ export default function ReservationComplete() {
           <div className="space-y-4 text-sauna-stone">
             <p>予約内容の確認メールをお送りしました。</p>
             <p>当日は予約コードをご提示ください。</p>
-            <p className="font-medium">受付開始時間は、ご予約時間の15分前からとなります。</p>
+            <p className="font-medium">受付開始時間は、ご予約時間の10分前からとなります。</p>
           </div>
 
           <div className="space-y-4 pt-6">

@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
@@ -101,7 +102,7 @@ const handler = async (req: Request): Promise<Response> => {
 水風呂温度: ${reservation.waterTemperature}°C
 
 【受付時間】
-ご予約時間の15分前からご案内いたします。
+ご予約時間の10分前からご案内いたします。
 
 【持ち物】
 ${ITEMS_TO_BRING}
