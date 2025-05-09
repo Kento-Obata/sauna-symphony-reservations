@@ -18,7 +18,15 @@ interface ReservationDetails {
 interface ReservationOptionResponse {
   quantity: number;
   option_id: string;
-  options: Option;
+  options: {
+    id: string;
+    name: string;
+    description: string | null;
+    price_per_person: number;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+  };
 }
 
 export default function ReservationPending() {
@@ -73,8 +81,8 @@ export default function ReservationPending() {
         }
 
         // オプション情報を整形
-        const formattedOptions = reservationOptions?.map((item: ReservationOptionResponse) => ({
-          option: item.options,
+        const formattedOptions = reservationOptions?.map((item: any) => ({
+          option: item.options as Option,
           quantity: item.quantity
         })).filter(item => item.option) || [];
 
