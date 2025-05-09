@@ -15,6 +15,7 @@ import { formatPrice } from "@/utils/priceCalculations";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trash2, Plus } from "lucide-react";
 import { useOptions } from "@/hooks/useOptions";
+import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 
 interface AdminCalendarEventDialogProps {
   open: boolean;
@@ -58,6 +59,8 @@ export const AdminCalendarEventDialog = ({
   const [isLoading, setIsLoading] = useState(false);
   const { data: availableOptions } = useOptions();
   const [isDirty, setIsDirty] = useState(false);
+  const [basePrice, setBasePrice] = useState(0);
+  const [totalPrice, setTotalPrice] = useState(0);
 
   // イベントがスケジュールタイプの場合は予約情報を取得
   useEffect(() => {
@@ -72,6 +75,22 @@ export const AdminCalendarEventDialog = ({
         
         const reservationId = idMatch[1];
         setReservationId(reservationId);
+        
+        // 予約情報を取得（合計金額を含む）
+        const { data: reservation, error: reservationError } = await supabase
+          .from("reservations")
+          .select("*")
+          .eq("id", reservationId)
+          .single();
+          
+        if (reservationError) {
+          console.error("予約情報の取得に失敗しました:", reservationError);
+          return;
+        }
+        
+        if (reservation) {
+          setTotalPrice(reservation.total_price);
+        }
         
         // 予約に関連するオプション情報を取得
         const { data: reservationOptions, error } = await supabase
@@ -95,6 +114,17 @@ export const AdminCalendarEventDialog = ({
             quantity: item.quantity
           }));
           setOptionDetails(formattedOptions);
+          
+          // オプション料金の合計を計算
+          const optionsTotal = formattedOptions.reduce((sum, item) => {
+            return sum + (item.option.price_per_person * item.quantity);
+          }, 0);
+          
+          // ベース料金（合計金額 - オプション料金）を計算
+          setBasePrice(reservation.total_price - optionsTotal);
+        } else {
+          // オプションがない場合は全額をベース料金とする
+          setBasePrice(reservation.total_price);
         }
       } catch (error) {
         console.error("予約詳細の取得に失敗しました:", error);
@@ -115,6 +145,22 @@ export const AdminCalendarEventDialog = ({
       reset();
     }
   }, [event, setValue, reset]);
+
+  // 合計金額を再計算（ベース料金 + オプション料金）
+  const recalculateTotal = () => {
+    const optionsTotal = calculateOptionsTotal();
+    const newTotal = basePrice + optionsTotal;
+    setTotalPrice(newTotal);
+    return newTotal;
+  };
+
+  // ベース料金の更新
+  const handleBasePriceChange = (newBasePrice: number) => {
+    setBasePrice(newBasePrice);
+    const newTotal = newBasePrice + calculateOptionsTotal();
+    setTotalPrice(newTotal);
+    setIsDirty(true);
+  };
 
   const onSubmit = async (data: FormData) => {
     try {
@@ -162,8 +208,16 @@ export const AdminCalendarEventDialog = ({
           }
           
           // 予約の合計金額を更新
-          const totalPrice = calculateOptionsTotal();
-          await updateReservationTotalPrice(reservationId, totalPrice);
+          const finalTotal = recalculateTotal();
+          const { error: updateError } = await supabase
+            .from("reservations")
+            .update({ total_price: finalTotal })
+            .eq("id", reservationId);
+            
+          if (updateError) {
+            console.error("予約の合計金額の更新に失敗しました:", updateError);
+            throw updateError;
+          }
         }
         
         toast.success("イベントを更新しました");
@@ -206,43 +260,6 @@ export const AdminCalendarEventDialog = ({
     }
   };
 
-  // 予約の合計金額を更新
-  const updateReservationTotalPrice = async (reservationId: string, optionsTotal: number) => {
-    // まず予約情報を取得
-    const { data: reservation, error: fetchError } = await supabase
-      .from("reservations")
-      .select("*")
-      .eq("id", reservationId)
-      .single();
-      
-    if (fetchError) {
-      console.error("予約情報の取得に失敗しました:", fetchError);
-      return;
-    }
-    
-    // 予約の合計金額を計算（ベース料金 + オプション料金）
-    const basePrice = reservation.total_price - calculateCurrentOptionsTotal();
-    const newTotalPrice = basePrice + optionsTotal;
-    
-    // 予約の合計金額を更新
-    const { error: updateError } = await supabase
-      .from("reservations")
-      .update({ total_price: newTotalPrice })
-      .eq("id", reservationId);
-      
-    if (updateError) {
-      console.error("予約の合計金額の更新に失敗しました:", updateError);
-      throw updateError;
-    }
-  };
-
-  // 現在の予約オプションの合計金額を計算（データベースに保存されている状態）
-  const calculateCurrentOptionsTotal = () => {
-    return optionDetails.reduce((total, item) => {
-      return total + (item.option.price_per_person * item.quantity);
-    }, 0);
-  };
-
   // オプションの合計金額を計算
   const calculateOptionsTotal = () => {
     return optionDetails.reduce((total, item) => {
@@ -262,6 +279,8 @@ export const AdminCalendarEventDialog = ({
     
     setOptionDetails([...optionDetails, newOption]);
     setIsDirty(true);
+    // オプション追加時に合計金額を再計算
+    recalculateTotal();
   };
 
   // オプションの削除
@@ -270,6 +289,8 @@ export const AdminCalendarEventDialog = ({
     updatedOptions.splice(index, 1);
     setOptionDetails(updatedOptions);
     setIsDirty(true);
+    // オプション削除時に合計金額を再計算
+    recalculateTotal();
   };
 
   // オプションの変更
@@ -285,6 +306,8 @@ export const AdminCalendarEventDialog = ({
     
     setOptionDetails(updatedOptions);
     setIsDirty(true);
+    // オプション変更時に合計金額を再計算
+    recalculateTotal();
   };
 
   // 数量の変更
@@ -297,6 +320,8 @@ export const AdminCalendarEventDialog = ({
     
     setOptionDetails(updatedOptions);
     setIsDirty(true);
+    // 数量変更時に合計金額を再計算
+    recalculateTotal();
   };
 
   return (
@@ -336,79 +361,106 @@ export const AdminCalendarEventDialog = ({
             />
           </div>
           
-          {/* スケジュールタイプの場合のみオプション編集を表示 */}
+          {/* スケジュールタイプの場合のみ料金とオプション編集を表示 */}
           {event?.type === 'schedule' && reservationId && (
-            <Card>
-              <CardHeader className="py-3 flex flex-row justify-between items-center">
-                <CardTitle className="text-sm">オプション設定</CardTitle>
-                <Button 
-                  type="button" 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={handleAddOption}
-                  className="h-7 px-2 text-xs"
-                >
-                  <Plus className="h-3 w-3 mr-1" /> 追加
-                </Button>
-              </CardHeader>
-              <CardContent className="py-2">
-                {optionDetails.length > 0 ? (
+            <>
+              <Card>
+                <CardHeader className="py-3">
+                  <CardTitle className="text-sm">料金設定</CardTitle>
+                </CardHeader>
+                <CardContent className="py-2">
                   <div className="space-y-3">
-                    {optionDetails.map((item, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <Select
-                          value={item.option.id}
-                          onValueChange={(value) => handleOptionChange(index, value)}
-                        >
-                          <SelectTrigger className="flex-1">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {availableOptions?.map((option) => (
-                              <SelectItem key={option.id} value={option.id}>
-                                {option.name} ({formatPrice(option.price_per_person)}/人)
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Select
-                          value={item.quantity.toString()}
-                          onValueChange={(value) => handleQuantityChange(index, parseInt(value))}
-                        >
-                          <SelectTrigger className="w-24">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {[1, 2, 3, 4, 5, 6].map((num) => (
-                              <SelectItem key={num} value={num.toString()}>
-                                {num}人
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => handleRemoveOption(index)}
-                          className="h-8 w-8"
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    ))}
+                    <div className="flex items-center gap-2">
+                      <FormLabel className="w-24">ベース料金:</FormLabel>
+                      <Input 
+                        type="number" 
+                        value={basePrice} 
+                        onChange={(e) => handleBasePriceChange(Number(e.target.value))} 
+                        className="w-32"
+                      />
+                    </div>
                     <div className="flex justify-between border-t pt-2 mt-2">
-                      <span className="font-medium">オプション合計:</span>
+                      <span className="font-medium">合計金額:</span>
                       <span className="font-medium">
-                        {formatPrice(calculateOptionsTotal())}
+                        {formatPrice(totalPrice)}
                       </span>
                     </div>
                   </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">オプションはありません</p>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="py-3 flex flex-row justify-between items-center">
+                  <CardTitle className="text-sm">オプション設定</CardTitle>
+                  <Button 
+                    type="button" 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={handleAddOption}
+                    className="h-7 px-2 text-xs"
+                  >
+                    <Plus className="h-3 w-3 mr-1" /> 追加
+                  </Button>
+                </CardHeader>
+                <CardContent className="py-2">
+                  {optionDetails.length > 0 ? (
+                    <div className="space-y-3">
+                      {optionDetails.map((item, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <Select
+                            value={item.option.id}
+                            onValueChange={(value) => handleOptionChange(index, value)}
+                          >
+                            <SelectTrigger className="flex-1">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableOptions?.map((option) => (
+                                <SelectItem key={option.id} value={option.id}>
+                                  {option.name} ({formatPrice(option.price_per_person)}/人)
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Select
+                            value={item.quantity.toString()}
+                            onValueChange={(value) => handleQuantityChange(index, parseInt(value))}
+                          >
+                            <SelectTrigger className="w-24">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {[1, 2, 3, 4, 5, 6].map((num) => (
+                                <SelectItem key={num} value={num.toString()}>
+                                  {num}人
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => handleRemoveOption(index)}
+                            className="h-8 w-8"
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      ))}
+                      <div className="flex justify-between border-t pt-2 mt-2">
+                        <span className="font-medium">オプション合計:</span>
+                        <span className="font-medium">
+                          {formatPrice(calculateOptionsTotal())}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">オプションはありません</p>
+                  )}
+                </CardContent>
+              </Card>
+            </>
           )}
 
           <div className="flex justify-between">
