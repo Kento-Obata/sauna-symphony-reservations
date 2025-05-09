@@ -61,7 +61,7 @@ export default function ReservationComplete() {
 
         // オプション情報を整形
         const formattedOptions = reservationOptions?.map(item => ({
-          option: item.options as Option,
+          option: item.options as Option, // Type assertion for Supabase response
           quantity: item.quantity
         })) || [];
 

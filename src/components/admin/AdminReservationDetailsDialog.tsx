@@ -1,4 +1,3 @@
-
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Reservation, TimeSlot } from "@/types/reservation";
@@ -58,7 +57,7 @@ export const AdminReservationDetailsDialog = ({
         .select(`
           quantity,
           options:option_id (
-            id, name, description, price_per_person, is_active
+            id, name, description, price_per_person
           )
         `)
         .eq("reservation_id", reservationId);
@@ -70,7 +69,7 @@ export const AdminReservationDetailsDialog = ({
 
       if (data && data.length > 0) {
         const formattedOptions = data.map(item => ({
-          option: item.options as Option,
+          option: item.options as Option, // Type assertion for Supabase response
           quantity: item.quantity
         }));
         setReservationOptions(formattedOptions);

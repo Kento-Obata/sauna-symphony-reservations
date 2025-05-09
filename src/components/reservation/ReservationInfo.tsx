@@ -51,7 +51,7 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
         if (reservationOptions && reservationOptions.length > 0) {
           console.log("Found reservation options:", reservationOptions);
           const formattedOptions = reservationOptions.map(item => ({
-            option: item.options as Option,
+            option: item.options as Option, // Type assertion for Supabase response
             quantity: item.quantity
           }));
           setOptions(formattedOptions);
