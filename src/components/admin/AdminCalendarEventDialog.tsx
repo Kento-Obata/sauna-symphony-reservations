@@ -1,4 +1,5 @@
-import React from "react";
+
+import React, { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,9 @@ import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { Option } from "@/types/option";
+import { formatPrice } from "@/utils/priceCalculations";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface AdminCalendarEventDialogProps {
   open: boolean;
@@ -28,6 +32,11 @@ interface FormData {
   type: "event" | "schedule" | "note";
 }
 
+interface ReservationOption {
+  option: Option;
+  quantity: number;
+}
+
 export const AdminCalendarEventDialog = ({
   open,
   onOpenChange,
@@ -42,6 +51,56 @@ export const AdminCalendarEventDialog = ({
     },
   });
   const queryClient = useQueryClient();
+  const [reservationId, setReservationId] = useState<string | null>(null);
+  const [optionDetails, setOptionDetails] = useState<ReservationOption[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // イベントがスケジュールタイプの場合は予約情報を取得
+  useEffect(() => {
+    const fetchReservationDetails = async () => {
+      if (!event || event.type !== 'schedule') return;
+      
+      setIsLoading(true);
+      try {
+        // イベントタイトルからIDを抽出（例: 予約 #xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx）
+        const idMatch = event.title.match(/#([0-9a-f-]+)/i);
+        if (!idMatch || !idMatch[1]) return;
+        
+        const reservationId = idMatch[1];
+        setReservationId(reservationId);
+        
+        // 予約に関連するオプション情報を取得
+        const { data: reservationOptions, error } = await supabase
+          .from("reservation_options")
+          .select(`
+            quantity,
+            options:option_id (
+              id, name, description, price_per_person
+            )
+          `)
+          .eq("reservation_id", reservationId);
+          
+        if (error) {
+          console.error("オプション情報の取得に失敗しました:", error);
+          return;
+        }
+        
+        if (reservationOptions && reservationOptions.length > 0) {
+          const formattedOptions = reservationOptions.map(item => ({
+            option: item.options as unknown as Option,
+            quantity: item.quantity
+          }));
+          setOptionDetails(formattedOptions);
+        }
+      } catch (error) {
+        console.error("予約詳細の取得に失敗しました:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchReservationDetails();
+  }, [event]);
 
   React.useEffect(() => {
     if (event) {
@@ -106,6 +165,13 @@ export const AdminCalendarEventDialog = ({
     }
   };
 
+  // オプションの合計金額を計算
+  const calculateOptionsTotal = () => {
+    return optionDetails.reduce((total, item) => {
+      return total + (item.option.price_per_person * item.quantity);
+    }, 0);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -142,6 +208,36 @@ export const AdminCalendarEventDialog = ({
               {...register("description")}
             />
           </div>
+          
+          {/* オプション情報の表示（スケジュールタイプかつオプションがある場合のみ） */}
+          {event?.type === 'schedule' && optionDetails.length > 0 && (
+            <Card>
+              <CardHeader className="py-3">
+                <CardTitle className="text-sm">選択されたオプション</CardTitle>
+              </CardHeader>
+              <CardContent className="py-2">
+                <ul className="space-y-1 text-sm">
+                  {optionDetails.map((item, index) => (
+                    <li key={index} className="flex justify-between">
+                      <span>
+                        {item.option.name} × {item.quantity}名様
+                      </span>
+                      <span className="font-medium">
+                        {formatPrice(item.option.price_per_person * item.quantity)}
+                      </span>
+                    </li>
+                  ))}
+                  <li className="flex justify-between pt-2 border-t mt-2">
+                    <span className="font-medium">オプション合計:</span>
+                    <span className="font-medium">
+                      {formatPrice(calculateOptionsTotal())}
+                    </span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
           <div className="flex justify-between">
             {event && (
               <Button
