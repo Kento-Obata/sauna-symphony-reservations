@@ -54,7 +54,7 @@ export default function ReservationPending() {
           .select(`
             quantity,
             option_id,
-            options(
+            options:option_id(
               id, name, description, price_per_person, is_active, created_at, updated_at
             )
           `)
