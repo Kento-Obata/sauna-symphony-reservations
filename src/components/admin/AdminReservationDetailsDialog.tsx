@@ -1,3 +1,4 @@
+
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Reservation, TimeSlot } from "@/types/reservation";
@@ -11,7 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ReservationDateSelect } from "./reservation-details/ReservationDateSelect";
 import { ReservationTimeSelect } from "./reservation-details/ReservationTimeSelect";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { XCircle } from "lucide-react";
+import { XCircle, List } from "lucide-react";
 import { formatPrice } from "@/utils/priceCalculations";
 import { Option } from "@/types/option";
 
@@ -95,7 +96,7 @@ export const AdminReservationDetailsDialog = ({
       case "confirmed":
         return "予約確定";
       case "cancelled":
-        return "キャン��ル済み";
+        return "キャンセル済み";
       default:
         return status;
     }
