@@ -69,7 +69,12 @@ export const ReservationDetail = () => {
     mutationFn: async () => {
       const { error } = await supabase
         .from("reservations")
-        .update({ status: "cancelled" })
+        .update({ 
+          status: "cancelled",
+          // キャンセル時には is_confirmed を true に設定
+          // これにより期限切れ処理から確実に除外される
+          is_confirmed: true 
+        })
         .eq("reservation_code", reservationCode);
 
       if (error) throw error;

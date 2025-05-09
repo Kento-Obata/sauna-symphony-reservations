@@ -1,3 +1,4 @@
+
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Reservation } from "@/types/reservation";
@@ -9,7 +10,7 @@ import { XCircle } from "lucide-react";
 
 interface AdminUpcomingReservationsProps {
   reservations?: Reservation[];
-  onStatusChange?: (id: string, status: string) => void;
+  onStatusChange?: (id: string, status: string, isConfirmed: boolean) => void;
 }
 
 export const AdminUpcomingReservations = ({
@@ -73,7 +74,7 @@ export const AdminUpcomingReservations = ({
                     <AlertDialogFooter>
                       <AlertDialogCancel>いいえ</AlertDialogCancel>
                       <AlertDialogAction
-                        onClick={() => onStatusChange(nextReservation.id, "cancelled")}
+                        onClick={() => onStatusChange(nextReservation.id, "cancelled", true)}
                       >
                         はい
                       </AlertDialogAction>

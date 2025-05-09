@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -47,11 +46,15 @@ const Admin = () => {
     setDateQuery(undefined);
   };
 
-  const handleStatusChange = async (id: string, status: string) => {
+  const handleStatusChange = async (id: string, status: string, isConfirmed = true) => {
     try {
       const { error } = await supabase
         .from("reservations")
-        .update({ status })
+        .update({ 
+          status,
+          // キャンセル時またはその他のステータス変更時に is_confirmed フラグを更新
+          is_confirmed: isConfirmed
+        })
         .eq("id", id);
 
       if (error) throw error;

@@ -14,7 +14,7 @@ import { formatPrice } from "@/utils/priceCalculations";
 
 interface AdminSearchResultsProps {
   reservations: Reservation[];
-  onStatusChange: (id: string, status: string) => void;
+  onStatusChange: (id: string, status: string, isConfirmed: boolean) => void;
 }
 
 export const AdminSearchResults = ({
@@ -95,7 +95,7 @@ export const AdminSearchResults = ({
                             <AlertDialogFooter>
                               <AlertDialogCancel>いいえ</AlertDialogCancel>
                               <AlertDialogAction
-                                onClick={() => onStatusChange(reservation.id, "cancelled")}
+                                onClick={() => onStatusChange(reservation.id, "cancelled", true)}
                               >
                                 はい
                               </AlertDialogAction>

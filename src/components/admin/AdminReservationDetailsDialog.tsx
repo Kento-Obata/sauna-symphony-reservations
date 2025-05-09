@@ -1,4 +1,3 @@
-
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Reservation, TimeSlot } from "@/types/reservation";
@@ -319,7 +318,10 @@ export const AdminReservationDetailsDialog = ({
     try {
       const { error } = await supabase
         .from("reservations")
-        .update({ status: "cancelled" })
+        .update({ 
+          status: "cancelled",
+          is_confirmed: true // キャンセル時には is_confirmed を true に設定
+        })
         .eq("id", reservation.id);
 
       if (error) throw error;
@@ -329,7 +331,7 @@ export const AdminReservationDetailsDialog = ({
       onOpenChange(false);
     } catch (error) {
       console.error("Error cancelling reservation:", error);
-      toast.error("予約のキャンセルに失敗しました");
+      toast.error("予約のキャン��ルに失敗しました");
     }
   };
 
