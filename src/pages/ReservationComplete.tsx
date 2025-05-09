@@ -20,6 +20,7 @@ export default function ReservationComplete() {
   const reservationCode = location.state?.reservationCode;
   const [details, setDetails] = useState<ReservationDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!reservationCode) {
@@ -31,6 +32,7 @@ export default function ReservationComplete() {
     const fetchReservationDetails = async () => {
       try {
         setIsLoading(true);
+        setError(null);
         
         // 予約情報を取得
         const { data: reservation, error } = await supabase
@@ -41,6 +43,7 @@ export default function ReservationComplete() {
 
         if (error || !reservation) {
           console.error("予約情報取得エラー:", error);
+          setError("予約情報の取得に失敗しました");
           return;
         }
 
@@ -50,7 +53,7 @@ export default function ReservationComplete() {
           .select(`
             quantity,
             option_id,
-            options:options(
+            options(
               id, name, description, price_per_person, is_active, created_at, updated_at
             )
           `)
@@ -58,13 +61,14 @@ export default function ReservationComplete() {
 
         if (optionsError) {
           console.error("オプション取得エラー:", optionsError);
+          // オプション取得エラーの場合はオプションなしで続行
         }
 
         // オプション情報を整形
         const formattedOptions = reservationOptions?.map(item => ({
           option: item.options as Option,
           quantity: item.quantity
-        })) || [];
+        })).filter(item => item.option) || [];
 
         setDetails({
           total_price: reservation.total_price,
@@ -72,6 +76,7 @@ export default function ReservationComplete() {
         });
       } catch (err) {
         console.error("詳細情報取得エラー:", err);
+        setError("予約情報の取得中にエラーが発生しました");
       } finally {
         setIsLoading(false);
       }
@@ -92,6 +97,12 @@ export default function ReservationComplete() {
             <p className="text-lg">予約コード</p>
             <p className="text-2xl font-bold">{reservationCode}</p>
           </div>
+
+          {error && (
+            <div className="bg-red-50 text-red-600 p-4 rounded-md">
+              {error}
+            </div>
+          )}
 
           {!isLoading && details && (
             <div className="space-y-2">

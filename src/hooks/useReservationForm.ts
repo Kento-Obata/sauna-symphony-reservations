@@ -171,33 +171,35 @@ export const useReservationForm = () => {
         
         try {
           // 配列を作成する前に各オプションIDが有効か確認
-          const reservationOptionsData = selectedOptions.map(option => {
-            if (!option.option_id || option.option_id.trim() === '' || !option.quantity || option.quantity <= 0) {
+          const validOptions = selectedOptions.filter(option => {
+            const isValid = option.option_id && option.option_id.trim() !== '' && option.quantity && option.quantity > 0;
+            if (!isValid) {
               console.error("Invalid option data:", option);
-              throw new Error("有効なオプションデータではありません");
             }
-            
-            return {
+            return isValid;
+          });
+          
+          if (validOptions.length > 0) {
+            const reservationOptionsData = validOptions.map(option => ({
               reservation_id: newReservation.id,
               option_id: option.option_id,
               quantity: option.quantity
-            };
-          });
+            }));
 
-          console.log("Prepared option data for insertion:", reservationOptionsData);
+            console.log("Prepared option data for insertion:", reservationOptionsData);
 
-          // バリデーションが成功したらオプションを挿入
-          const { data: insertedOptions, error: optionsError } = await supabase
-            .from("reservation_options")
-            .insert(reservationOptionsData)
-            .select();
+            // バリデーションが成功したらオプションを挿入
+            const { error: optionsError } = await supabase
+              .from("reservation_options")
+              .insert(reservationOptionsData);
 
-          if (optionsError) {
-            console.error("Error inserting reservation options:", optionsError);
-            // より詳細なエラーメッセージを表示
-            toast.error(`オプション情報の保存に失敗しました: ${optionsError.message || 'データベースエラー'}`);
-          } else {
-            console.log("Successfully saved reservation options:", insertedOptions);
+            if (optionsError) {
+              console.error("Error inserting reservation options:", optionsError);
+              // より詳細なエラーメッセージを表示
+              toast.error(`オプション情報の保存に失敗しました: ${optionsError.message || 'データベースエラー'}`);
+            } else {
+              console.log("Successfully saved reservation options");
+            }
           }
         } catch (optionError: any) {
           console.error("オプション保存中にエラーが発生しました:", optionError);

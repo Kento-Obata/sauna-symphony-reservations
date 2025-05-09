@@ -59,7 +59,7 @@ export const AdminReservationDetailsDialog = ({
         .select(`
           quantity,
           option_id,
-          options:options(
+          options(
             id, name, description, price_per_person, is_active, created_at, updated_at
           )
         `)
@@ -71,10 +71,12 @@ export const AdminReservationDetailsDialog = ({
       }
 
       if (data && data.length > 0) {
-        const formattedOptions = data.map(item => ({
-          option: item.options as Option,
-          quantity: item.quantity
-        }));
+        const formattedOptions = data
+          .filter(item => item.options) // Filter out any null options
+          .map(item => ({
+            option: item.options as Option,
+            quantity: item.quantity
+          }));
         setReservationOptions(formattedOptions);
         console.log("Formatted options:", formattedOptions);
       } else {
@@ -93,7 +95,7 @@ export const AdminReservationDetailsDialog = ({
       case "confirmed":
         return "予約確定";
       case "cancelled":
-        return "キャンセル済み";
+        return "キャン��ル済み";
       default:
         return status;
     }
