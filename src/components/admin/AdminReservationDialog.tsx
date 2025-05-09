@@ -160,26 +160,35 @@ export const AdminReservationDialog = ({
         console.log("Saving admin reservation options:", selectedOptions, "for reservation ID:", newReservation.id);
         
         try {
-          const reservationOptionsData = selectedOptions.map(option => ({
-            reservation_id: newReservation.id,
-            option_id: option.option_id,
-            quantity: option.quantity
-          }));
+          // 配列を作成する前に各オプションIDが有効か確認
+          const reservationOptionsData = selectedOptions.map(option => {
+            if (!option.option_id || !option.quantity) {
+              console.error("Invalid option data:", option);
+              throw new Error("有効なオプションデータではありません");
+            }
+            
+            return {
+              reservation_id: newReservation.id,
+              option_id: option.option_id,
+              quantity: option.quantity
+            };
+          });
 
+          // バリデーションが成功したらオプションを挿入
           const { error: optionsError } = await supabase
             .from("reservation_options")
             .insert(reservationOptionsData);
 
           if (optionsError) {
             console.error("Error inserting reservation options:", optionsError);
-            // オプション保存エラーの場合でも予約自体は確定させるため、ここではthrowしない
-            toast.error("オプション情報の保存に失敗しました");
+            // より詳細なエラーメッセージを表示
+            toast.error(`オプション情報の保存に失敗しました: ${optionsError.message || 'データベースエラー'}`);
           } else {
             console.log("Successfully saved reservation options");
           }
-        } catch (optionError) {
+        } catch (optionError: any) {
           console.error("オプション保存中にエラーが発生しました:", optionError);
-          toast.error("オプション情報の保存に失敗しました");
+          toast.error(`オプション情報の保存に失敗しました: ${optionError.message || '不明なエラー'}`);
         }
       }
 
@@ -187,9 +196,9 @@ export const AdminReservationDialog = ({
       queryClient.invalidateQueries({ queryKey: ["reservations"] });
       onOpenChange(false);
       resetForm();
-    } catch (error) {
+    } catch (error: any) {
       console.error("予約の登録に失敗しました:", error);
-      toast.error("予約の登録に失敗しました。もう一度お試しください。");
+      toast.error(`予約の登録に失敗しました: ${error.message || 'もう一度お試しください'}`);
     }
   };
 

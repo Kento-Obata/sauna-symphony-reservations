@@ -53,6 +53,8 @@ export const AdminReservationDetailsDialog = ({
 
   const fetchReservationOptions = async (reservationId: string) => {
     try {
+      console.log("Fetching options for reservation ID:", reservationId);
+      
       const { data, error } = await supabase
         .from("reservation_options")
         .select(`
@@ -70,12 +72,14 @@ export const AdminReservationDetailsDialog = ({
 
       if (data && data.length > 0) {
         const formattedOptions = data.map(item => ({
-          option: item.options as unknown as Option, // Cast to unknown first, then to Option
+          option: item.options as unknown as Option,
           quantity: item.quantity
         }));
         setReservationOptions(formattedOptions);
+        console.log("Formatted options:", formattedOptions);
       } else {
         setReservationOptions([]);
+        console.log("No options found for this reservation");
       }
     } catch (error) {
       console.error("Error in fetchReservationOptions:", error);
