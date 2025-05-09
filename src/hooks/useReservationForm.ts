@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { TimeSlot } from "@/types/reservation";
 import { toast } from "sonner";
@@ -167,25 +166,30 @@ export const useReservationForm = () => {
       setReservationCode(newReservation.reservation_code);
 
       // オプションが選択されている場合は予約オプションを保存
-      if (selectedOptions.length > 0) {
+      if (selectedOptions && selectedOptions.length > 0) {
         console.log("Saving reservation options:", selectedOptions, "for reservation ID:", newReservation.id);
         
-        const reservationOptionsData = selectedOptions.map(option => ({
-          reservation_id: newReservation.id,
-          option_id: option.option_id,
-          quantity: option.quantity
-        }));
+        try {
+          const reservationOptionsData = selectedOptions.map(option => ({
+            reservation_id: newReservation.id,
+            option_id: option.option_id,
+            quantity: option.quantity
+          }));
 
-        const { error: optionsError } = await supabase
-          .from("reservation_options")
-          .insert(reservationOptionsData);
+          const { error: optionsError } = await supabase
+            .from("reservation_options")
+            .insert(reservationOptionsData);
 
-        if (optionsError) {
-          console.error("Error inserting reservation options:", optionsError);
-          // オプション保存エラーの場合でも予約自体は確定させるため、ここではthrowしない
+          if (optionsError) {
+            console.error("Error inserting reservation options:", optionsError);
+            // オプション保存エラーの場合でも予約自体は確定させるため、ここではthrowしない
+            toast.error("オプション情報の保存に失敗しました");
+          } else {
+            console.log("Successfully saved reservation options");
+          }
+        } catch (optionError) {
+          console.error("オプション保存中にエラーが発生しました:", optionError);
           toast.error("オプション情報の保存に失敗しました");
-        } else {
-          console.log("Successfully saved reservation options");
         }
       }
 

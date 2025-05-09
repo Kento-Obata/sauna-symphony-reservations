@@ -27,6 +27,11 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
       try {
         console.log("Fetching options for reservation ID:", reservation.id);
         
+        if (!reservation.id) {
+          console.log("No reservation ID provided");
+          return;
+        }
+        
         const { data: reservationOptions, error } = await supabase
           .from("reservation_options")
           .select(`
