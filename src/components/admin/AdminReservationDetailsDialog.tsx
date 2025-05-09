@@ -1,4 +1,3 @@
-
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Reservation, TimeSlot } from "@/types/reservation";
@@ -59,8 +58,9 @@ export const AdminReservationDetailsDialog = ({
         .from("reservation_options")
         .select(`
           quantity,
-          options:option_id (
-            id, name, description, price_per_person
+          option_id,
+          options:options(
+            id, name, description, price_per_person, is_active, created_at, updated_at
           )
         `)
         .eq("reservation_id", reservationId);
@@ -72,7 +72,7 @@ export const AdminReservationDetailsDialog = ({
 
       if (data && data.length > 0) {
         const formattedOptions = data.map(item => ({
-          option: item.options as unknown as Option,
+          option: item.options as Option,
           quantity: item.quantity
         }));
         setReservationOptions(formattedOptions);

@@ -50,8 +50,9 @@ export default function ReservationPending() {
           .from("reservation_options")
           .select(`
             quantity,
-            options:option_id (
-              id, name, description, price_per_person
+            option_id,
+            options:options(
+              id, name, description, price_per_person, is_active, created_at, updated_at
             )
           `)
           .eq("reservation_id", reservation.id);
@@ -62,7 +63,7 @@ export default function ReservationPending() {
 
         // オプション情報を整形
         const formattedOptions = reservationOptions?.map(item => ({
-          option: item.options as unknown as Option,
+          option: item.options as Option,
           quantity: item.quantity
         })) || [];
 

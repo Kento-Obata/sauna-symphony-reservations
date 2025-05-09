@@ -20,14 +20,23 @@ export const ReservationOptions = ({
   } = useOptions();
   const handleOptionChange = (optionId: string, checked: boolean) => {
     if (checked) {
+      // オプションを追加する前にIDが有効か確認
+      if (!optionId || optionId.trim() === '') {
+        console.error("Invalid option ID:", optionId);
+        return;
+      }
+
       // オプションを追加 (初期数量は1に設定)
       setSelectedOptions([...selectedOptions, {
         option_id: optionId,
         quantity: 1
       }]);
+
+      console.log(`Added option ${optionId} with quantity 1`);
     } else {
       // オプションを削除
       setSelectedOptions(selectedOptions.filter(option => option.option_id !== optionId));
+      console.log(`Removed option ${optionId}`);
     }
   };
   const handleQuantityChange = (optionId: string, change: number) => {

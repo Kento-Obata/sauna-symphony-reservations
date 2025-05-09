@@ -162,7 +162,7 @@ export const AdminReservationDialog = ({
         try {
           // 配列を作成する前に各オプションIDが有効か確認
           const reservationOptionsData = selectedOptions.map(option => {
-            if (!option.option_id || !option.quantity) {
+            if (!option.option_id || option.option_id.trim() === '' || !option.quantity || option.quantity <= 0) {
               console.error("Invalid option data:", option);
               throw new Error("有効なオプションデータではありません");
             }
@@ -174,17 +174,20 @@ export const AdminReservationDialog = ({
             };
           });
 
+          console.log("Prepared admin option data for insertion:", reservationOptionsData);
+
           // バリデーションが成功したらオプションを挿入
-          const { error: optionsError } = await supabase
+          const { data: insertedOptions, error: optionsError } = await supabase
             .from("reservation_options")
-            .insert(reservationOptionsData);
+            .insert(reservationOptionsData)
+            .select();
 
           if (optionsError) {
             console.error("Error inserting reservation options:", optionsError);
             // より詳細なエラーメッセージを表示
             toast.error(`オプション情報の保存に失敗しました: ${optionsError.message || 'データベースエラー'}`);
           } else {
-            console.log("Successfully saved reservation options");
+            console.log("Successfully saved reservation options:", insertedOptions);
           }
         } catch (optionError: any) {
           console.error("オプション保存中にエラーが発生しました:", optionError);
