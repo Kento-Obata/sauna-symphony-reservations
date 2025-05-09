@@ -122,6 +122,7 @@ export const useReservationForm = () => {
         // 水温を常に15°Cに固定
         water_temperature: 15,
         status: "pending" as const,
+        is_confirmed: false, // フロントエンドから作成される予約は最初は未確認
         // Include the total price in the reservation data
         total_price: totalPrice
       };

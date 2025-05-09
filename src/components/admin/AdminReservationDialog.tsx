@@ -135,7 +135,8 @@ export const AdminReservationDialog = ({
         water_temperature: 15, // 常に15°Cに固定
         status: 'confirmed', // 管理者からの予約は直接confirmedになる
         total_price: totalPrice,
-        selectedOptions
+        selectedOptions,
+        is_confirmed: true // 重要：管理者作成の予約は最初からis_confirmedをtrueに設定
       });
 
       const { data: newReservation, error } = await supabase.from("reservations").insert({
@@ -147,6 +148,7 @@ export const AdminReservationDialog = ({
         phone: phone,
         water_temperature: 15, // 常に15°Cに固定
         status: 'confirmed', // 管理者からの予約は直接confirmedになる
+        is_confirmed: true, // 重要：管理者作成の予約は最初からis_confirmedをtrueに設定
         total_price: totalPrice
       }).select().single();
 

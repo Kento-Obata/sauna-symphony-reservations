@@ -1,94 +1,116 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
-import { Resend } from "https://esm.sh/resend@2.0.0"
-import { Twilio } from "https://esm.sh/twilio@4.19.0"
 
-const resend = new Resend(Deno.env.get('RESEND_API_KEY'))
-const twilioClient = new Twilio(
-  Deno.env.get('TWILIO_ACCOUNT_SID'),
-  Deno.env.get('TWILIO_AUTH_TOKEN')
-)
+// supabase/functions/send-expiration-notification/index.ts
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.47.2";
+import { corsHeaders } from "../_shared/cors.ts";
+import { sendEmail } from "../_shared/email.ts";
+import { sendSMS } from "../_shared/twilio.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 
-interface ReservationData {
-  guestName: string
-  email: string | null
-  phone: string
-  reservationCode: string
-  date: string
-  timeSlot: string
-}
-
-Deno.serve(async (req) => {
-  console.log("Expiration notification function called")
-
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+serve(async (_req) => {
+  // CORS headers
+  if (_req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
   }
-
+  
   try {
-    const reservationData: ReservationData = await req.json()
-    console.log('Received reservation data:', reservationData)
-    const { guestName, email, phone, reservationCode, date, timeSlot } = reservationData
+    console.log("Running send-expiration-notification edge function");
+    
+    // Create a Supabase client with the service role key
+    const supabase = createClient(
+      SUPABASE_URL,
+      SUPABASE_SERVICE_ROLE_KEY
+    );
+    
+    // Find all reservations that have expired (past their expires_at time)
+    const { data: expiredReservations, error } = await supabase
+      .from("reservations")
+      .select("*")
+      .eq("status", "pending")
+      .eq("is_confirmed", false) // 重要：is_confirmedがfalseの予約のみを対象に
+      .lt("expires_at", new Date().toISOString());
 
-    console.log('Starting to send notifications')
-
-    // Send email if email is provided
-    if (email) {
-      console.log('Sending expiration email to:', email)
-      try {
-        await resend.emails.send({
-          from: 'Sauna Reservation <onsen@resend.dev>',
-          to: email,
-          subject: '予約が期限切れになりました',
-          html: `
-            <p>${guestName}様</p>
-            <p>ご予約の確認が1分以内に完了しなかったため、予約番号${reservationCode}の予約は期限切れとなりました。</p>
-            <p>予約内容:</p>
-            <ul>
-              <li>日付: ${date}</li>
-              <li>時間帯: ${timeSlot}</li>
-            </ul>
-            <p>もう一度ご予約いただけますと幸いです。</p>
-          `
-        })
-        console.log('Email sent successfully')
-      } catch (error) {
-        console.error('Error sending email:', error)
-      }
-    }
-
-    // Send SMS
-    console.log('Sending expiration SMS to:', phone)
-    try {
-      await twilioClient.messages.create({
-        body: `${guestName}様、予約番号${reservationCode}の予約は確認が完了しなかったため期限切れとなりました。もう一度ご予約ください。`,
-        from: Deno.env.get('TWILIO_PHONE_NUMBER'),
-        to: phone
-      })
-      console.log('SMS sent successfully')
-    } catch (error) {
-      console.error('Error sending SMS:', error)
-    }
-
-    return new Response(
-      JSON.stringify({ message: 'Expiration notifications sent successfully' }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
-    )
-  } catch (error) {
-    console.error('Error in expiration notification function:', error)
-    return new Response(
-      JSON.stringify({ error: 'Failed to send expiration notifications' }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    if (error) {
+      console.error("Error fetching expired reservations:", error);
+      return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    console.log(`Found ${expiredReservations?.length || 0} expired reservations`);
+
+    if (!expiredReservations || expiredReservations.length === 0) {
+      return new Response(JSON.stringify({ message: "No expired reservations found" }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    // Process each expired reservation
+    const notifications = [];
+
+    for (const reservation of expiredReservations) {
+      console.log(`Processing expired reservation: ${reservation.id}`);
+      
+      // Send notification to the user
+      try {
+        const subject = "予約期限切れのお知らせ";
+        const message = `
+お客様の予約（予約コード: ${reservation.reservation_code}）の確認期限が切れました。
+20分以内に確認が行われなかったため、予約はキャンセルされました。
+
+再度ご予約いただく場合は、弊社ウェブサイトからお手続きください。
+        `;
+
+        // Send email notification if email exists
+        if (reservation.email) {
+          console.log(`Sending expiration email to: ${reservation.email}`);
+          await sendEmail(reservation.email, subject, message);
+          notifications.push(`Email sent to ${reservation.email}`);
+        }
+
+        // Send SMS notification
+        if (reservation.phone) {
+          console.log(`Sending expiration SMS to: ${reservation.phone}`);
+          await sendSMS(reservation.phone, message);
+          notifications.push(`SMS sent to ${reservation.phone}`);
+        }
+      } catch (notificationError) {
+        console.error(`Error sending notifications for reservation ${reservation.id}:`, notificationError);
       }
-    )
+    }
+
+    // Delete the expired reservations
+    const { error: deleteError } = await supabase
+      .from("reservations")
+      .delete()
+      .eq("status", "pending")
+      .eq("is_confirmed", false) // 重要：is_confirmedがfalseの予約のみを削除
+      .lt("expires_at", new Date().toISOString());
+
+    if (deleteError) {
+      console.error("Error deleting expired reservations:", deleteError);
+      return new Response(JSON.stringify({ error: deleteError.message }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    return new Response(JSON.stringify({ 
+      message: "Expired reservations processed successfully", 
+      notifications 
+    }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
+    });
+  } catch (err) {
+    console.error("Unexpected error:", err);
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
+    });
   }
-})
+});
