@@ -14,21 +14,6 @@ interface ReservationDetails {
   }[];
 }
 
-// Define the structure of the option data that comes back from Supabase
-interface ReservationOptionResponse {
-  quantity: number;
-  option_id: string;
-  options: {
-    id: string;
-    name: string;
-    description: string | null;
-    price_per_person: number;
-    is_active: boolean;
-    created_at: string;
-    updated_at: string;
-  };
-}
-
 export default function ReservationPending() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -69,8 +54,8 @@ export default function ReservationPending() {
           .select(`
             quantity,
             option_id,
-            options:option_id(
-              id, name, description, price_per_person, is_active, created_at, updated_at
+            options:option_id (
+              id, name, description, price_per_person, is_active
             )
           `)
           .eq("reservation_id", reservation.id);
@@ -80,11 +65,19 @@ export default function ReservationPending() {
           // オプション取得エラーの場合はオプションなしで続行
         }
 
+        console.log("取得したオプション情報:", reservationOptions);
+
         // オプション情報を整形
-        const formattedOptions = reservationOptions?.map((item: any) => ({
-          option: item.options as Option,
-          quantity: item.quantity
-        })).filter(item => item.option) || [];
+        const formattedOptions = reservationOptions?.map((item: any) => {
+          if (!item.options) {
+            console.log("オプションが見つかりません:", item);
+            return null;
+          }
+          return {
+            option: item.options as Option,
+            quantity: item.quantity
+          };
+        }).filter(Boolean) || [];
 
         setDetails({
           total_price: reservation.total_price,
