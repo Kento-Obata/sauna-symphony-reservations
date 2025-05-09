@@ -14,6 +14,13 @@ interface ReservationDetails {
   }[];
 }
 
+// Define the structure of the option data that comes back from Supabase
+interface ReservationOptionResponse {
+  quantity: number;
+  option_id: string;
+  options: Option;
+}
+
 export default function ReservationPending() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -66,8 +73,8 @@ export default function ReservationPending() {
         }
 
         // オプション情報を整形
-        const formattedOptions = reservationOptions?.map(item => ({
-          option: item.options as Option,
+        const formattedOptions = reservationOptions?.map((item: ReservationOptionResponse) => ({
+          option: item.options,
           quantity: item.quantity
         })).filter(item => item.option) || [];
 
