@@ -1,3 +1,4 @@
+
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Reservation, TimeSlot } from "@/types/reservation";
@@ -69,7 +70,7 @@ export const AdminReservationDetailsDialog = ({
 
       if (data && data.length > 0) {
         const formattedOptions = data.map(item => ({
-          option: item.options as Option, // Type assertion for Supabase response
+          option: item.options as unknown as Option, // Cast to unknown first, then to Option
           quantity: item.quantity
         }));
         setReservationOptions(formattedOptions);

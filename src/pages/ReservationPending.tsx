@@ -62,7 +62,7 @@ export default function ReservationPending() {
 
         // オプション情報を整形
         const formattedOptions = reservationOptions?.map(item => ({
-          option: item.options as Option, // Type assertion for Supabase response
+          option: item.options as unknown as Option, // Cast to unknown first, then to Option
           quantity: item.quantity
         })) || [];
 
