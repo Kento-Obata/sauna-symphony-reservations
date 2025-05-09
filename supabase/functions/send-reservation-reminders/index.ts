@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { format, addDays } from "https://esm.sh/date-fns@3.3.1";
@@ -127,21 +128,22 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`明日の予約を確認します: ${tomorrowStr}`);
 
-    // 明日の予約を取得
+    // 明日の予約を取得 - キャンセルされた予約を除外
     const { data: reservations, error } = await supabase
       .from("reservations")
       .select("*")
-      .eq("date", tomorrowStr);
+      .eq("date", tomorrowStr)
+      .neq("status", "cancelled"); // キャンセル済みの予約を除外
 
     if (error) {
       throw error;
     }
 
-    console.log(`明日の予約数: ${reservations?.length || 0}`);
+    console.log(`明日の有効な予約数: ${reservations?.length || 0}`);
 
     // 各予約に対して通知を送信
     for (const reservation of reservations || []) {
-      console.log(`予約を処理中: ${reservation.guest_name}`);
+      console.log(`予約を処理中: ${reservation.guest_name} (ステータス: ${reservation.status})`);
 
       // メールがある場合は送信
       if (reservation.email) {
