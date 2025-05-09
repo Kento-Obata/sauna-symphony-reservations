@@ -12,7 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ReservationDateSelect } from "./reservation-details/ReservationDateSelect";
 import { ReservationTimeSelect } from "./reservation-details/ReservationTimeSelect";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { XCircle, List } from "lucide-react";
+import { XCircle, List, Plus, Minus, Trash } from "lucide-react";
 import { formatPrice } from "@/utils/priceCalculations";
 import { Option } from "@/types/option";
 
@@ -37,6 +37,28 @@ export const AdminReservationDetailsDialog = ({
   const [date, setDate] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [reservationOptions, setReservationOptions] = useState<{option: Option, quantity: number}[]>([]);
+  const [basePrice, setBasePrice] = useState(0);
+  const [totalPrice, setTotalPrice] = useState(0);
+  const [availableOptions, setAvailableOptions] = useState<Option[]>([]);
+  const [isDirty, setIsDirty] = useState(false); // Track if options or price have been modified
+
+  // Fetch all available options
+  useEffect(() => {
+    const fetchAvailableOptions = async () => {
+      const { data, error } = await supabase
+        .from("options")
+        .select("*")
+        .eq("is_active", true);
+      
+      if (error) {
+        console.error("Error fetching available options:", error);
+      } else if (data) {
+        setAvailableOptions(data);
+      }
+    };
+
+    fetchAvailableOptions();
+  }, []);
 
   useEffect(() => {
     if (reservation) {
@@ -47,6 +69,7 @@ export const AdminReservationDetailsDialog = ({
       setWaterTemperature(reservation.water_temperature.toString());
       setTimeSlot(reservation.time_slot);
       setDate(reservation.date);
+      setTotalPrice(reservation.total_price);
       fetchReservationOptions(reservation.id);
     }
   }, [reservation]);
@@ -79,10 +102,22 @@ export const AdminReservationDetailsDialog = ({
             quantity: item.quantity
           }));
         setReservationOptions(formattedOptions);
+        
+        // Calculate base price by subtracting options total from total price
+        const optionsTotal = formattedOptions.reduce((total, item) => {
+          return total + (item.option.price_per_person * item.quantity);
+        }, 0);
+        
+        setBasePrice(reservation?.total_price ? reservation.total_price - optionsTotal : 0);
         console.log("Formatted options:", formattedOptions);
+        console.log("Options total:", optionsTotal);
+        console.log("Base price set to:", reservation?.total_price ? reservation.total_price - optionsTotal : 0);
       } else {
         setReservationOptions([]);
+        // If no options, base price is the total price
+        setBasePrice(reservation?.total_price || 0);
         console.log("No options found for this reservation");
+        console.log("Base price set to total:", reservation?.total_price);
       }
     } catch (error) {
       console.error("Error in fetchReservationOptions:", error);
@@ -109,6 +144,75 @@ export const AdminReservationDetailsDialog = ({
     }, 0);
   };
 
+  // Update total price when base price or options change
+  useEffect(() => {
+    const newTotal = basePrice + calculateOptionsTotal();
+    setTotalPrice(newTotal);
+  }, [basePrice, reservationOptions]);
+
+  // Handle base price change
+  const handleBasePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newBasePrice = parseInt(e.target.value) || 0;
+    setBasePrice(newBasePrice);
+    setIsDirty(true);
+  };
+
+  // Handle adding an option
+  const handleAddOption = () => {
+    if (!availableOptions || availableOptions.length === 0) return;
+    
+    // Add first available option by default
+    const newOption = {
+      option: availableOptions[0],
+      quantity: 1
+    };
+    
+    setReservationOptions([...reservationOptions, newOption]);
+    setIsDirty(true);
+  };
+
+  // Handle removing an option
+  const handleRemoveOption = (index: number) => {
+    const updatedOptions = [...reservationOptions];
+    updatedOptions.splice(index, 1);
+    setReservationOptions(updatedOptions);
+    setIsDirty(true);
+  };
+
+  // Handle changing an option
+  const handleOptionChange = (index: number, optionId: string) => {
+    const option = availableOptions?.find(opt => opt.id === optionId);
+    if (!option) return;
+    
+    const updatedOptions = [...reservationOptions];
+    updatedOptions[index] = {
+      ...updatedOptions[index],
+      option
+    };
+    
+    setReservationOptions(updatedOptions);
+    setIsDirty(true);
+  };
+
+  // Handle changing quantity
+  const handleQuantityChange = (index: number, change: number) => {
+    const updatedOptions = [...reservationOptions];
+    const currentOption = updatedOptions[index];
+    const newQuantity = Math.max(1, currentOption.quantity + change);
+    
+    // Limit to guest count if applicable
+    const guestCountNum = parseInt(guestCount);
+    const maxQuantity = !isNaN(guestCountNum) ? guestCountNum : 6;
+    
+    updatedOptions[index] = {
+      ...currentOption,
+      quantity: Math.min(newQuantity, maxQuantity)
+    };
+    
+    setReservationOptions(updatedOptions);
+    setIsDirty(true);
+  };
+
   if (!reservation) return null;
 
   const handleSave = async () => {
@@ -121,6 +225,7 @@ export const AdminReservationDetailsDialog = ({
         water_temperature: 15,
         time_slot: timeSlot,
         date: date,
+        total_price: totalPrice,
       });
 
       const { error } = await supabase
@@ -133,12 +238,45 @@ export const AdminReservationDetailsDialog = ({
           water_temperature: 15,
           time_slot: timeSlot,
           date: date,
+          total_price: totalPrice, // Save the updated total price
         })
         .eq("id", reservation.id);
 
       if (error) {
         console.error("Error updating reservation:", error);
         throw error;
+      }
+
+      // If options have been modified, update them too
+      if (isDirty) {
+        // First delete all existing options
+        const { error: deleteError } = await supabase
+          .from("reservation_options")
+          .delete()
+          .eq("reservation_id", reservation.id);
+          
+        if (deleteError) {
+          console.error("Error deleting existing options:", deleteError);
+          throw deleteError;
+        }
+        
+        // Then insert the new ones if there are any
+        if (reservationOptions.length > 0) {
+          const optionsToInsert = reservationOptions.map(item => ({
+            reservation_id: reservation.id,
+            option_id: item.option.id,
+            quantity: item.quantity
+          }));
+          
+          const { error: insertError } = await supabase
+            .from("reservation_options")
+            .insert(optionsToInsert);
+            
+          if (insertError) {
+            console.error("Error inserting new options:", insertError);
+            throw insertError;
+          }
+        }
       }
 
       const notificationResponse = await supabase.functions.invoke(
@@ -170,6 +308,7 @@ export const AdminReservationDetailsDialog = ({
       });
       
       setIsEditing(false);
+      setIsDirty(false);
     } catch (error) {
       console.error("Error updating reservation:", error);
       toast.error("予約情報の更新に失敗しました");
@@ -273,7 +412,7 @@ export const AdminReservationDetailsDialog = ({
               {isEditing ? (
                 <>
                   <div className="text-sm text-muted-foreground mb-2 text-amber-600 font-medium">
-                    ※ 水温選択は2024年9月より導入予定です
+                    ※ 水温選択は2025年9月より導入予定です
                   </div>
                   <Select value="15" onValueChange={setWaterTemperature} disabled>
                     <SelectTrigger>
@@ -289,10 +428,120 @@ export const AdminReservationDetailsDialog = ({
               )}
             </div>
 
-            {reservationOptions.length > 0 && (
+            {/* Price editor - only visible when editing */}
+            {isEditing && (
               <>
-                <div className="text-muted-foreground">選択オプション:</div>
+                <div className="text-muted-foreground">基本料金:</div>
                 <div>
+                  <Input 
+                    type="number" 
+                    value={basePrice} 
+                    onChange={handleBasePriceChange} 
+                    className="w-32"
+                  />
+                </div>
+              </>
+            )}
+            
+            {/* Options section */}
+            <div className="text-muted-foreground">選択オプション:</div>
+            <div>
+              {isEditing ? (
+                <div className="space-y-3">
+                  {/* Option list */}
+                  {reservationOptions.length > 0 ? (
+                    <ul className="space-y-2">
+                      {reservationOptions.map((item, index) => (
+                        <li key={index} className="bg-sauna-wood/10 p-2 rounded-lg border border-sauna-stone/10">
+                          <div className="flex justify-between items-center">
+                            <div className="flex-1">
+                              <Select
+                                value={item.option.id}
+                                onValueChange={(value) => handleOptionChange(index, value)}
+                              >
+                                <SelectTrigger className="h-8">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {availableOptions?.map((option) => (
+                                    <SelectItem key={option.id} value={option.id}>
+                                      {option.name} ({formatPrice(option.price_per_person)}/人)
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            
+                            <div className="flex items-center ml-2 gap-1">
+                              <Button 
+                                type="button" 
+                                variant="outline" 
+                                size="icon" 
+                                className="h-7 w-7" 
+                                onClick={() => handleQuantityChange(index, -1)}
+                                disabled={item.quantity <= 1}
+                              >
+                                <Minus className="h-3 w-3" />
+                              </Button>
+                              <span className="w-5 text-center">{item.quantity}</span>
+                              <Button 
+                                type="button" 
+                                variant="outline" 
+                                size="icon" 
+                                className="h-7 w-7"
+                                onClick={() => handleQuantityChange(index, 1)}
+                                disabled={item.quantity >= parseInt(guestCount)}
+                              >
+                                <Plus className="h-3 w-3" />
+                              </Button>
+                              
+                              <Button 
+                                type="button" 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-7 w-7 ml-1" 
+                                onClick={() => handleRemoveOption(index)}
+                              >
+                                <Trash className="h-3 w-3 text-destructive" />
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="text-xs mt-1">
+                            小計: {formatPrice(item.option.price_per_person * item.quantity)}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">選択されているオプションはありません</p>
+                  )}
+                  
+                  {/* Add option button */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="mt-2"
+                    onClick={handleAddOption}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    オプションを追加
+                  </Button>
+                  
+                  {/* Total options price */}
+                  {reservationOptions.length > 0 && (
+                    <div className="bg-sauna-stone/10 p-2 rounded-lg mt-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">オプション合計</span>
+                        <span className="font-bold">
+                          {formatPrice(calculateOptionsTotal())}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                reservationOptions.length > 0 ? (
                   <ul className="space-y-2">
                     {reservationOptions.map((item, index) => (
                       <li key={index} className="bg-sauna-wood/10 p-2 rounded-lg border border-sauna-stone/10">
@@ -305,9 +554,7 @@ export const AdminReservationDetailsDialog = ({
                         )}
                       </li>
                     ))}
-                  </ul>
-                  {reservationOptions.length > 0 && (
-                    <div className="mt-3 bg-sauna-stone/10 p-2 rounded-lg">
+                    <div className="mt-2 bg-sauna-stone/10 p-2 rounded-lg">
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium">オプション合計</span>
                         <span className="font-bold">
@@ -315,10 +562,12 @@ export const AdminReservationDetailsDialog = ({
                         </span>
                       </div>
                     </div>
-                  )}
-                </div>
-              </>
-            )}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground">選択されているオプションはありません</p>
+                )
+              )}
+            </div>
 
             <div className="text-muted-foreground">予約コード:</div>
             <div>{reservation.reservation_code}</div>
@@ -330,7 +579,25 @@ export const AdminReservationDetailsDialog = ({
 
             <div className="text-muted-foreground">料金:</div>
             <div>
-              {formatPrice(reservation.total_price)} (税込)
+              {isEditing ? (
+                <div className="bg-sauna-stone/10 p-2 rounded-lg">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">合計金額</span>
+                    <span className="font-bold text-lg">
+                      {formatPrice(totalPrice)}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {formatPrice(reservation.total_price)} (税込)
+                  {basePrice > 0 && reservationOptions.length > 0 && (
+                    <div className="text-xs text-muted-foreground mt-1">
+                      内訳: 基本料金 {formatPrice(basePrice)} + オプション {formatPrice(calculateOptionsTotal())}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
 
