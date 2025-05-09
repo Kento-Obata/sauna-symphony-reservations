@@ -13,6 +13,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Option } from "@/types/option";
 import { formatPrice } from "@/utils/priceCalculations";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Trash2, Plus } from "lucide-react";
+import { useOptions } from "@/hooks/useOptions";
 
 interface AdminCalendarEventDialogProps {
   open: boolean;
@@ -54,6 +56,8 @@ export const AdminCalendarEventDialog = ({
   const [reservationId, setReservationId] = useState<string | null>(null);
   const [optionDetails, setOptionDetails] = useState<ReservationOption[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const { data: availableOptions } = useOptions();
+  const [isDirty, setIsDirty] = useState(false);
 
   // イベントがスケジュールタイプの場合は予約情報を取得
   useEffect(() => {
@@ -125,6 +129,43 @@ export const AdminCalendarEventDialog = ({
           .eq("id", event.id);
 
         if (error) throw error;
+        
+        // オプションが変更された場合、予約オプションを更新
+        if (event.type === 'schedule' && reservationId && isDirty) {
+          // まずは既存のオプションを削除
+          const { error: deleteError } = await supabase
+            .from("reservation_options")
+            .delete()
+            .eq("reservation_id", reservationId);
+            
+          if (deleteError) {
+            console.error("既存のオプションの削除に失敗しました:", deleteError);
+            throw deleteError;
+          }
+          
+          // 選択されたオプションがある場合は新しく挿入
+          if (optionDetails.length > 0) {
+            const newOptions = optionDetails.map(item => ({
+              reservation_id: reservationId,
+              option_id: item.option.id,
+              quantity: item.quantity
+            }));
+            
+            const { error: insertError } = await supabase
+              .from("reservation_options")
+              .insert(newOptions);
+              
+            if (insertError) {
+              console.error("新しいオプションの追加に失敗しました:", insertError);
+              throw insertError;
+            }
+          }
+          
+          // 予約の合計金額を更新
+          const totalPrice = calculateOptionsTotal();
+          await updateReservationTotalPrice(reservationId, totalPrice);
+        }
+        
         toast.success("イベントを更新しました");
       } else if (date) {
         const { error } = await supabase.from("calendar_events").insert({
@@ -165,11 +206,97 @@ export const AdminCalendarEventDialog = ({
     }
   };
 
+  // 予約の合計金額を更新
+  const updateReservationTotalPrice = async (reservationId: string, optionsTotal: number) => {
+    // まず予約情報を取得
+    const { data: reservation, error: fetchError } = await supabase
+      .from("reservations")
+      .select("*")
+      .eq("id", reservationId)
+      .single();
+      
+    if (fetchError) {
+      console.error("予約情報の取得に失敗しました:", fetchError);
+      return;
+    }
+    
+    // 予約の合計金額を計算（ベース料金 + オプション料金）
+    const basePrice = reservation.total_price - calculateCurrentOptionsTotal();
+    const newTotalPrice = basePrice + optionsTotal;
+    
+    // 予約の合計金額を更新
+    const { error: updateError } = await supabase
+      .from("reservations")
+      .update({ total_price: newTotalPrice })
+      .eq("id", reservationId);
+      
+    if (updateError) {
+      console.error("予約の合計金額の更新に失敗しました:", updateError);
+      throw updateError;
+    }
+  };
+
+  // 現在の予約オプションの合計金額を計算（データベースに保存されている状態）
+  const calculateCurrentOptionsTotal = () => {
+    return optionDetails.reduce((total, item) => {
+      return total + (item.option.price_per_person * item.quantity);
+    }, 0);
+  };
+
   // オプションの合計金額を計算
   const calculateOptionsTotal = () => {
     return optionDetails.reduce((total, item) => {
       return total + (item.option.price_per_person * item.quantity);
     }, 0);
+  };
+
+  // オプションの追加
+  const handleAddOption = () => {
+    if (!availableOptions || availableOptions.length === 0) return;
+    
+    // デフォルトで最初のオプションを選択
+    const newOption = {
+      option: availableOptions[0],
+      quantity: 1
+    };
+    
+    setOptionDetails([...optionDetails, newOption]);
+    setIsDirty(true);
+  };
+
+  // オプションの削除
+  const handleRemoveOption = (index: number) => {
+    const updatedOptions = [...optionDetails];
+    updatedOptions.splice(index, 1);
+    setOptionDetails(updatedOptions);
+    setIsDirty(true);
+  };
+
+  // オプションの変更
+  const handleOptionChange = (index: number, optionId: string) => {
+    const option = availableOptions?.find(opt => opt.id === optionId);
+    if (!option) return;
+    
+    const updatedOptions = [...optionDetails];
+    updatedOptions[index] = {
+      ...updatedOptions[index],
+      option
+    };
+    
+    setOptionDetails(updatedOptions);
+    setIsDirty(true);
+  };
+
+  // 数量の変更
+  const handleQuantityChange = (index: number, quantity: number) => {
+    const updatedOptions = [...optionDetails];
+    updatedOptions[index] = {
+      ...updatedOptions[index],
+      quantity
+    };
+    
+    setOptionDetails(updatedOptions);
+    setIsDirty(true);
   };
 
   return (
@@ -209,31 +336,77 @@ export const AdminCalendarEventDialog = ({
             />
           </div>
           
-          {/* オプション情報の表示（スケジュールタイプかつオプションがある場合のみ） */}
-          {event?.type === 'schedule' && optionDetails.length > 0 && (
+          {/* スケジュールタイプの場合のみオプション編集を表示 */}
+          {event?.type === 'schedule' && reservationId && (
             <Card>
-              <CardHeader className="py-3">
-                <CardTitle className="text-sm">選択されたオプション</CardTitle>
+              <CardHeader className="py-3 flex flex-row justify-between items-center">
+                <CardTitle className="text-sm">オプション設定</CardTitle>
+                <Button 
+                  type="button" 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={handleAddOption}
+                  className="h-7 px-2 text-xs"
+                >
+                  <Plus className="h-3 w-3 mr-1" /> 追加
+                </Button>
               </CardHeader>
               <CardContent className="py-2">
-                <ul className="space-y-1 text-sm">
-                  {optionDetails.map((item, index) => (
-                    <li key={index} className="flex justify-between">
-                      <span>
-                        {item.option.name} × {item.quantity}名様
-                      </span>
+                {optionDetails.length > 0 ? (
+                  <div className="space-y-3">
+                    {optionDetails.map((item, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <Select
+                          value={item.option.id}
+                          onValueChange={(value) => handleOptionChange(index, value)}
+                        >
+                          <SelectTrigger className="flex-1">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableOptions?.map((option) => (
+                              <SelectItem key={option.id} value={option.id}>
+                                {option.name} ({formatPrice(option.price_per_person)}/人)
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Select
+                          value={item.quantity.toString()}
+                          onValueChange={(value) => handleQuantityChange(index, parseInt(value))}
+                        >
+                          <SelectTrigger className="w-24">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {[1, 2, 3, 4, 5, 6].map((num) => (
+                              <SelectItem key={num} value={num.toString()}>
+                                {num}人
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => handleRemoveOption(index)}
+                          className="h-8 w-8"
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    ))}
+                    <div className="flex justify-between border-t pt-2 mt-2">
+                      <span className="font-medium">オプション合計:</span>
                       <span className="font-medium">
-                        {formatPrice(item.option.price_per_person * item.quantity)}
+                        {formatPrice(calculateOptionsTotal())}
                       </span>
-                    </li>
-                  ))}
-                  <li className="flex justify-between pt-2 border-t mt-2">
-                    <span className="font-medium">オプション合計:</span>
-                    <span className="font-medium">
-                      {formatPrice(calculateOptionsTotal())}
-                    </span>
-                  </li>
-                </ul>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">オプションはありません</p>
+                )}
               </CardContent>
             </Card>
           )}
