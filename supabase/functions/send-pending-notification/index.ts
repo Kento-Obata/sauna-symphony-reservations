@@ -67,16 +67,18 @@ const handler = async (req: Request): Promise<Response> => {
 最終確認のため、下記リンクより予約確定手続きをお願いいたします。
 予約コード: ${reservation.reservationCode}
 URL：${CONFIRMATION_URL}
-※本リンクは1時間有効です。
+※本リンクは20分有効です。
 
 【ご予約内容】
 日付: ${reservation.date}
 時間: ${TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]}
 人数: ${reservation.guestCount}名様
-水風呂温度: 15°C
 
 【料金】
-¥${totalPrice.toLocaleString()} (税込)`;
+¥${totalPrice.toLocaleString()} (税込)
+
+【設備・アメニティ】
+タオル、水着、シャンプー・リンス・ボディソープ・フェイシャルパック・化粧水・乳液・ヘアオイル・ドライヤー・カールアイロン・ストレートアイロン を用意しております。`;
 
     if (reservation.email) {
       try {
