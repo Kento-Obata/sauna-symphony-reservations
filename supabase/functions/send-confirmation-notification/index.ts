@@ -81,15 +81,13 @@ const handler = async (req: Request): Promise<Response> => {
 日付: ${reservation.date}
 時間: ${TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]}
 人数: ${reservation.guestCount}名様
-水風呂温度: 15°C
 料金: ¥${totalPrice.toLocaleString()} (税込)
 
 【受付時間】
 ご予約時間の10分前からご案内いたします。
 
 【設備・アメニティ】
-タオル、水着はご用意しております。
-アメニティは、シャンプー / リンス / フェイシャルパック / 化粧水 を用意しております。
+タオル、水着、シャンプー・リンス・ボディソープ・フェイシャルパック・化粧水・乳液・ヘアオイル・ドライヤー・カールアイロン・ストレートアイロン を用意しております。
 
 【アクセス】
 住所: 〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4
@@ -107,7 +105,7 @@ Google Maps: ${GOOGLE_MAPS_URL}
 日付: ${reservation.date}
 時間: ${TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]}
 人数: ${reservation.guestCount}名様
-水風呂温度: 15°C
+水風呂温度: ${reservation.waterTemperature}°C
 料金: ¥${totalPrice.toLocaleString()} (税込)
 電話番号: ${reservation.phone}
 メール: ${reservation.email || "未登録"}
