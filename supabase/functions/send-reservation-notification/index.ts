@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { sendSMS } from "../_shared/twilio.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -57,12 +58,14 @@ const handler = async (req: Request): Promise<Response> => {
     const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID');
     const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN');
     const TWILIO_PHONE_NUMBER = Deno.env.get('TWILIO_PHONE_NUMBER');
+    const OWNER_PHONE_NUMBER = Deno.env.get('OWNER_PHONE_NUMBER');
 
     console.log("Environment variables check:", {
       hasResendKey: !!RESEND_API_KEY,
       hasTwilioSid: !!TWILIO_ACCOUNT_SID,
       hasTwilioToken: !!TWILIO_AUTH_TOKEN,
-      hasPhoneNumber: !!TWILIO_PHONE_NUMBER
+      hasPhoneNumber: !!TWILIO_PHONE_NUMBER,
+      hasOwnerPhone: !!OWNER_PHONE_NUMBER
     });
 
     if (!RESEND_API_KEY || !TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
@@ -116,6 +119,19 @@ Google Maps: ${GOOGLE_MAPS_URL}
 ${RESERVATION_DETAILS_URL}
 
 心よりお待ちしております。
+`;
+
+    // オーナーへの通知メッセージを作成
+    const ownerMessageContent = `
+【新規仮予約のお知らせ】
+予約コード: ${reservation.reservationCode}
+お客様: ${reservation.guestName}様
+日付: ${reservation.date}
+時間: ${TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]}
+人数: ${reservation.guestCount}名様
+水風呂温度: ${reservation.waterTemperature}°C
+電話番号: ${reservation.phone}
+メール: ${reservation.email || "未登録"}
 `;
 
     if (reservation.email) {
@@ -175,6 +191,20 @@ ${RESERVATION_DETAILS_URL}
       notifications.push("sms");
     } catch (error) {
       console.error("SMS sending error:", error);
+    }
+
+    // オーナーへのSMS通知を送信（OWNER_PHONE_NUMBER が設定されている場合のみ）
+    if (OWNER_PHONE_NUMBER) {
+      try {
+        console.log("Attempting to send notification SMS to owner:", OWNER_PHONE_NUMBER);
+        
+        await sendSMS(OWNER_PHONE_NUMBER, ownerMessageContent);
+        
+        console.log("Owner notification SMS sent successfully");
+        notifications.push("owner_sms");
+      } catch (error) {
+        console.error("Owner notification SMS sending error:", error);
+      }
     }
 
     return new Response(

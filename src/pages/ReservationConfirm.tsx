@@ -68,7 +68,7 @@ export default function ReservationConfirm() {
                 phone: reservation.phone,
                 waterTemperature: reservation.water_temperature,
                 reservationCode: data.reservation_code,
-                total_price: reservation.total_price, // 合計価格を通知データに含める
+                total_price: reservation.total_price,
               },
             }
           );
