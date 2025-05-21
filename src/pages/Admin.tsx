@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -13,6 +14,7 @@ import { AdminSearchResults } from "@/components/admin/AdminSearchResults";
 import { ShopClosureManager } from "@/components/admin/ShopClosureManager";
 import { PriceSettingsManager } from "@/components/admin/PriceSettingsManager";
 import { OptionManager } from "@/components/admin/OptionManager";
+import { AvailabilityTextGenerator } from "@/components/admin/AvailabilityTextGenerator";
 import { useReservations } from "@/hooks/useReservations";
 
 const Admin = () => {
@@ -143,6 +145,10 @@ const Admin = () => {
             onStatusChange={handleStatusChange}
           />
         </div>
+      </div>
+
+      <div className="mb-8">
+        <AvailabilityTextGenerator reservations={reservations} />
       </div>
 
       <div className="mb-8">
