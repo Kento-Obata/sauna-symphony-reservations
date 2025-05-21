@@ -79,9 +79,9 @@ export const generateAvailabilityText = (
     if (availableTimeSlots.length === 0) {
       result += `${dateString} 完売\n`;
     } else {
-      // 利用可能な時間枠を表示
+      // 利用可能な時間枠を表示（開始時間-終了時間の形式で）
       const timeSlotsText = availableTimeSlots
-        .map((slot) => TIME_SLOTS[slot].start)
+        .map((slot) => `${TIME_SLOTS[slot].start}-${TIME_SLOTS[slot].end}`)
         .join(", ");
       
       result += `${dateString} ${timeSlotsText}\n`;
