@@ -9,6 +9,57 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      approved_shifts: {
+        Row: {
+          created_at: string
+          date: string
+          end_hour: number
+          id: string
+          note: string | null
+          shift_request_id: string
+          staff_id: string
+          start_hour: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          end_hour: number
+          id?: string
+          note?: string | null
+          shift_request_id: string
+          staff_id: string
+          start_hour: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          end_hour?: number
+          id?: string
+          note?: string | null
+          shift_request_id?: string
+          staff_id?: string
+          start_hour?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approved_shifts_shift_request_id_fkey"
+            columns: ["shift_request_id"]
+            isOneToOne: false
+            referencedRelation: "shift_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "approved_shifts_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calendar_dates: {
         Row: {
           created_at: string
@@ -269,6 +320,63 @@ export type Database = {
           },
         ]
       }
+      shift_requests: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          date: string
+          end_hour: number
+          id: string
+          note: string | null
+          staff_id: string
+          start_hour: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          date: string
+          end_hour: number
+          id?: string
+          note?: string | null
+          staff_id: string
+          start_hour: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          date?: string
+          end_hour?: number
+          id?: string
+          note?: string | null
+          staff_id?: string
+          start_hour?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_requests_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_requests_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shifts: {
         Row: {
           created_at: string | null
@@ -330,6 +438,41 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      staff_auth: {
+        Row: {
+          created_at: string
+          id: string
+          password_hash: string
+          staff_id: string
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          password_hash: string
+          staff_id: string
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          password_hash?: string
+          staff_id?: string
+          updated_at?: string
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_auth_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
