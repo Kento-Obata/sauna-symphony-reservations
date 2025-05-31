@@ -1,3 +1,4 @@
+
 import { createBrowserRouter } from "react-router-dom";
 import Index from "./pages/Index";
 import Admin from "./pages/Admin";
@@ -9,8 +10,8 @@ import ReservationConfirm from "./pages/ReservationConfirm";
 import ReservationComplete from "./pages/ReservationComplete";
 import ReservationPending from "./pages/ReservationPending";
 import ReservationDetail from "./pages/ReservationDetail";
-import { AdminGuard } from "./components/auth/AdminGuard";
-import { ShiftGuard } from "./components/auth/ShiftGuard";
+import { AdminGuard } from "./components/admin/AdminGuard";
+import { ShiftGuard } from "./components/shift/ShiftGuard";
 import Shift2 from "./pages/Shift2";
 import Shift2Dashboard from "./pages/Shift2Dashboard";
 
