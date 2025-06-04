@@ -73,7 +73,7 @@ export const router = createBrowserRouter([
     element: <ReservationPending />,
   },
   {
-    path: "/reservation/:id",
+    path: "/reservation/:code",
     element: <ReservationDetail />,
   },
 ]);
