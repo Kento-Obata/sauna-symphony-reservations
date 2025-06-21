@@ -223,6 +223,13 @@ export type Database = {
             foreignKeyName: "reservation_options_reservation_id_fkey"
             columns: ["reservation_id"]
             isOneToOne: false
+            referencedRelation: "customer_search"
+            referencedColumns: ["reservation_id"]
+          },
+          {
+            foreignKeyName: "reservation_options_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
             referencedRelation: "reservations"
             referencedColumns: ["id"]
           },
@@ -230,6 +237,9 @@ export type Database = {
       }
       reservations: {
         Row: {
+          admin_memo: string | null
+          admin_memo_updated_at: string | null
+          admin_memo_updated_by: string | null
           confirmation_token: string | null
           created_at: string
           date: string
@@ -247,6 +257,9 @@ export type Database = {
           water_temperature: number
         }
         Insert: {
+          admin_memo?: string | null
+          admin_memo_updated_at?: string | null
+          admin_memo_updated_by?: string | null
           confirmation_token?: string | null
           created_at?: string
           date: string
@@ -264,6 +277,9 @@ export type Database = {
           water_temperature: number
         }
         Update: {
+          admin_memo?: string | null
+          admin_memo_updated_at?: string | null
+          admin_memo_updated_by?: string | null
           confirmation_token?: string | null
           created_at?: string
           date?: string
@@ -476,7 +492,60 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      customer_search: {
+        Row: {
+          admin_memo: string | null
+          created_at: string | null
+          date: string | null
+          email: string | null
+          guest_name: string | null
+          phone: string | null
+          reservation_id: string | null
+          status: string | null
+          total_price: number | null
+          user_key: string | null
+        }
+        Insert: {
+          admin_memo?: string | null
+          created_at?: string | null
+          date?: string | null
+          email?: string | null
+          guest_name?: string | null
+          phone?: string | null
+          reservation_id?: string | null
+          status?: string | null
+          total_price?: number | null
+          user_key?: never
+        }
+        Update: {
+          admin_memo?: string | null
+          created_at?: string | null
+          date?: string | null
+          email?: string | null
+          guest_name?: string | null
+          phone?: string | null
+          reservation_id?: string | null
+          status?: string | null
+          total_price?: number | null
+          user_key?: never
+        }
+        Relationships: []
+      }
+      user_reservation_stats: {
+        Row: {
+          cancelled_reservations: number | null
+          completed_reservations: number | null
+          first_visit_date: string | null
+          last_reservation_created: string | null
+          last_visit_date: string | null
+          latest_email: string | null
+          latest_name: string | null
+          phone: string | null
+          total_reservations: number | null
+          user_key: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       cleanup_expired_reservations: {

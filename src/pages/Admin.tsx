@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, LogOut } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminReservationDialog } from "@/components/admin/AdminReservationDialog";
 import { AdminSearchBar } from "@/components/admin/AdminSearchBar";
 import { AdminCalendar } from "@/components/admin/AdminCalendar";
@@ -15,6 +16,7 @@ import { ShopClosureManager } from "@/components/admin/ShopClosureManager";
 import { PriceSettingsManager } from "@/components/admin/PriceSettingsManager";
 import { OptionManager } from "@/components/admin/OptionManager";
 import { AvailabilityTextGenerator } from "@/components/admin/AvailabilityTextGenerator";
+import { CustomerManagement } from "@/components/admin/CustomerManagement";
 import { useReservations } from "@/hooks/useReservations";
 
 const Admin = () => {
@@ -54,7 +56,6 @@ const Admin = () => {
         .from("reservations")
         .update({ 
           status,
-          // キャンセル時またはその他のステータス変更時に is_confirmed フラグを更新
           is_confirmed: isConfirmed
         })
         .eq("id", id);
@@ -93,7 +94,7 @@ const Admin = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">予約管理</h1>
+        <h1 className="text-3xl font-bold">管理者画面</h1>
         <div className="flex gap-4">
           <Button 
             onClick={handleNewReservation}
@@ -113,55 +114,70 @@ const Admin = () => {
         </div>
       </div>
 
-      <AdminSearchBar
-        nameQuery={nameQuery}
-        setNameQuery={setNameQuery}
-        phoneQuery={phoneQuery}
-        setPhoneQuery={setPhoneQuery}
-        dateQuery={dateQuery}
-        setDateQuery={setDateQuery}
-        onClearFilters={handleClearFilters}
-      />
+      <Tabs defaultValue="reservations" className="w-full">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="reservations">予約管理</TabsTrigger>
+          <TabsTrigger value="customers">顧客管理</TabsTrigger>
+          <TabsTrigger value="availability">空き状況</TabsTrigger>
+          <TabsTrigger value="closures">休業管理</TabsTrigger>
+          <TabsTrigger value="settings">設定</TabsTrigger>
+        </TabsList>
 
-      {(nameQuery || phoneQuery || dateQuery) && (
-        <div className="mb-8">
-          <AdminSearchResults
-            reservations={filteredReservations || []}
-            onStatusChange={handleStatusChange}
+        <TabsContent value="reservations" className="space-y-6">
+          <AdminSearchBar
+            nameQuery={nameQuery}
+            setNameQuery={setNameQuery}
+            phoneQuery={phoneQuery}
+            setPhoneQuery={setPhoneQuery}
+            dateQuery={dateQuery}
+            setDateQuery={setDateQuery}
+            onClearFilters={handleClearFilters}
           />
-        </div>
-      )}
 
-      <div className="grid lg:grid-cols-3 gap-8 mb-8">
-        <div className="lg:col-span-2">
-          <AdminCalendar 
-            reservations={reservations} 
-            onDateSelect={setSelectedDate}
-          />
-        </div>
-        <div>
-          <AdminUpcomingReservations 
-            reservations={upcomingReservations}
-            onStatusChange={handleStatusChange}
-          />
-        </div>
-      </div>
+          {(nameQuery || phoneQuery || dateQuery) && (
+            <div className="mb-8">
+              <AdminSearchResults
+                reservations={filteredReservations || []}
+                onStatusChange={handleStatusChange}
+              />
+            </div>
+          )}
 
-      <div className="mb-8">
-        <AvailabilityTextGenerator reservations={reservations} />
-      </div>
+          <div className="grid lg:grid-cols-3 gap-8 mb-8">
+            <div className="lg:col-span-2">
+              <AdminCalendar 
+                reservations={reservations} 
+                onDateSelect={setSelectedDate}
+              />
+            </div>
+            <div>
+              <AdminUpcomingReservations 
+                reservations={upcomingReservations}
+                onStatusChange={handleStatusChange}
+              />
+            </div>
+          </div>
+        </TabsContent>
 
-      <div className="mb-8">
-        <ShopClosureManager />
-      </div>
+        <TabsContent value="customers" className="space-y-6">
+          <CustomerManagement />
+        </TabsContent>
 
-      <div className="mb-8">
-        <PriceSettingsManager />
-      </div>
+        <TabsContent value="availability" className="space-y-6">
+          <AvailabilityTextGenerator reservations={reservations} />
+        </TabsContent>
 
-      <div className="mb-8">
-        <OptionManager />
-      </div>
+        <TabsContent value="closures" className="space-y-6">
+          <ShopClosureManager />
+        </TabsContent>
+
+        <TabsContent value="settings" className="space-y-6">
+          <div className="space-y-8">
+            <PriceSettingsManager />
+            <OptionManager />
+          </div>
+        </TabsContent>
+      </Tabs>
 
       <AdminReservationDialog
         open={showNewReservationDialog}
