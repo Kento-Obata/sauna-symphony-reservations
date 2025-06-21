@@ -23,6 +23,11 @@ export const AdminUpcomingReservations = ({
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
+  // Filter out reservations with phone number "00000000000" (休枠)
+  const filteredReservations = reservations.filter(reservation => 
+    reservation.phone !== "00000000000"
+  );
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "confirmed":
@@ -62,10 +67,10 @@ export const AdminUpcomingReservations = ({
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {reservations.length === 0 ? (
+            {filteredReservations.length === 0 ? (
               <p className="text-center text-gray-500">今後の予約はありません</p>
             ) : (
-              reservations.slice(0, 10).map((reservation) => (
+              filteredReservations.slice(0, 10).map((reservation) => (
                 <div key={reservation.id} className="border rounded-lg p-4">
                   <div className="flex justify-between items-start mb-2">
                     <div>
