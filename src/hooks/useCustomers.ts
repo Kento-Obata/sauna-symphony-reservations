@@ -54,3 +54,20 @@ export const useCustomerReservations = (userKey: string) => {
     enabled: !!userKey,
   });
 };
+
+export const useReservationDetails = (reservationId: string) => {
+  return useQuery({
+    queryKey: ["reservationDetails", reservationId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("reservations")
+        .select("*")
+        .eq("id", reservationId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!reservationId,
+  });
+};

@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, MessageSquare } from "lucide-react";
-import { useCustomerReservations } from "@/hooks/useCustomers";
+import { useCustomerReservations, useReservationDetails } from "@/hooks/useCustomers";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { useState } from "react";
@@ -19,6 +19,8 @@ export const CustomerDetail = ({ userKey, onBack }: CustomerDetailProps) => {
   const { data: reservations, isLoading } = useCustomerReservations(userKey);
   const [selectedReservationId, setSelectedReservationId] = useState<string | null>(null);
   const [showReservationDialog, setShowReservationDialog] = useState(false);
+  
+  const { data: selectedReservationDetails } = useReservationDetails(selectedReservationId || "");
 
   if (isLoading) {
     return <div>読み込み中...</div>;
@@ -47,8 +49,6 @@ export const CustomerDetail = ({ userKey, onBack }: CustomerDetailProps) => {
         return <Badge variant="outline">{status}</Badge>;
     }
   };
-
-  const selectedReservation = reservations.find(r => r.reservation_id === selectedReservationId);
 
   return (
     <div className="space-y-6">
@@ -168,19 +168,11 @@ export const CustomerDetail = ({ userKey, onBack }: CustomerDetailProps) => {
       </Card>
 
       {/* 予約詳細ダイアログ */}
-      {selectedReservation && (
+      {selectedReservationDetails && (
         <AdminReservationDetailsDialog
           open={showReservationDialog}
           onOpenChange={setShowReservationDialog}
-          reservation={{
-            ...selectedReservation,
-            id: selectedReservation.reservation_id,
-            guest_count: 1, // デフォルト値
-            water_temperature: 0, // デフォルト値
-            is_confirmed: true,
-            confirmation_token: null,
-            expires_at: null,
-          }}
+          reservation={selectedReservationDetails}
         />
       )}
     </div>
