@@ -1,4 +1,3 @@
-
 export type TimeSlot = "morning" | "afternoon" | "evening";
 
 export interface Reservation {
@@ -17,6 +16,9 @@ export interface Reservation {
   confirmation_token: string | null;
   expires_at: string | null;
   total_price: number;
+  admin_memo?: string | null;
+  admin_memo_updated_at?: string | null;
+  admin_memo_updated_by?: string | null;
 }
 
 export interface ReservationFormData {
