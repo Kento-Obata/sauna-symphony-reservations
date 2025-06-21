@@ -1,27 +1,46 @@
 
-import { format } from "date-fns";
-import { ja } from "date-fns/locale";
-import { useState } from "react";
-import { Reservation } from "@/types/reservation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { TIME_SLOTS } from "@/components/TimeSlotSelect";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { XCircle, Edit } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AdminReservationDetailsDialog } from "./AdminReservationDetailsDialog";
-import { formatPrice } from "@/utils/priceCalculations";
+import { useState } from "react";
+import { Reservation } from "@/types/reservation";
+import { format } from "date-fns";
+import { ja } from "date-fns/locale";
 
 interface AdminSearchResultsProps {
   reservations: Reservation[];
-  onStatusChange: (id: string, status: string, isConfirmed: boolean) => void;
+  onStatusChange: (id: string, status: string, isConfirmed?: boolean) => void;
+  onCustomerDetailClick?: (userKey: string) => void;
 }
 
-export const AdminSearchResults = ({
-  reservations,
+export const AdminSearchResults = ({ 
+  reservations, 
   onStatusChange,
+  onCustomerDetailClick 
 }: AdminSearchResultsProps) => {
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "confirmed":
+        return <Badge variant="default">確定</Badge>;
+      case "pending":
+        return <Badge variant="secondary">保留中</Badge>;
+      case "cancelled":
+        return <Badge variant="destructive">キャンセル</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const handleShowDetails = (reservation: Reservation) => {
+    setSelectedReservation(reservation);
+    setShowDetailsDialog(true);
+  };
 
   return (
     <>
@@ -34,95 +53,65 @@ export const AdminSearchResults = ({
             <TableHeader>
               <TableRow>
                 <TableHead>日付</TableHead>
-                <TableHead>時間帯</TableHead>
-                <TableHead>お客様名</TableHead>
-                <TableHead>人数</TableHead>
+                <TableHead>時間</TableHead>
+                <TableHead>名前</TableHead>
                 <TableHead>電話番号</TableHead>
-                <TableHead>料金</TableHead>
+                <TableHead>人数</TableHead>
                 <TableHead>ステータス</TableHead>
-                <TableHead></TableHead>
+                <TableHead>料金</TableHead>
+                <TableHead>操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {reservations.map((reservation) => (
                 <TableRow key={reservation.id}>
                   <TableCell>
-                    {format(new Date(reservation.date), "M月d日(E)", {
-                      locale: ja,
-                    })}
+                    {format(new Date(reservation.date), "yyyy年MM月dd日", { locale: ja })}
                   </TableCell>
                   <TableCell>
-                    {TIME_SLOTS[reservation.time_slot].start}-
-                    {TIME_SLOTS[reservation.time_slot].end}
+                    {reservation.time_slot === "morning" ? "午前" : 
+                     reservation.time_slot === "afternoon" ? "午後" : "夜"}
                   </TableCell>
-                  <TableCell>{reservation.guest_name}様</TableCell>
-                  <TableCell>{reservation.guest_count}名</TableCell>
+                  <TableCell>{reservation.guest_name}</TableCell>
                   <TableCell>{reservation.phone}</TableCell>
-                  <TableCell>{formatPrice(reservation.total_price)}</TableCell>
+                  <TableCell>{reservation.guest_count}名</TableCell>
                   <TableCell>
-                    {reservation.status === "cancelled" ? "キャンセル済" : "予約済"}
+                    <Select
+                      value={reservation.status}
+                      onValueChange={(value) => onStatusChange(reservation.id, value)}
+                    >
+                      <SelectTrigger className="w-24">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="confirmed">確定</SelectItem>
+                        <SelectItem value="pending">保留中</SelectItem>
+                        <SelectItem value="cancelled">キャンセル</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </TableCell>
+                  <TableCell>¥{reservation.total_price.toLocaleString()}</TableCell>
                   <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex items-center gap-2"
-                        onClick={() => setSelectedReservation(reservation)}
-                      >
-                        <Edit className="h-4 w-4" />
-                        詳細
-                      </Button>
-                      {reservation.status !== "cancelled" && (
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              className="flex items-center gap-2"
-                            >
-                              <XCircle className="h-4 w-4" />
-                              キャンセル
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>予約をキャンセルしますか？</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                この操作は取り消せません。
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>いいえ</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => onStatusChange(reservation.id, "cancelled", true)}
-                              >
-                                はい
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      )}
-                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleShowDetails(reservation)}
+                    >
+                      詳細
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
-              {reservations.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center py-4">
-                    検索結果はありません
-                  </TableCell>
-                </TableRow>
-              )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
 
       <AdminReservationDetailsDialog
-        open={!!selectedReservation}
-        onOpenChange={(open) => !open && setSelectedReservation(null)}
+        open={showDetailsDialog}
+        onOpenChange={setShowDetailsDialog}
         reservation={selectedReservation}
+        onCustomerDetailClick={onCustomerDetailClick}
       />
     </>
   );

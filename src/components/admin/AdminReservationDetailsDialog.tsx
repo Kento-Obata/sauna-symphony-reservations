@@ -10,8 +10,9 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { ReservationDateSelect } from "./reservation-details/ReservationDateSelect";
 import { ReservationTimeSelect } from "./reservation-details/ReservationTimeSelect";
+import { ReservationMemoEditor } from "./ReservationMemoEditor";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { XCircle, List, Plus, Minus, Trash } from "lucide-react";
+import { XCircle, List, Plus, Minus, Trash, User, MessageSquare } from "lucide-react";
 import { formatPrice } from "@/utils/priceCalculations";
 import { Option } from "@/types/option";
 
@@ -19,12 +20,14 @@ interface AdminReservationDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   reservation: Reservation | null;
+  onCustomerDetailClick?: (userKey: string) => void;
 }
 
 export const AdminReservationDetailsDialog = ({
   open,
   onOpenChange,
   reservation,
+  onCustomerDetailClick,
 }: AdminReservationDetailsDialogProps) => {
   const queryClient = useQueryClient();
   const [guestName, setGuestName] = useState("");
@@ -212,6 +215,18 @@ export const AdminReservationDetailsDialog = ({
     setIsDirty(true);
   };
 
+  const generateUserKey = (phone: string) => {
+    return phone.replace(/\D/g, ''); // Remove non-digit characters to create user_key
+  };
+
+  const handleCustomerDetailNavigation = () => {
+    if (onCustomerDetailClick && reservation) {
+      const userKey = generateUserKey(reservation.phone);
+      onCustomerDetailClick(userKey);
+      onOpenChange(false); // Close the dialog
+    }
+  };
+
   if (!reservation) return null;
 
   const handleSave = async () => {
@@ -343,7 +358,20 @@ export const AdminReservationDetailsDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>予約詳細</DialogTitle>
+          <DialogTitle className="flex items-center justify-between">
+            <span>予約詳細</span>
+            {onCustomerDetailClick && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCustomerDetailNavigation}
+                className="flex items-center gap-2"
+              >
+                <User className="h-4 w-4" />
+                顧客詳細
+              </Button>
+            )}
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="grid grid-cols-[120px_1fr] gap-4 items-center">
@@ -602,6 +630,16 @@ export const AdminReservationDetailsDialog = ({
               )}
             </div>
           </div>
+
+          {/* 管理者メモセクション */}
+          {!isEditing && (
+            <div className="mt-6">
+              <ReservationMemoEditor 
+                reservationId={reservation.id}
+                currentMemo={reservation.admin_memo}
+              />
+            </div>
+          )}
 
           <div className="flex justify-end gap-2">
             {isEditing ? (

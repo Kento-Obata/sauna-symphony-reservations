@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -27,6 +26,8 @@ const Admin = () => {
   const [nameQuery, setNameQuery] = useState("");
   const [phoneQuery, setPhoneQuery] = useState("");
   const [dateQuery, setDateQuery] = useState<Date | undefined>(undefined);
+  const [activeTab, setActiveTab] = useState("reservations");
+  const [selectedUserKey, setSelectedUserKey] = useState<string | null>(null);
 
   const handleNewReservation = () => {
     setSelectedDate(new Date());
@@ -66,6 +67,11 @@ const Admin = () => {
       console.error("Error updating reservation:", error);
       toast.error("予約状態の更新に失敗しました");
     }
+  };
+
+  const handleCustomerDetailClick = (userKey: string) => {
+    setSelectedUserKey(userKey);
+    setActiveTab("customers");
   };
 
   const filteredReservations = reservations?.filter((reservation) => {
@@ -114,7 +120,7 @@ const Admin = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="reservations" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="reservations">予約管理</TabsTrigger>
           <TabsTrigger value="customers">顧客管理</TabsTrigger>
@@ -139,6 +145,7 @@ const Admin = () => {
               <AdminSearchResults
                 reservations={filteredReservations || []}
                 onStatusChange={handleStatusChange}
+                onCustomerDetailClick={handleCustomerDetailClick}
               />
             </div>
           )}
@@ -154,13 +161,17 @@ const Admin = () => {
               <AdminUpcomingReservations 
                 reservations={upcomingReservations}
                 onStatusChange={handleStatusChange}
+                onCustomerDetailClick={handleCustomerDetailClick}
               />
             </div>
           </div>
         </TabsContent>
 
         <TabsContent value="customers" className="space-y-6">
-          <CustomerManagement />
+          <CustomerManagement 
+            initialUserKey={selectedUserKey}
+            onUserKeyChange={setSelectedUserKey}
+          />
         </TabsContent>
 
         <TabsContent value="availability" className="space-y-6">
