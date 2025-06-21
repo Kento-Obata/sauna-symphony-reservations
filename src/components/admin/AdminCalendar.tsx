@@ -26,11 +26,13 @@ import { toast } from "sonner";
 interface AdminCalendarProps {
   reservations?: Reservation[];
   onDateSelect?: (date: Date) => void;
+  onCustomerDetailClick?: (userKey: string) => void;
 }
 
 export const AdminCalendar = ({ 
   reservations = [], 
-  onDateSelect 
+  onDateSelect,
+  onCustomerDetailClick 
 }: AdminCalendarProps) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -271,6 +273,7 @@ export const AdminCalendar = ({
         open={showDetailsDialog}
         onOpenChange={setShowDetailsDialog}
         reservation={selectedReservation}
+        onCustomerDetailClick={onCustomerDetailClick}
       />
 
       <AdminCalendarEventDialog

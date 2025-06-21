@@ -155,6 +155,7 @@ const Admin = () => {
               <AdminCalendar 
                 reservations={reservations} 
                 onDateSelect={setSelectedDate}
+                onCustomerDetailClick={handleCustomerDetailClick}
               />
             </div>
             <div>
