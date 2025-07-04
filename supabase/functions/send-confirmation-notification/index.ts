@@ -94,6 +94,11 @@ const handler = async (req: Request): Promise<Response> => {
 Plus Code: 8Q5GHG7V+J5
 Google Maps: ${GOOGLE_MAPS_URL}
 
+【予約変更・遅刻の際の事前連絡について】
+予約の変更やキャンセル、遅刻の可能性がある場合は、事前にご連絡をお願いいたします。
+・電話: 090-9370-2960
+・Instagram DM も可能です
+
 心よりお待ちしております。
 `;
 
