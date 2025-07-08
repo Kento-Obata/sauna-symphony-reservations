@@ -579,6 +579,7 @@ export type Database = {
           month: number | null
           staff_id: string | null
           staff_name: string | null
+          total_break_hours: number | null
           total_salary: number | null
           total_shifts: number | null
           total_work_hours: number | null

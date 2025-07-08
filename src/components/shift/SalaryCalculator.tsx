@@ -98,6 +98,7 @@ export const SalaryCalculator = () => {
                     <TableHead>スタッフ名</TableHead>
                     <TableHead>シフト数</TableHead>
                     <TableHead>労働時間</TableHead>
+                    <TableHead>休憩時間</TableHead>
                     <TableHead>給与</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -107,6 +108,7 @@ export const SalaryCalculator = () => {
                       <TableCell>{item.staff_name}</TableCell>
                       <TableCell>{item.total_shifts}回</TableCell>
                       <TableCell>{Math.round((item.total_work_hours || 0) * 10) / 10}時間</TableCell>
+                      <TableCell>{Math.round((item.total_break_hours || 0) * 10) / 10}時間</TableCell>
                       <TableCell>¥{Math.round(item.total_salary || 0).toLocaleString()}</TableCell>
                     </TableRow>
                   ))}
