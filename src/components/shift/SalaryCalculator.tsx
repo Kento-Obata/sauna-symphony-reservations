@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { Copy } from "lucide-react";
+import { toast } from "sonner";
 
 export const SalaryCalculator = () => {
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
@@ -43,6 +45,24 @@ export const SalaryCalculator = () => {
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
 
   const totalSalary = salarySummary?.reduce((sum, item) => sum + (item.total_salary || 0), 0) || 0;
+
+  const copyToClipboard = async (item: any) => {
+    const text = `【${selectedYear}年${selectedMonth}月の給与明細】
+スタッフ名: ${item.staff_name}さん
+シフト数: ${item.total_shifts}回
+労働時間: ${Math.round((item.total_work_hours || 0) * 10) / 10}時間
+休憩時間: ${Math.round((item.total_break_hours || 0) * 10) / 10}時間
+給与: ¥${Math.round(item.total_salary || 0).toLocaleString()}
+
+お疲れ様でした！`;
+
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(`${item.staff_name}さんの給与明細をコピーしました`);
+    } catch (error) {
+      toast.error("コピーに失敗しました");
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -100,6 +120,7 @@ export const SalaryCalculator = () => {
                     <TableHead>労働時間</TableHead>
                     <TableHead>休憩時間</TableHead>
                     <TableHead>給与</TableHead>
+                    <TableHead>操作</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -110,6 +131,17 @@ export const SalaryCalculator = () => {
                       <TableCell>{Math.round((item.total_work_hours || 0) * 10) / 10}時間</TableCell>
                       <TableCell>{Math.round((item.total_break_hours || 0) * 10) / 10}時間</TableCell>
                       <TableCell>¥{Math.round(item.total_salary || 0).toLocaleString()}</TableCell>
+                      <TableCell>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => copyToClipboard(item)}
+                          className="flex items-center gap-1"
+                        >
+                          <Copy className="h-4 w-4" />
+                          コピー
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
