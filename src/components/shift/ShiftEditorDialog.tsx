@@ -200,8 +200,32 @@ export const ShiftEditorDialog = ({
       setSelectedStaff(staffId || "");
       setStart(startTime || "");
       setEnd(endTime || "");
+      setBreakMinutes(getDefaultBreakMinutes(startTime || "", endTime || ""));
     }
   }, [isOpen, staffId, startTime, endTime]);
+
+  // 勤務時間に基づいて休憩時間のデフォルト値を計算
+  const getDefaultBreakMinutes = (startTime: string, endTime: string) => {
+    if (!startTime || !endTime) return "0";
+    
+    const [startHour, startMin] = startTime.split(":").map(Number);
+    const [endHour, endMin] = endTime.split(":").map(Number);
+    
+    const startMinutes = startHour * 60 + startMin;
+    const endMinutes = endHour * 60 + endMin;
+    const workMinutes = endMinutes - startMinutes;
+    
+    // 6.5時間（390分）以上なら1時間（60分）の休憩
+    return workMinutes >= 390 ? "60" : "0";
+  };
+
+  // 開始時間または終了時間が変更されたときに休憩時間を自動調整
+  useEffect(() => {
+    if (start && end) {
+      const defaultBreak = getDefaultBreakMinutes(start, end);
+      setBreakMinutes(defaultBreak);
+    }
+  }, [start, end]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
