@@ -74,6 +74,7 @@ export const ShiftEditorDialog = ({
   const [selectedStaff, setSelectedStaff] = useState(staffId || "");
   const [start, setStart] = useState(startTime || "");
   const [end, setEnd] = useState(endTime || "");
+  const [breakMinutes, setBreakMinutes] = useState<string>("0");
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -115,6 +116,7 @@ export const ShiftEditorDialog = ({
         staff_id: selectedStaff,
         start_time: startTimestamp,
         end_time: endTimestamp,
+        break_minutes: parseInt(breakMinutes) || 0,
       });
 
       if (error) {
@@ -138,6 +140,7 @@ export const ShiftEditorDialog = ({
           staff_id: selectedStaff,
           start_time: startTimestamp,
           end_time: endTimestamp,
+          break_minutes: parseInt(breakMinutes) || 0,
         })
         .eq("id", shiftId);
 
@@ -274,6 +277,20 @@ export const ShiftEditorDialog = ({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="break" className="text-right">
+              休憩時間
+            </Label>
+            <Input
+              id="break"
+              type="number"
+              value={breakMinutes}
+              onChange={(e) => setBreakMinutes(e.target.value)}
+              placeholder="0"
+              className="col-span-3"
+            />
+            <span className="col-span-4 text-sm text-gray-500 text-right">分</span>
           </div>
         </div>
         <div className="flex justify-between">
