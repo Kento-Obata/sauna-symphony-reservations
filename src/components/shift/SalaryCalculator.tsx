@@ -54,7 +54,8 @@ export const SalaryCalculator = () => {
 休憩時間: ${Math.round((item.total_break_hours || 0) * 10) / 10}時間
 給与: ¥${Math.round(item.total_salary || 0).toLocaleString()}
 
-お疲れ様でした！`;
+お疲れ様でした！
+もし修正あれば個別で連絡お願いします。`;
 
     try {
       await navigator.clipboard.writeText(text);
