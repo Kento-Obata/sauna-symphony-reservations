@@ -2,6 +2,7 @@
 import { TIME_SLOTS } from "@/components/TimeSlotSelect";
 import { TimeSlot } from "@/types/reservation";
 import { useReservations } from "@/hooks/useReservations";
+import { useDailyTimeSlots } from "@/hooks/useDailyTimeSlots";
 import {
   Select,
   SelectContent,
@@ -26,6 +27,7 @@ export const ReservationTimeSelect = ({
   currentReservationId,
 }: ReservationTimeSelectProps) => {
   const { data: reservations } = useReservations();
+  const { data: dailyTimeSlots } = useDailyTimeSlots();
 
   const isTimeSlotDisabled = (slot: TimeSlot) => {
     if (!reservations) return false;
@@ -41,6 +43,20 @@ export const ReservationTimeSelect = ({
     return slotReservations.length >= 1;
   };
 
+  const getTimeSlotLabel = (slot: TimeSlot) => {
+    const dailySlot = dailyTimeSlots?.find(dts => 
+      dts.date === date && dts.time_slot === slot && dts.is_active
+    );
+    
+    if (dailySlot) {
+      return { start: dailySlot.start_time, end: dailySlot.end_time };
+    }
+    
+    return TIME_SLOTS[slot];
+  };
+
+  const currentTimeSlotLabel = getTimeSlotLabel(timeSlot);
+
   return (
     <>
       <div className="text-muted-foreground">時間帯:</div>
@@ -54,20 +70,23 @@ export const ReservationTimeSelect = ({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {Object.entries(TIME_SLOTS).map(([key, slot]) => (
-                <SelectItem 
-                  key={key} 
-                  value={key as TimeSlot}
-                  disabled={isTimeSlotDisabled(key as TimeSlot)}
-                >
-                  {slot.start}-{slot.end}
-                  {isTimeSlotDisabled(key as TimeSlot) && " (予約済み)"}
-                </SelectItem>
-              ))}
+              {Object.entries(TIME_SLOTS).map(([key, slot]) => {
+                const timeSlotLabel = getTimeSlotLabel(key as TimeSlot);
+                return (
+                  <SelectItem 
+                    key={key} 
+                    value={key as TimeSlot}
+                    disabled={isTimeSlotDisabled(key as TimeSlot)}
+                  >
+                    {timeSlotLabel.start}-{timeSlotLabel.end}
+                    {isTimeSlotDisabled(key as TimeSlot) && " (予約済み)"}
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         ) : (
-          `${TIME_SLOTS[timeSlot].start}-${TIME_SLOTS[timeSlot].end}`
+          `${currentTimeSlotLabel.start}-${currentTimeSlotLabel.end}`
         )}
       </div>
     </>

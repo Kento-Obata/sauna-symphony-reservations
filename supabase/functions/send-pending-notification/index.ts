@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -21,10 +22,31 @@ interface ReservationNotification {
   total_price: number;
 }
 
-const TIME_SLOTS = {
+const DEFAULT_TIME_SLOTS = {
   morning: "10:00-12:30",
   afternoon: "13:30-16:00",
   evening: "17:00-19:30",
+};
+
+const getTimeSlotLabel = async (timeSlot: string, date: string, supabase: any) => {
+  try {
+    const { data, error } = await supabase
+      .from('daily_time_slots')
+      .select('start_time, end_time')
+      .eq('date', date)
+      .eq('time_slot', timeSlot)
+      .eq('is_active', true)
+      .single();
+
+    if (error || !data) {
+      return DEFAULT_TIME_SLOTS[timeSlot as keyof typeof DEFAULT_TIME_SLOTS];
+    }
+
+    return `${data.start_time}-${data.end_time}`;
+  } catch (error) {
+    console.error('Error fetching time slot:', error);
+    return DEFAULT_TIME_SLOTS[timeSlot as keyof typeof DEFAULT_TIME_SLOTS];
+  }
 };
 
 const formatPhoneNumber = (phone: string): string => {
@@ -44,11 +66,14 @@ const handler = async (req: Request): Promise<Response> => {
     const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID');
     const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN');
     const TWILIO_PHONE_NUMBER = Deno.env.get('TWILIO_PHONE_NUMBER');
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-    if (!RESEND_API_KEY || !TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
+    if (!RESEND_API_KEY || !TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
       throw new Error("Missing required environment variables");
     }
 
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const resend = new Resend(RESEND_API_KEY);
     const reservation: ReservationNotification = await req.json();
     const notifications = [];
@@ -62,6 +87,9 @@ const handler = async (req: Request): Promise<Response> => {
     
     // Ensure total_price is a number and handle default
     const totalPrice = reservation.total_price || 0;
+    
+    // Get dynamic time slot label
+    const timeSlotLabel = await getTimeSlotLabel(reservation.timeSlot, reservation.date, supabase);
 
     const messageContent = `【Sauna U】 仮予約ありがとうございます。
 最終確認のため、下記リンクより予約確定手続きをお願いいたします。
@@ -71,7 +99,7 @@ URL：${CONFIRMATION_URL}
 
 【ご予約内容】
 日付: ${reservation.date}
-時間: ${TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]}
+時間: ${timeSlotLabel}
 人数: ${reservation.guestCount}名様
 
 【料金】

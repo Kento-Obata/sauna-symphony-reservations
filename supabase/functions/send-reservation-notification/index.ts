@@ -2,6 +2,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { sendSMS } from "../_shared/twilio.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,10 +21,31 @@ interface ReservationNotification {
   confirmationToken: string;
 }
 
-const TIME_SLOTS = {
+const DEFAULT_TIME_SLOTS = {
   morning: "10:00-12:30",
   afternoon: "13:30-16:00",
   evening: "17:00-19:30",
+};
+
+const getTimeSlotLabel = async (timeSlot: string, date: string, supabase: any) => {
+  try {
+    const { data, error } = await supabase
+      .from('daily_time_slots')
+      .select('start_time, end_time')
+      .eq('date', date)
+      .eq('time_slot', timeSlot)
+      .eq('is_active', true)
+      .single();
+
+    if (error || !data) {
+      return DEFAULT_TIME_SLOTS[timeSlot as keyof typeof DEFAULT_TIME_SLOTS];
+    }
+
+    return `${data.start_time}-${data.end_time}`;
+  } catch (error) {
+    console.error('Error fetching time slot:', error);
+    return DEFAULT_TIME_SLOTS[timeSlot as keyof typeof DEFAULT_TIME_SLOTS];
+  }
 };
 
 const ITEMS_TO_BRING = `
@@ -59,6 +81,8 @@ const handler = async (req: Request): Promise<Response> => {
     const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN');
     const TWILIO_PHONE_NUMBER = Deno.env.get('TWILIO_PHONE_NUMBER');
     const OWNER_PHONE_NUMBER = Deno.env.get('OWNER_PHONE_NUMBER');
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
     console.log("Environment variables check:", {
       hasResendKey: !!RESEND_API_KEY,
@@ -68,11 +92,12 @@ const handler = async (req: Request): Promise<Response> => {
       hasOwnerPhone: !!OWNER_PHONE_NUMBER
     });
 
-    if (!RESEND_API_KEY || !TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
+    if (!RESEND_API_KEY || !TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
       console.error("Missing required environment variables");
       throw new Error("Server configuration error");
     }
 
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const resend = new Resend(RESEND_API_KEY);
 
     const reservation: ReservationNotification = await req.json();
@@ -93,6 +118,9 @@ const handler = async (req: Request): Promise<Response> => {
       GOOGLE_MAPS_URL,
       RESERVATION_DETAILS_URL
     });
+    
+    // Get dynamic time slot label
+    const timeSlotLabel = await getTimeSlotLabel(reservation.timeSlot, reservation.date, supabase);
 
     const commonMessageContent = `
 ご予約ありがとうございます。
@@ -100,7 +128,7 @@ const handler = async (req: Request): Promise<Response> => {
 【ご予約内容】
 予約コード: ${reservation.reservationCode}
 日付: ${reservation.date}
-時間: ${TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]}
+時間: ${timeSlotLabel}
 人数: ${reservation.guestCount}名様
 
 【受付時間】
@@ -126,7 +154,7 @@ ${RESERVATION_DETAILS_URL}
 予約コード: ${reservation.reservationCode}
 お客様: ${reservation.guestName}様
 日付: ${reservation.date}
-時間: ${TIME_SLOTS[reservation.timeSlot as keyof typeof TIME_SLOTS]}
+時間: ${timeSlotLabel}
 人数: ${reservation.guestCount}名様
 水風呂温度: ${reservation.waterTemperature}°C
 電話番号: ${reservation.phone}

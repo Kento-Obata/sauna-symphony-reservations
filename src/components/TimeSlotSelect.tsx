@@ -7,7 +7,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TimeSlot } from "@/types/reservation";
-import { isBefore, addHours, setHours, setMinutes } from "date-fns";
+import { isBefore, addHours, setHours, setMinutes, format } from "date-fns";
+import { useDailyTimeSlots } from "@/hooks/useDailyTimeSlots";
 
 export const TIME_SLOTS = {
   morning: { start: '10:00', end: '12:30' },
@@ -22,11 +23,18 @@ interface TimeSlotSelectProps {
   timeSlotReservations: Record<TimeSlot, number>;
 }
 
-export const isTimeSlotDisabled = (slot: TimeSlot, selectedDate: Date) => {
+export const isTimeSlotDisabled = (slot: TimeSlot, selectedDate: Date, dailyTimeSlots?: any[]) => {
   const now = new Date();
   const twoHoursFromNow = addHours(now, 2);
   
-  const [startHour, startMinute] = TIME_SLOTS[slot].start.split(':').map(Number);
+  // Get start time from daily time slots or fallback to default
+  const dateStr = format(selectedDate, 'yyyy-MM-dd');
+  const dailySlot = dailyTimeSlots?.find(dts => 
+    dts.date === dateStr && dts.time_slot === slot && dts.is_active
+  );
+  
+  const startTime = dailySlot?.start_time || TIME_SLOTS[slot].start;
+  const [startHour, startMinute] = startTime.split(':').map(Number);
   const slotTime = setMinutes(setHours(selectedDate, startHour), startMinute);
   
   return isBefore(slotTime, twoHoursFromNow);
@@ -40,6 +48,23 @@ export const TimeSlotSelect = ({
   selectedDate,
   timeSlotReservations,
 }: TimeSlotSelectProps) => {
+  const { data: dailyTimeSlots } = useDailyTimeSlots();
+  
+  const getTimeSlotLabel = (slot: TimeSlot) => {
+    if (!selectedDate) return TIME_SLOTS[slot];
+    
+    const dateStr = format(selectedDate, 'yyyy-MM-dd');
+    const dailySlot = dailyTimeSlots?.find(dts => 
+      dts.date === dateStr && dts.time_slot === slot && dts.is_active
+    );
+    
+    if (dailySlot) {
+      return { start: dailySlot.start_time, end: dailySlot.end_time };
+    }
+    
+    return TIME_SLOTS[slot];
+  };
+
   return (
     <div className="space-y-2">
       <Select 
@@ -51,13 +76,15 @@ export const TimeSlotSelect = ({
         </SelectTrigger>
         <SelectContent>
           {[
-            { value: 'morning', label: '午前 10:00-12:30' },
-            { value: 'afternoon', label: '午後 13:30-16:00' },
-            { value: 'evening', label: '夕方 17:00-19:30' }
+            { value: 'morning', label: '午前' },
+            { value: 'afternoon', label: '午後' },
+            { value: 'evening', label: '夕方' }
           ].map(({ value, label }) => {
+            const timeSlot = getTimeSlotLabel(value as TimeSlot);
+            const displayLabel = `${label} ${timeSlot.start}-${timeSlot.end}`;
             const reservationCount = timeSlotReservations[value as TimeSlot];
             const isDisabled = selectedDate 
-              ? (isTimeSlotDisabled(value as TimeSlot, selectedDate) || 
+              ? (isTimeSlotDisabled(value as TimeSlot, selectedDate, dailyTimeSlots) || 
                  reservationCount >= MAX_RESERVATIONS)
               : true;
             const statusLabel = reservationCount > 0 
@@ -71,7 +98,7 @@ export const TimeSlotSelect = ({
                 disabled={isDisabled}
               >
                 <div>
-                  <div>{label} {statusLabel}</div>
+                  <div>{displayLabel} {statusLabel}</div>
                 </div>
               </SelectItem>
             );
