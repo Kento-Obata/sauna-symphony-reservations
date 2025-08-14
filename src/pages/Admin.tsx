@@ -16,6 +16,7 @@ import { PriceSettingsManager } from "@/components/admin/PriceSettingsManager";
 import { OptionManager } from "@/components/admin/OptionManager";
 import { AvailabilityTextGenerator } from "@/components/admin/AvailabilityTextGenerator";
 import { CustomerManagement } from "@/components/admin/CustomerManagement";
+import { DailyTimeSlotManager } from "@/components/admin/DailyTimeSlotManager";
 import { useReservations } from "@/hooks/useReservations";
 
 const Admin = () => {
@@ -187,6 +188,7 @@ const Admin = () => {
           <div className="space-y-8">
             <PriceSettingsManager />
             <OptionManager />
+            <DailyTimeSlotManager />
           </div>
         </TabsContent>
       </Tabs>
