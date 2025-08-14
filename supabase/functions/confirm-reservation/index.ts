@@ -59,21 +59,20 @@ serve(async (req) => {
         expires_at: null,
       })
       .eq("id", reservation.id)
-      .select()
-      .single();
+      .select();
 
     console.log("Updated reservation:", updatedReservation);
     console.log("Update error:", updateError);
 
-    if (updateError) {
+    if (updateError || !updatedReservation || updatedReservation.length === 0) {
       console.error("Error updating reservation:", updateError);
-      throw updateError;
+      throw new Error("Failed to update reservation");
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        reservation_code: updatedReservation.reservation_code,
+        reservation_code: updatedReservation[0].reservation_code,
       }),
       {
         headers: {
