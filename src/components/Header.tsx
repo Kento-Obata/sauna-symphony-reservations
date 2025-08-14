@@ -1,51 +1,28 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { Search, Instagram } from 'lucide-react';
+import { Instagram } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 
 export const Header = () => {
   const [searchInput, setSearchInput] = useState('');
-  const [showForm, setShowForm] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleReservationLookup = async (e: React.FormEvent) => {
+  const handleReservationCodeSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!searchInput.trim()) {
-      toast.error('予約コードまたは電話番号を入力してください');
+    const code = searchInput.trim().toUpperCase();
+    
+    if (!code) {
+      toast.error('予約コードを入力してください');
       return;
     }
 
-    setIsLoading(true);
-    try {
-      // Check if input is a reservation code (alphanumeric, 8 characters)
-      if (/^[A-Z0-9]{8}$/.test(searchInput.trim().toUpperCase())) {
-        navigate(`/reservation/${searchInput.trim().toUpperCase()}`);
-        return;
-      }
-
-      // If not a reservation code, treat as phone number
-      const { error } = await supabase.functions.invoke('lookup-reservation', {
-        body: { phone: searchInput.trim() },
-      });
-
-      if (error) {
-        console.error('Lookup error:', error);
-        toast.error('予約の検索に失敗しました');
-        return;
-      }
-
-      toast.success('予約詳細のリンクをSMSで送信しました');
+    // Check if input is a reservation code (alphanumeric, 8 characters)
+    if (/^[A-Z0-9]{8}$/.test(code)) {
+      navigate(`/reservation/${code}`);
       setSearchInput('');
-      setShowForm(false);
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('予約の検索に失敗しました');
-    } finally {
-      setIsLoading(false);
+    } else {
+      toast.error('予約コードは8桁の英数字で入力してください');
     }
   };
   
@@ -60,30 +37,16 @@ export const Header = () => {
         >
           <Instagram className="h-5 w-5" />
         </a>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="text-black/80 hover:text-black transition-colors text-xs font-mplus font-extralight flex items-center gap-1"
-        >
-          <Search className="h-4 w-4" />
-          予約を探す
-        </button>
-        {showForm && (
-          <form onSubmit={handleReservationLookup} className="flex gap-2 bg-white/80 backdrop-blur-sm rounded-lg p-2 shadow-sm animate-fade-in">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                type="text"
-                placeholder="予約コード（8桁）または電話番号"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                className="w-64 pl-10 bg-transparent border-black/30 text-black placeholder:text-black/50 font-mplus font-extralight"
-              />
-            </div>
-            <Button type="submit" variant="secondary" size="icon" disabled={isLoading}>
-              <Search className="h-4 w-4" />
-            </Button>
-          </form>
-        )}
+        <form onSubmit={handleReservationCodeSubmit} className="flex gap-2 bg-white/80 backdrop-blur-sm rounded-lg p-2 shadow-sm">
+          <Input
+            type="text"
+            placeholder="予約コード（8桁）"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="w-48 bg-transparent border-black/30 text-black placeholder:text-black/50 font-mplus font-extralight"
+            maxLength={8}
+          />
+        </form>
       </div>
       
       <div className="relative z-10 w-full mx-auto text-center">

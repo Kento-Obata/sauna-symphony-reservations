@@ -121,18 +121,18 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
       <div>{TIME_SLOTS[reservation.time_slot]}</div>
       
       <div className="text-sauna-stone">お名前:</div>
-      <div>{reservation.guest_name}</div>
+      <div>{reservation.guest_name?.replace(/(..).+/, '$1○○')}</div>
       
       <div className="text-sauna-stone">人数:</div>
       <div>{reservation.guest_count}名</div>
       
       <div className="text-sauna-stone">電話番号:</div>
-      <div>{reservation.phone}</div>
+      <div>{reservation.phone?.replace(/(\d{3})-?\d{4}-?(\d{4})/, '$1-****-$2')}</div>
       
       {reservation.email && (
         <>
           <div className="text-sauna-stone">メールアドレス:</div>
-          <div>{reservation.email}</div>
+          <div>{reservation.email.replace(/(.{2})[^@]*(@.*)/, '$1***$2')}</div>
         </>
       )}
       
