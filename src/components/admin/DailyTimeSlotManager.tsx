@@ -107,8 +107,8 @@ export const DailyTimeSlotManager = () => {
                     {format(new Date(slot.date), "yyyy年MM月dd日", { locale: ja })}
                   </TableCell>
                   <TableCell>{getTimeSlotLabel(slot.time_slot)}</TableCell>
-                  <TableCell>{slot.start_time}</TableCell>
-                  <TableCell>{slot.end_time}</TableCell>
+                  <TableCell>{slot.start_time.slice(0, 5)}</TableCell>
+                  <TableCell>{slot.end_time.slice(0, 5)}</TableCell>
                   <TableCell>{getStatusBadge(slot.is_active)}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
