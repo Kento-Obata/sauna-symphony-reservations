@@ -41,7 +41,7 @@ const getTimeSlotLabel = async (timeSlot: string, date: string, supabase: any) =
       return DEFAULT_TIME_SLOTS[timeSlot as keyof typeof DEFAULT_TIME_SLOTS];
     }
 
-    return `${data.start_time}-${data.end_time}`;
+    return `${data.start_time.slice(0, 5)}-${data.end_time.slice(0, 5)}`;
   } catch (error) {
     console.error('Error fetching time slot:', error);
     return DEFAULT_TIME_SLOTS[timeSlot as keyof typeof DEFAULT_TIME_SLOTS];
