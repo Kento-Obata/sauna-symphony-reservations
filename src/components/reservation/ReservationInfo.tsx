@@ -5,11 +5,25 @@ import { getTotalPrice, getSurcharge, formatPrice } from "@/utils/priceCalculati
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Option } from "@/types/option";
+import { useDailyTimeSlots } from "@/hooks/useDailyTimeSlots";
 
 const TIME_SLOTS = {
-  morning: "10:00-12:30",
-  afternoon: "13:30-16:00",
-  evening: "17:00-19:30",
+  morning: { start: "10:00", end: "12:30" },
+  afternoon: { start: "13:30", end: "16:00" },
+  evening: { start: "17:00", end: "19:30" },
+};
+
+const getTimeSlotDisplay = (timeSlot: string, date: string, dailyTimeSlots: any[]) => {
+  const dailySlot = dailyTimeSlots?.find(dts => 
+    dts.date === date && dts.time_slot === timeSlot && dts.is_active
+  );
+  
+  if (dailySlot) {
+    return `${dailySlot.start_time.slice(0, 5)}-${dailySlot.end_time.slice(0, 5)}`;
+  }
+  
+  const defaultSlot = TIME_SLOTS[timeSlot as keyof typeof TIME_SLOTS];
+  return defaultSlot ? `${defaultSlot.start}-${defaultSlot.end}` : timeSlot;
 };
 
 interface ReservationInfoProps {
@@ -20,6 +34,7 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const [options, setOptions] = useState<{option: Option, quantity: number}[]>([]);
   const surcharge = getSurcharge(reservation.water_temperature.toString());
+  const { data: dailyTimeSlots } = useDailyTimeSlots();
 
   // オプション情報を取得
   useEffect(() => {
@@ -153,7 +168,7 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
       <div>{format(new Date(reservation.date), "yyyy年MM月dd日")}</div>
       
       <div className="text-sauna-stone">時間:</div>
-      <div>{TIME_SLOTS[reservation.time_slot]}</div>
+      <div>{getTimeSlotDisplay(reservation.time_slot, reservation.date, dailyTimeSlots || [])}</div>
       
       <div className="text-sauna-stone">お名前:</div>
       <div>{maskName(reservation.guest_name)}</div>

@@ -9,11 +9,24 @@ import { useEffect, useState } from "react";
 import { getTotalPrice, getSurcharge, formatPrice } from "@/utils/priceCalculations";
 import { useOptions } from "@/hooks/useOptions";
 import { Option } from "@/types/option";
+import { useDailyTimeSlots } from "@/hooks/useDailyTimeSlots";
+const TIME_SLOTS = {
+  morning: { start: "10:00", end: "12:30" },
+  afternoon: { start: "13:30", end: "16:00" },
+  evening: { start: "17:00", end: "19:30" },
+};
 
-const timeSlotLabels: Record<TimeSlot, string> = {
-  morning: "午前",
-  afternoon: "午後",
-  evening: "夜",
+const getTimeSlotDisplay = (timeSlot: TimeSlot, date: string, dailyTimeSlots: any[]) => {
+  const dailySlot = dailyTimeSlots?.find(dts => 
+    dts.date === date && dts.time_slot === timeSlot && dts.is_active
+  );
+  
+  if (dailySlot) {
+    return `${dailySlot.start_time.slice(0, 5)}-${dailySlot.end_time.slice(0, 5)}`;
+  }
+  
+  const defaultSlot = TIME_SLOTS[timeSlot];
+  return `${defaultSlot.start}-${defaultSlot.end}`;
 };
 
 interface ReservationConfirmDialogProps {
@@ -37,6 +50,7 @@ export const ReservationConfirmDialog = ({
 }: ReservationConfirmDialogProps) => {
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const surcharge = getSurcharge(reservation.water_temperature.toString());
+  const { data: dailyTimeSlots } = useDailyTimeSlots();
   const { data: options } = useOptions();
 
   // 選択されたオプションの情報を取得
@@ -97,7 +111,7 @@ export const ReservationConfirmDialog = ({
             <div>{formattedDate}</div>
 
             <div className="text-muted-foreground">時間帯</div>
-            <div>{timeSlotLabels[reservation.time_slot]}</div>
+            <div>{getTimeSlotDisplay(reservation.time_slot, reservation.date, dailyTimeSlots || [])}</div>
 
             <div className="text-muted-foreground">お名前</div>
             <div>{reservation.guest_name}</div>
