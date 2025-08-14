@@ -116,6 +116,39 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_time_slots: {
+        Row: {
+          created_at: string
+          date: string
+          end_time: string
+          id: string
+          is_active: boolean
+          start_time: string
+          time_slot: Database["public"]["Enums"]["time_slot"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          end_time: string
+          id?: string
+          is_active?: boolean
+          start_time: string
+          time_slot: Database["public"]["Enums"]["time_slot"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          end_time?: string
+          id?: string
+          is_active?: boolean
+          start_time?: string
+          time_slot?: Database["public"]["Enums"]["time_slot"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       options: {
         Row: {
           created_at: string
