@@ -81,7 +81,7 @@ export const TimeSlotSelect = ({
             { value: 'evening', label: '夕方' }
           ].map(({ value, label }) => {
             const timeSlot = getTimeSlotLabel(value as TimeSlot);
-            const displayLabel = `${label} ${timeSlot.start}-${timeSlot.end}`;
+            const displayLabel = `${label} ${timeSlot.start.slice(0, 5)}-${timeSlot.end.slice(0, 5)}`;
             const reservationCount = timeSlotReservations[value as TimeSlot];
             const isDisabled = selectedDate 
               ? (isTimeSlotDisabled(value as TimeSlot, selectedDate, dailyTimeSlots) || 
