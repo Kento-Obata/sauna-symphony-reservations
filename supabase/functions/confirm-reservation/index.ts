@@ -58,7 +58,7 @@ serve(async (req) => {
         confirmation_token: null,
         expires_at: null,
       })
-      .eq("confirmation_token", token)
+      .eq("id", reservation.id)
       .select()
       .single();
 
