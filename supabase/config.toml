@@ -3,3 +3,6 @@ project_id = "knjbxqiyngztylnzxzln"
 [functions]
 [functions.send-reservation-notification]
 verify_jwt = false
+
+[functions.confirm-reservation]
+verify_jwt = false

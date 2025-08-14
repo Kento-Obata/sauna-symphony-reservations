@@ -21,10 +21,19 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-    );
+    console.log("Creating Supabase client...");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    
+    console.log("Supabase URL exists:", !!supabaseUrl);
+    console.log("Service role key exists:", !!supabaseServiceKey);
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error("Missing Supabase credentials");
+    }
+
+    // Use service role key to bypass RLS for this operation
+    const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
 
     const { token } = await req.json();
     console.log("Received token:", token);
