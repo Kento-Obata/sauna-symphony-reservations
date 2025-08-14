@@ -102,6 +102,41 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
     }
   };
 
+  // 個人情報をマスクする関数
+  const maskName = (name: string) => {
+    if (!name || name.length === 0) return name;
+    if (name.length === 1) return name;
+    if (name.length === 2) return name.charAt(0) + '○';
+    return name.charAt(0) + name.charAt(1) + '○'.repeat(name.length - 2);
+  };
+
+  const maskPhone = (phone: string) => {
+    if (!phone) return phone;
+    // 電話番号の形式に応じてマスク
+    if (phone.includes('-')) {
+      const parts = phone.split('-');
+      if (parts.length === 3) {
+        return `${parts[0]}-****-${parts[2]}`;
+      }
+    }
+    // ハイフンなしの場合
+    if (phone.length >= 7) {
+      return phone.substring(0, 3) + '****' + phone.substring(phone.length - 4);
+    }
+    return phone;
+  };
+
+  const maskEmail = (email: string) => {
+    if (!email) return email;
+    const [localPart, domain] = email.split('@');
+    if (!domain) return email;
+    
+    if (localPart.length <= 2) {
+      return `${localPart}***@${domain}`;
+    }
+    return `${localPart.substring(0, 2)}***@${domain}`;
+  };
+
   // オプションの合計金額を計算
   const calculateOptionsTotal = () => {
     return options.reduce((total, item) => {
@@ -121,18 +156,18 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
       <div>{TIME_SLOTS[reservation.time_slot]}</div>
       
       <div className="text-sauna-stone">お名前:</div>
-      <div>{reservation.guest_name}</div>
+      <div>{maskName(reservation.guest_name)}</div>
       
       <div className="text-sauna-stone">人数:</div>
       <div>{reservation.guest_count}名</div>
       
       <div className="text-sauna-stone">電話番号:</div>
-      <div>{reservation.phone}</div>
+      <div>{maskPhone(reservation.phone)}</div>
       
       {reservation.email && (
         <>
           <div className="text-sauna-stone">メールアドレス:</div>
-          <div>{reservation.email}</div>
+          <div>{maskEmail(reservation.email)}</div>
         </>
       )}
       
