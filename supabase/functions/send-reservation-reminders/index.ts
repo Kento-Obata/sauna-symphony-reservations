@@ -10,10 +10,31 @@ const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-const TIME_SLOTS = {
+const DEFAULT_TIME_SLOTS = {
   morning: "10:00-12:30",
-  afternoon: "13:30-16:00",
+  afternoon: "13:30-16:00", 
   evening: "17:00-19:30",
+};
+
+const getTimeSlotLabel = async (supabase: any, timeSlot: string, date: string): Promise<string> => {
+  try {
+    const { data, error } = await supabase
+      .from('daily_time_slots')
+      .select('start_time, end_time')
+      .eq('date', date)
+      .eq('time_slot', timeSlot)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (error || !data) {
+      return DEFAULT_TIME_SLOTS[timeSlot as keyof typeof DEFAULT_TIME_SLOTS];
+    }
+
+    return `${data.start_time.slice(0, 5)}-${data.end_time.slice(0, 5)}`;
+  } catch (error) {
+    console.error('Error fetching time slot:', error);
+    return DEFAULT_TIME_SLOTS[timeSlot as keyof typeof DEFAULT_TIME_SLOTS];
+  }
 };
 
 const corsHeaders = {
@@ -33,7 +54,7 @@ const formatPhoneNumber = (phone: string): string => {
   return digits;
 };
 
-const sendEmail = async (to: string, reservation: any) => {
+const sendEmail = async (to: string, reservation: any, timeSlotLabel: string) => {
   try {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -51,7 +72,7 @@ const sendEmail = async (to: string, reservation: any) => {
           <p>明日のサウナのご予約についてお知らせいたします：</p>
           <ul>
             <li>日時: ${reservation.date}</li>
-            <li>時間: ${TIME_SLOTS[reservation.time_slot]}</li>
+            <li>時間: ${timeSlotLabel}</li>
             <li>人数: ${reservation.guest_count}名</li>
             <li>水風呂温度: ${reservation.water_temperature}°C</li>
           </ul>
@@ -72,7 +93,7 @@ const sendEmail = async (to: string, reservation: any) => {
   }
 };
 
-const sendSMS = async (phone: string, reservation: any) => {
+const sendSMS = async (phone: string, reservation: any, timeSlotLabel: string) => {
   try {
     const formattedPhone = formatPhoneNumber(phone);
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
@@ -83,7 +104,7 @@ const sendSMS = async (phone: string, reservation: any) => {
       "Body",
       `【明日のご予約リマインダー】\n${reservation.guest_name}様\n\n日時: ${
         reservation.date
-      }\n時間: ${TIME_SLOTS[reservation.time_slot]}\n人数: ${
+      }\n時間: ${timeSlotLabel}\n人数: ${
         reservation.guest_count
       }名\n水風呂温度: ${
         reservation.water_temperature
@@ -145,13 +166,16 @@ const handler = async (req: Request): Promise<Response> => {
     for (const reservation of reservations || []) {
       console.log(`予約を処理中: ${reservation.guest_name} (ステータス: ${reservation.status})`);
 
+      // 動的時間帯を取得
+      const timeSlotLabel = await getTimeSlotLabel(supabase, reservation.time_slot, reservation.date);
+
       // メールがある場合は送信
       if (reservation.email) {
-        await sendEmail(reservation.email, reservation);
+        await sendEmail(reservation.email, reservation, timeSlotLabel);
       }
 
       // SMSを送信
-      await sendSMS(reservation.phone, reservation);
+      await sendSMS(reservation.phone, reservation, timeSlotLabel);
     }
 
     return new Response(
