@@ -101,6 +101,8 @@ const handler = async (req: Request): Promise<Response> => {
     // Get dynamic time slot label
     const timeSlotLabel = await getTimeSlotLabel(reservation.timeSlot, reservation.date, supabase);
 
+    const reservationDetailUrl = `https://www.u-sauna-private.com/reservation/${reservation.reservationCode}`;
+    
     const messageContent = `
 ご予約いただきありがとうございます！
 
@@ -122,8 +124,12 @@ const handler = async (req: Request): Promise<Response> => {
 Plus Code: 8Q5GHG7V+J5
 Google Maps: ${GOOGLE_MAPS_URL}
 
-【予約変更・遅刻の際の事前連絡について】
-予約の変更やキャンセル、遅刻の可能性がある場合は、事前にご連絡をお願いいたします。
+【予約の確認・変更・キャンセル】
+以下のURLから予約内容の確認、変更、キャンセルが可能です：
+${reservationDetailUrl}
+
+【遅刻の際の事前連絡について】
+遅刻の可能性がある場合は、事前にご連絡をお願いいたします。
 ・電話: 090-9370-2960
 ・Instagram DM も可能です
 
