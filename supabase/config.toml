@@ -6,3 +6,6 @@ verify_jwt = false
 
 [functions.confirm-reservation]
 verify_jwt = false
+
+[functions.cancel-reservation]
+verify_jwt = false

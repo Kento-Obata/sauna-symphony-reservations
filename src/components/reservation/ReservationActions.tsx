@@ -21,14 +21,12 @@ interface ReservationActionsProps {
   status: string;
   setShowEditDialog: (show: boolean) => void;
   cancelReservation: UseMutationResult<void, Error, string, unknown>;
-  phoneNumber: string;
 }
 
 export const ReservationActions = ({
   status,
   setShowEditDialog,
   cancelReservation,
-  phoneNumber,
 }: ReservationActionsProps) => {
   const [phoneInput, setPhoneInput] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -36,9 +34,8 @@ export const ReservationActions = ({
   if (status === 'cancelled') return null;
 
   const handleCancel = () => {
-    const last4Digits = phoneNumber.slice(-4);
-    if (phoneInput !== last4Digits) {
-      toast.error("電話番号の下4桁が一致しません");
+    if (phoneInput.length !== 4) {
+      toast.error("電話番号の下4桁を入力してください");
       return;
     }
     cancelReservation.mutate(phoneInput);

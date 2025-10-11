@@ -67,29 +67,24 @@ export const ReservationDetail = () => {
 
   const cancelReservation = useMutation({
     mutationFn: async (phoneInput: string) => {
-      if (!reservation) throw new Error("予約情報がありません");
-      
-      const last4Digits = reservation.phone.slice(-4);
-      if (phoneInput !== last4Digits) {
-        throw new Error("電話番号の下4桁が一致しません");
-      }
-
-      const { error } = await supabase
-        .from("reservations")
-        .update({ 
-          status: "cancelled",
-          is_confirmed: true 
-        })
-        .eq("reservation_code", reservationCode);
+      const { data, error } = await supabase.functions.invoke('cancel-reservation', {
+        body: {
+          reservationCode: reservationCode,
+          phoneLastFourDigits: phoneInput
+        }
+      });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reservation", reservationCode] });
       toast.success("予約をキャンセルしました");
     },
-    onError: () => {
-      toast.error("予約のキャンセルに失敗しました");
+    onError: (error: Error) => {
+      toast.error(error.message || "予約のキャンセルに失敗しました");
     },
   });
 
@@ -172,7 +167,6 @@ export const ReservationDetail = () => {
             status={reservation.status}
             setShowEditDialog={setShowEditDialog}
             cancelReservation={cancelReservation}
-            phoneNumber={reservation.phone}
           />
         </div>
       </div>
