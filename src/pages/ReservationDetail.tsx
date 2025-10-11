@@ -66,13 +66,18 @@ export const ReservationDetail = () => {
   });
 
   const cancelReservation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (phoneInput: string) => {
+      if (!reservation) throw new Error("予約情報がありません");
+      
+      const last4Digits = reservation.phone.slice(-4);
+      if (phoneInput !== last4Digits) {
+        throw new Error("電話番号の下4桁が一致しません");
+      }
+
       const { error } = await supabase
         .from("reservations")
         .update({ 
           status: "cancelled",
-          // キャンセル時には is_confirmed を true に設定
-          // これにより期限切れ処理から確実に除外される
           is_confirmed: true 
         })
         .eq("reservation_code", reservationCode);
@@ -167,6 +172,7 @@ export const ReservationDetail = () => {
             status={reservation.status}
             setShowEditDialog={setShowEditDialog}
             cancelReservation={cancelReservation}
+            phoneNumber={reservation.phone}
           />
         </div>
       </div>
