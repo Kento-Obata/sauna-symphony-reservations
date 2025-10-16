@@ -60,7 +60,7 @@ serve(async (_req) => {
         const subject = "予約期限切れのお知らせ";
         const message = `
 お客様の予約（予約コード: ${reservation.reservation_code}）の確認期限が切れました。
-20分以内に確認が行われなかったため、予約はキャンセルされました。
+3時間以内に確認が行われなかったため、予約はキャンセルされました。
 
 再度ご予約いただく場合は、弊社ウェブサイトからお手続きください。
         `;
@@ -83,17 +83,17 @@ serve(async (_req) => {
       }
     }
 
-    // Delete the expired reservations
-    const { error: deleteError } = await supabase
+    // Update the expired reservations to expired status
+    const { error: updateError } = await supabase
       .from("reservations")
-      .delete()
+      .update({ status: "expired" })
       .eq("status", "pending")
-      .eq("is_confirmed", false) // 重要：is_confirmedがfalseの予約のみを削除
+      .eq("is_confirmed", false) // 重要：is_confirmedがfalseの予約のみを更新
       .lt("expires_at", new Date().toISOString());
 
-    if (deleteError) {
-      console.error("Error deleting expired reservations:", deleteError);
-      return new Response(JSON.stringify({ error: deleteError.message }), {
+    if (updateError) {
+      console.error("Error updating expired reservations:", updateError);
+      return new Response(JSON.stringify({ error: updateError.message }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
