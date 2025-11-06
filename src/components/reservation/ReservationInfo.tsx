@@ -157,6 +157,9 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
     return options.reduce((total, item) => {
       if (item.option.pricing_type === 'flat') {
         return total + (item.option.flat_price || 0);
+      } else if (item.option.pricing_type === 'per_guest') {
+        // per_guestは予約人数を使用
+        return total + (item.option.price_per_person * reservation.guest_count);
       } else {
         return total + (item.option.price_per_person * item.quantity);
       }
@@ -208,15 +211,20 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
               {options.map((item, index) => {
                 const subtotal = item.option.pricing_type === 'flat'
                   ? (item.option.flat_price || 0)
+                  : item.option.pricing_type === 'per_guest'
+                  ? item.option.price_per_person * reservation.guest_count
                   : item.option.price_per_person * item.quantity;
                 const priceDisplay = item.option.pricing_type === 'flat'
                   ? `${formatPrice(item.option.flat_price || 0)}（一律）`
+                  : item.option.pricing_type === 'per_guest'
+                  ? `${formatPrice(item.option.price_per_person)}/人（予約人数適用）`
                   : `${formatPrice(item.option.price_per_person)}/人`;
                 
                 return (
                   <li key={index} className="text-sm">
                     {item.option.name} ({priceDisplay})
                     {item.option.pricing_type === 'per_person' && ` × ${item.quantity}名様`}
+                    {item.option.pricing_type === 'per_guest' && ` × ${reservation.guest_count}名様`}
                     <span className="block text-xs text-muted-foreground">
                       小計: {formatPrice(subtotal)}
                     </span>

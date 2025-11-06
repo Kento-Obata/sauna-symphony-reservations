@@ -54,8 +54,11 @@ export const calculateOptionTotalPrice = (
   if (option.pricing_type === 'flat') {
     // 一律料金の場合
     return option.flat_price || 0;
+  } else if (option.pricing_type === 'per_guest') {
+    // 予約人数に自動適用される料金の場合
+    return option.price_per_person * guestCount;
   } else {
-    // 一人あたり料金の場合
+    // 一人あたり料金（数量選択可能）の場合
     const effectiveQuantity = Math.min(quantity, guestCount);
     return option.price_per_person * effectiveQuantity;
   }
@@ -72,9 +75,12 @@ export const calculateOptionsTotal = async (
     return selectedOptions.reduce((total, selectedOption) => {
       const option = options.find(o => o.id === selectedOption.option_id);
       if (option) {
-        // pricing_typeに応じた計算（quantityはguestCountの代わりに使用）
+        // pricing_typeに応じた計算
         if (option.pricing_type === 'flat') {
           return total + (option.flat_price || 0);
+        } else if (option.pricing_type === 'per_guest') {
+          // per_guestの場合はquantityが予約人数（selectedOption.quantityを使用）
+          return total + (option.price_per_person * selectedOption.quantity);
         } else {
           return total + (option.price_per_person * selectedOption.quantity);
         }

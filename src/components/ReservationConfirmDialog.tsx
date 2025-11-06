@@ -150,18 +150,23 @@ export const ReservationConfirmDialog = ({
                   <ul className="space-y-1">
                     {selectedOptions.map(option => {
                       const selectedOption = reservation.options?.find(o => o.option_id === option.id);
-                      const quantity = selectedOption?.quantity || 0;
+                       const quantity = selectedOption?.quantity || 0;
                       const subtotal = option.pricing_type === 'flat' 
-                        ? (option.flat_price || 0) 
+                        ? (option.flat_price || 0)
+                        : option.pricing_type === 'per_guest'
+                        ? option.price_per_person * reservation.guest_count
                         : option.price_per_person * quantity;
                       const priceDisplay = option.pricing_type === 'flat'
                         ? `${formatPrice(option.flat_price || 0)}（一律）`
+                        : option.pricing_type === 'per_guest'
+                        ? `${formatPrice(option.price_per_person)}/人（予約人数適用）`
                         : `${formatPrice(option.price_per_person)}/人`;
                       
                       return (
                         <li key={option.id} className="text-sm">
                           {option.name} ({priceDisplay})
                           {option.pricing_type === 'per_person' && ` × ${quantity}名様`}
+                          {option.pricing_type === 'per_guest' && ` × ${reservation.guest_count}名様`}
                           <span className="block text-xs text-muted-foreground">
                             小計: {formatPrice(subtotal)}
                           </span>

@@ -660,7 +660,7 @@ export type Database = {
     }
     Enums: {
       event_type: "event" | "schedule" | "note"
-      pricing_type: "per_person" | "flat"
+      pricing_type: "per_person" | "flat" | "per_guest"
       shift_preference: "available" | "unavailable"
       shift_status: "scheduled" | "cancelled"
       time_slot: "morning" | "afternoon" | "evening"
@@ -792,7 +792,7 @@ export const Constants = {
   public: {
     Enums: {
       event_type: ["event", "schedule", "note"],
-      pricing_type: ["per_person", "flat"],
+      pricing_type: ["per_person", "flat", "per_guest"],
       shift_preference: ["available", "unavailable"],
       shift_status: ["scheduled", "cancelled"],
       time_slot: ["morning", "afternoon", "evening"],

@@ -196,18 +196,21 @@ export const AdminCalendarEventDialog = ({
           // 選択されたオプションがある場合は新しく挿入
           if (optionDetails.length > 0) {
             const newOptions = optionDetails.map(item => {
+              // per_guestの場合はitem.quantityがすでに予約人数を反映している
+              const effectiveQuantity = item.quantity;
+              
               // Calculate total_price based on pricing_type
               let total_price: number;
               if (item.option.pricing_type === 'flat') {
                 total_price = item.option.flat_price || 0;
               } else {
-                total_price = item.option.price_per_person * item.quantity;
+                total_price = item.option.price_per_person * effectiveQuantity;
               }
 
               return {
                 reservation_id: reservationId,
                 option_id: item.option.id,
-                quantity: item.quantity,
+                quantity: effectiveQuantity,
                 total_price
               };
             });

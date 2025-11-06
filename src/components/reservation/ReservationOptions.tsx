@@ -20,23 +20,12 @@ export const ReservationOptions = ({
   } = useOptions();
   const handleOptionChange = (optionId: string, checked: boolean) => {
     if (checked) {
-      // オプションを追加する前にIDが有効か確認
-      if (!optionId || optionId.trim() === '') {
-        console.error("Invalid option ID:", optionId);
-        return;
-      }
-
-      // オプションを追加 (初期数量は1に設定)
-      setSelectedOptions([...selectedOptions, {
-        option_id: optionId,
-        quantity: 1
-      }]);
-
-      console.log(`Added option ${optionId} with quantity 1`);
+      const option = options?.find(o => o.id === optionId);
+      // per_guestの場合は予約人数を自動適用
+      const initialQuantity = option?.pricing_type === 'per_guest' ? guestCount : 1;
+      setSelectedOptions([...selectedOptions, { option_id: optionId, quantity: initialQuantity }]);
     } else {
-      // オプションを削除
-      setSelectedOptions(selectedOptions.filter(option => option.option_id !== optionId));
-      console.log(`Removed option ${optionId}`);
+      setSelectedOptions(selectedOptions.filter(o => o.option_id !== optionId));
     }
   };
   const handleQuantityChange = (optionId: string, change: number) => {
@@ -62,6 +51,9 @@ export const ReservationOptions = ({
       if (option) {
         if (option.pricing_type === 'flat') {
           return total + (option.flat_price || 0);
+        } else if (option.pricing_type === 'per_guest') {
+          // per_guestは予約人数を使用
+          return total + option.price_per_person * guestCount;
         } else {
           return total + option.price_per_person * selectedOption.quantity;
         }
@@ -87,6 +79,8 @@ export const ReservationOptions = ({
                   <span className="text-sauna-stone/80">
                     {option.pricing_type === 'flat' 
                       ? `${formatPrice(option.flat_price || 0)}（一律）`
+                      : option.pricing_type === 'per_guest'
+                      ? `${formatPrice(option.price_per_person)} / 人（予約人数適用）`
                       : `${formatPrice(option.price_per_person)} / 人`}
                   </span>
                 </label>
@@ -110,10 +104,17 @@ export const ReservationOptions = ({
                         </div>
                       </div>
                     )}
+                    {option.pricing_type === 'per_guest' && (
+                      <div className="text-xs text-muted-foreground">
+                        予約人数 {guestCount}名に自動適用
+                      </div>
+                    )}
                     <p className="text-xs font-medium text-gray-950">
                       合計: {formatPrice(
                         option.pricing_type === 'flat' 
                           ? (option.flat_price || 0)
+                          : option.pricing_type === 'per_guest'
+                          ? option.price_per_person * guestCount
                           : option.price_per_person * selectedOption.quantity
                       )}
                     </p>

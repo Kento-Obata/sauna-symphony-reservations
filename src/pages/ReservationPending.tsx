@@ -123,11 +123,10 @@ export default function ReservationPending() {
                   <p className="font-medium mb-1">選択オプション:</p>
                   <ul className="space-y-1">
                     {details.options.map((item, index) => {
-                      const optionPrice = item.option.pricing_type === 'flat'
-                        ? item.option.flat_price || 0
-                        : item.option.price_per_person * item.quantity;
                       const priceDisplay = item.option.pricing_type === 'flat'
                         ? `${formatPrice(item.option.flat_price || 0)}（一律）`
+                        : item.option.pricing_type === 'per_guest'
+                        ? `${formatPrice(item.option.price_per_person)} / 人 × ${item.quantity}名様（予約人数適用）`
                         : `${formatPrice(item.option.price_per_person)} × ${item.quantity}名様`;
                       
                       return (

@@ -200,18 +200,23 @@ export const useReservationForm = () => {
                 return null;
               }
               
+              // per_guestの場合は予約人数を使用、それ以外は指定されたquantityを使用
+              const effectiveQuantity = optionData.pricing_type === 'per_guest' 
+                ? guestCount 
+                : option.quantity;
+              
               // Calculate total_price based on pricing_type
               let total_price: number;
               if (optionData.pricing_type === 'flat') {
                 total_price = optionData.flat_price || 0;
               } else {
-                total_price = optionData.price_per_person * option.quantity;
+                total_price = optionData.price_per_person * effectiveQuantity;
               }
 
               return {
                 reservation_id: newReservation.id,
                 option_id: option.option_id,
-                quantity: option.quantity,
+                quantity: effectiveQuantity,
                 total_price
               };
             }).filter(Boolean) as any[];

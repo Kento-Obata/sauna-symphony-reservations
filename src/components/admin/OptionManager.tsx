@@ -46,7 +46,7 @@ import { Textarea } from "@/components/ui/textarea";
 interface OptionFormValues {
   name: string;
   description: string;
-  pricing_type: 'per_person' | 'flat';
+  pricing_type: 'per_person' | 'flat' | 'per_guest';
   price_per_person: number;
   flat_price: number | null;
   is_active: boolean;
@@ -236,7 +236,8 @@ export const OptionManager = () => {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="per_person">一人あたり料金</SelectItem>
+                            <SelectItem value="per_person">一人あたり料金（数量選択可）</SelectItem>
+                            <SelectItem value="per_guest">一人あたり料金（予約人数に自動適用）</SelectItem>
                             <SelectItem value="flat">一律料金</SelectItem>
                           </SelectContent>
                         </Select>
@@ -245,7 +246,7 @@ export const OptionManager = () => {
                     </FormItem>
                   )}
                 />
-                {addOptionForm.watch("pricing_type") === "per_person" ? (
+                {(addOptionForm.watch("pricing_type") === "per_person" || addOptionForm.watch("pricing_type") === "per_guest") ? (
                   <FormField
                     control={addOptionForm.control}
                     name="price_per_person"
@@ -337,10 +338,11 @@ export const OptionManager = () => {
                 <TableCell>{option.name}</TableCell>
                 <TableCell>{option.description || "-"}</TableCell>
                 <TableCell>
-                  {option.pricing_type === 'per_person' ? '一人あたり' : '一律'}
+                  {option.pricing_type === 'per_person' ? '一人あたり（選択可）' : 
+                   option.pricing_type === 'per_guest' ? '一人あたり（自動）' : '一律'}
                 </TableCell>
                 <TableCell>
-                  {option.pricing_type === 'per_person' 
+                  {(option.pricing_type === 'per_person' || option.pricing_type === 'per_guest')
                     ? `${formatPrice(option.price_per_person)} / 人`
                     : formatPrice(option.flat_price || 0)}
                 </TableCell>
@@ -435,7 +437,8 @@ export const OptionManager = () => {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="per_person">一人あたり料金</SelectItem>
+                            <SelectItem value="per_person">一人あたり料金（数量選択可）</SelectItem>
+                            <SelectItem value="per_guest">一人あたり料金（予約人数に自動適用）</SelectItem>
                             <SelectItem value="flat">一律料金</SelectItem>
                           </SelectContent>
                         </Select>
@@ -444,7 +447,7 @@ export const OptionManager = () => {
                     </FormItem>
                   )}
                 />
-                {editOptionForm.watch("pricing_type") === "per_person" ? (
+                {(editOptionForm.watch("pricing_type") === "per_person" || editOptionForm.watch("pricing_type") === "per_guest") ? (
                   <FormField
                     control={editOptionForm.control}
                     name="price_per_person"
