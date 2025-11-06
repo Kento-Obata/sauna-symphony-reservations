@@ -32,7 +32,7 @@ interface ReservationInfoProps {
 
 export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
   const [totalPrice, setTotalPrice] = useState<number>(0);
-  const [options, setOptions] = useState<{option: Option, quantity: number}[]>([]);
+  const [options, setOptions] = useState<{option: Option, quantity: number, total_price?: number}[]>([]);
   const surcharge = getSurcharge(reservation.water_temperature.toString());
   const { data: dailyTimeSlots } = useDailyTimeSlots();
 
@@ -51,8 +51,9 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
           .from("reservation_options")
           .select(`
             quantity,
+            total_price,
             options:option_id (
-              id, name, description, price_per_person
+              id, name, description, price_per_person, pricing_type, flat_price
             )
           `)
           .eq("reservation_id", reservation.id);
@@ -67,7 +68,8 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
           console.log("Found reservation options:", reservationOptions);
           const formattedOptions = reservationOptions.map(item => ({
             option: item.options as unknown as Option, // Cast to unknown first, then to Option
-            quantity: item.quantity
+            quantity: item.quantity,
+            total_price: item.total_price // Include stored total_price
           }));
           setOptions(formattedOptions);
         } else {
@@ -155,6 +157,11 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
   // オプションの合計金額を計算
   const calculateOptionsTotal = () => {
     return options.reduce((total, item) => {
+      // Use stored total_price if available
+      if (item.total_price !== undefined) {
+        return total + item.total_price;
+      }
+      // Fallback calculation (should not happen in normal cases)
       if (item.option.pricing_type === 'flat') {
         return total + (item.option.flat_price || 0);
       } else if (item.option.pricing_type === 'per_guest') {

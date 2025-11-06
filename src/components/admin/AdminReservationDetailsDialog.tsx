@@ -38,7 +38,7 @@ export const AdminReservationDetailsDialog = ({
   const [timeSlot, setTimeSlot] = useState<TimeSlot>("morning");
   const [date, setDate] = useState("");
   const [isEditing, setIsEditing] = useState(false);
-  const [reservationOptions, setReservationOptions] = useState<{option: Option, quantity: number}[]>([]);
+  const [reservationOptions, setReservationOptions] = useState<{option: Option, quantity: number, total_price?: number}[]>([]);
   const [basePrice, setBasePrice] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
   const [availableOptions, setAvailableOptions] = useState<Option[]>([]);
@@ -85,8 +85,9 @@ export const AdminReservationDetailsDialog = ({
         .select(`
           quantity,
           option_id,
+          total_price,
           options(
-            id, name, description, price_per_person, is_active, created_at, updated_at
+            id, name, description, price_per_person, pricing_type, flat_price, is_active, created_at, updated_at
           )
         `)
         .eq("reservation_id", reservationId);
@@ -101,22 +102,20 @@ export const AdminReservationDetailsDialog = ({
           .filter(item => item.options) // Filter out any null options
           .map(item => ({
             option: item.options as Option,
-            quantity: item.quantity
+            quantity: item.quantity,
+            total_price: item.total_price // Include stored total_price
           }));
         setReservationOptions(formattedOptions);
         
         // Calculate base price by subtracting options total from total price
+        // Use the stored total_price from database instead of recalculating
         const optionsTotal = formattedOptions.reduce((total, item) => {
-          if (item.option.pricing_type === 'flat') {
-            return total + (item.option.flat_price || 0);
-          } else {
-            return total + (item.option.price_per_person * item.quantity);
-          }
+          return total + (item.total_price || 0);
         }, 0);
         
         setBasePrice(reservation?.total_price ? reservation.total_price - optionsTotal : 0);
         console.log("Formatted options:", formattedOptions);
-        console.log("Options total:", optionsTotal);
+        console.log("Options total (from DB):", optionsTotal);
         console.log("Base price set to:", reservation?.total_price ? reservation.total_price - optionsTotal : 0);
       } else {
         setReservationOptions([]);
@@ -146,8 +145,15 @@ export const AdminReservationDetailsDialog = ({
   // Calculate total options price
   const calculateOptionsTotal = () => {
     return reservationOptions.reduce((total, item) => {
+      // Use stored total_price if available, otherwise calculate
+      if (item.total_price !== undefined) {
+        return total + item.total_price;
+      }
+      // Fallback calculation for new options being added
       if (item.option.pricing_type === 'flat') {
         return total + (item.option.flat_price || 0);
+      } else if (item.option.pricing_type === 'per_guest') {
+        return total + (item.option.price_per_person * parseInt(guestCount));
       } else {
         return total + (item.option.price_per_person * item.quantity);
       }
