@@ -107,7 +107,11 @@ export const AdminReservationDetailsDialog = ({
         
         // Calculate base price by subtracting options total from total price
         const optionsTotal = formattedOptions.reduce((total, item) => {
-          return total + (item.option.price_per_person * item.quantity);
+          if (item.option.pricing_type === 'flat') {
+            return total + (item.option.flat_price || 0);
+          } else {
+            return total + (item.option.price_per_person * item.quantity);
+          }
         }, 0);
         
         setBasePrice(reservation?.total_price ? reservation.total_price - optionsTotal : 0);
@@ -142,7 +146,11 @@ export const AdminReservationDetailsDialog = ({
   // Calculate total options price
   const calculateOptionsTotal = () => {
     return reservationOptions.reduce((total, item) => {
-      return total + (item.option.price_per_person * item.quantity);
+      if (item.option.pricing_type === 'flat') {
+        return total + (item.option.flat_price || 0);
+      } else {
+        return total + (item.option.price_per_person * item.quantity);
+      }
     }, 0);
   };
 
@@ -506,7 +514,11 @@ export const AdminReservationDetailsDialog = ({
                                 <SelectContent>
                                   {availableOptions?.map((option) => (
                                     <SelectItem key={option.id} value={option.id}>
-                                      {option.name} ({formatPrice(option.price_per_person)}/人)
+                                      {option.name} (
+                                        {option.pricing_type === 'flat' 
+                                          ? `${formatPrice(option.flat_price || 0)}・一律`
+                                          : `${formatPrice(option.price_per_person)}/人`
+                                        })
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
@@ -514,27 +526,31 @@ export const AdminReservationDetailsDialog = ({
                             </div>
                             
                             <div className="flex items-center ml-2 gap-1">
-                              <Button 
-                                type="button" 
-                                variant="outline" 
-                                size="icon" 
-                                className="h-7 w-7" 
-                                onClick={() => handleQuantityChange(index, -1)}
-                                disabled={item.quantity <= 1}
-                              >
-                                <Minus className="h-3 w-3" />
-                              </Button>
-                              <span className="w-5 text-center">{item.quantity}</span>
-                              <Button 
-                                type="button" 
-                                variant="outline" 
-                                size="icon" 
-                                className="h-7 w-7"
-                                onClick={() => handleQuantityChange(index, 1)}
-                                disabled={item.quantity >= parseInt(guestCount)}
-                              >
-                                <Plus className="h-3 w-3" />
-                              </Button>
+                              {item.option.pricing_type === 'per_person' && (
+                                <>
+                                  <Button 
+                                    type="button" 
+                                    variant="outline" 
+                                    size="icon" 
+                                    className="h-7 w-7" 
+                                    onClick={() => handleQuantityChange(index, -1)}
+                                    disabled={item.quantity <= 1}
+                                  >
+                                    <Minus className="h-3 w-3" />
+                                  </Button>
+                                  <span className="w-5 text-center">{item.quantity}</span>
+                                  <Button 
+                                    type="button" 
+                                    variant="outline" 
+                                    size="icon" 
+                                    className="h-7 w-7"
+                                    onClick={() => handleQuantityChange(index, 1)}
+                                    disabled={item.quantity >= parseInt(guestCount)}
+                                  >
+                                    <Plus className="h-3 w-3" />
+                                  </Button>
+                                </>
+                              )}
                               
                               <Button 
                                 type="button" 
@@ -548,7 +564,11 @@ export const AdminReservationDetailsDialog = ({
                             </div>
                           </div>
                           <div className="text-xs mt-1">
-                            小計: {formatPrice(item.option.price_per_person * item.quantity)}
+                            小計: {formatPrice(
+                              item.option.pricing_type === 'flat' 
+                                ? (item.option.flat_price || 0)
+                                : item.option.price_per_person * item.quantity
+                            )}
                           </div>
                         </li>
                       ))}

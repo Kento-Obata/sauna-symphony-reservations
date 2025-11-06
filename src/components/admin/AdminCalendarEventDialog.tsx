@@ -117,7 +117,11 @@ export const AdminCalendarEventDialog = ({
           
           // オプション料金の合計を計算
           const optionsTotal = formattedOptions.reduce((sum, item) => {
-            return sum + (item.option.price_per_person * item.quantity);
+            if (item.option.pricing_type === 'flat') {
+              return sum + (item.option.flat_price || 0);
+            } else {
+              return sum + (item.option.price_per_person * item.quantity);
+            }
           }, 0);
           
           // ベース料金（合計金額 - オプション料金）を計算
@@ -274,7 +278,11 @@ export const AdminCalendarEventDialog = ({
   // オプションの合計金額を計算
   const calculateOptionsTotal = () => {
     return optionDetails.reduce((total, item) => {
-      return total + (item.option.price_per_person * item.quantity);
+      if (item.option.pricing_type === 'flat') {
+        return total + (item.option.flat_price || 0);
+      } else {
+        return total + (item.option.price_per_person * item.quantity);
+      }
     }, 0);
   };
 
@@ -428,27 +436,33 @@ export const AdminCalendarEventDialog = ({
                             <SelectContent>
                               {availableOptions?.map((option) => (
                                 <SelectItem key={option.id} value={option.id}>
-                                  {option.name} ({formatPrice(option.price_per_person)}/人)
+                                  {option.name} (
+                                    {option.pricing_type === 'flat'
+                                      ? `${formatPrice(option.flat_price || 0)}・一律`
+                                      : `${formatPrice(option.price_per_person)}/人`
+                                    })
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
-                          <Select
-                            value={item.quantity.toString()}
-                            onValueChange={(value) => handleQuantityChange(index, parseInt(value))}
-                          >
-                            <SelectTrigger className="w-24">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {[1, 2, 3, 4, 5, 6].map((num) => (
-                                <SelectItem key={num} value={num.toString()}>
-                                  {num}人
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <Button 
+                          {item.option.pricing_type === 'per_person' && (
+                            <Select
+                              value={item.quantity.toString()}
+                              onValueChange={(value) => handleQuantityChange(index, parseInt(value))}
+                            >
+                              <SelectTrigger className="w-24">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {[1, 2, 3, 4, 5, 6].map((num) => (
+                                  <SelectItem key={num} value={num.toString()}>
+                                    {num}名
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                          <Button
                             type="button" 
                             variant="ghost" 
                             size="icon" 

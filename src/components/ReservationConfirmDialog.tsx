@@ -63,7 +63,11 @@ export const ReservationConfirmDialog = ({
     return selectedOptions.reduce((total, selectedOption) => {
       const option = options.find(opt => opt.id === selectedOption.option_id);
       if (option) {
-        return total + (option.price_per_person * selectedOption.quantity);
+        if (option.pricing_type === 'flat') {
+          return total + (option.flat_price || 0);
+        } else {
+          return total + (option.price_per_person * selectedOption.quantity);
+        }
       }
       return total;
     }, 0);
@@ -147,11 +151,19 @@ export const ReservationConfirmDialog = ({
                     {selectedOptions.map(option => {
                       const selectedOption = reservation.options?.find(o => o.option_id === option.id);
                       const quantity = selectedOption?.quantity || 0;
+                      const subtotal = option.pricing_type === 'flat' 
+                        ? (option.flat_price || 0) 
+                        : option.price_per_person * quantity;
+                      const priceDisplay = option.pricing_type === 'flat'
+                        ? `${formatPrice(option.flat_price || 0)}（一律）`
+                        : `${formatPrice(option.price_per_person)}/人`;
+                      
                       return (
                         <li key={option.id} className="text-sm">
-                          {option.name} ({formatPrice(option.price_per_person)}/人) × {quantity}名様
+                          {option.name} ({priceDisplay})
+                          {option.pricing_type === 'per_person' && ` × ${quantity}名様`}
                           <span className="block text-xs text-muted-foreground">
-                            小計: {formatPrice(option.price_per_person * quantity)}
+                            小計: {formatPrice(subtotal)}
                           </span>
                         </li>
                       );

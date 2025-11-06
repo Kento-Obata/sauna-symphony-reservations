@@ -155,7 +155,11 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
   // オプションの合計金額を計算
   const calculateOptionsTotal = () => {
     return options.reduce((total, item) => {
-      return total + (item.option.price_per_person * item.quantity);
+      if (item.option.pricing_type === 'flat') {
+        return total + (item.option.flat_price || 0);
+      } else {
+        return total + (item.option.price_per_person * item.quantity);
+      }
     }, 0);
   };
 
@@ -201,14 +205,24 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
           <div className="text-sauna-stone">選択オプション:</div>
           <div>
             <ul className="space-y-1">
-              {options.map((item, index) => (
-                <li key={index} className="text-sm">
-                  {item.option.name} ({formatPrice(item.option.price_per_person)}/人) × {item.quantity}名様
-                  <span className="block text-xs text-muted-foreground">
-                    小計: {formatPrice(item.option.price_per_person * item.quantity)}
-                  </span>
-                </li>
-              ))}
+              {options.map((item, index) => {
+                const subtotal = item.option.pricing_type === 'flat'
+                  ? (item.option.flat_price || 0)
+                  : item.option.price_per_person * item.quantity;
+                const priceDisplay = item.option.pricing_type === 'flat'
+                  ? `${formatPrice(item.option.flat_price || 0)}（一律）`
+                  : `${formatPrice(item.option.price_per_person)}/人`;
+                
+                return (
+                  <li key={index} className="text-sm">
+                    {item.option.name} ({priceDisplay})
+                    {item.option.pricing_type === 'per_person' && ` × ${item.quantity}名様`}
+                    <span className="block text-xs text-muted-foreground">
+                      小計: {formatPrice(subtotal)}
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         </>
