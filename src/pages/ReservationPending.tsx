@@ -55,7 +55,7 @@ export default function ReservationPending() {
             quantity,
             option_id,
             options:option_id (
-              id, name, description, price_per_person, is_active
+              id, name, description, pricing_type, price_per_person, flat_price, is_active
             )
           `)
           .eq("reservation_id", reservation.id);
@@ -122,12 +122,21 @@ export default function ReservationPending() {
                 <div className="mt-2 text-sm">
                   <p className="font-medium mb-1">選択オプション:</p>
                   <ul className="space-y-1">
-                    {details.options.map((item, index) => (
-                      <li key={index} className="flex justify-between">
-                        <span>{item.option.name}</span>
-                        <span>{formatPrice(item.option.price_per_person)} × {item.quantity}名様</span>
-                      </li>
-                    ))}
+                    {details.options.map((item, index) => {
+                      const optionPrice = item.option.pricing_type === 'flat'
+                        ? item.option.flat_price || 0
+                        : item.option.price_per_person * item.quantity;
+                      const priceDisplay = item.option.pricing_type === 'flat'
+                        ? `${formatPrice(item.option.flat_price || 0)}（一律）`
+                        : `${formatPrice(item.option.price_per_person)} × ${item.quantity}名様`;
+                      
+                      return (
+                        <li key={index} className="flex justify-between">
+                          <span>{item.option.name}</span>
+                          <span>{priceDisplay}</span>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               )}
