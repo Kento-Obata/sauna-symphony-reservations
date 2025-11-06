@@ -97,14 +97,17 @@ export const OptionManager = () => {
   const handleAddOption = async (values: OptionFormValues) => {
     setIsLoading(true);
     try {
-      const { error } = await supabase.from("options").insert({
+      // pricing_typeに応じて適切なフィールドを設定
+      const insertData = {
         name: values.name,
         description: values.description || null,
         pricing_type: values.pricing_type,
-        price_per_person: values.price_per_person,
-        flat_price: values.flat_price,
+        price_per_person: values.pricing_type === 'flat' ? 0 : values.price_per_person,
+        flat_price: values.pricing_type === 'flat' ? values.flat_price : null,
         is_active: values.is_active,
-      });
+      };
+      
+      const { error } = await supabase.from("options").insert(insertData);
 
       if (error) throw error;
       
@@ -125,13 +128,13 @@ export const OptionManager = () => {
     
     setIsLoading(true);
     try {
-      // Extract only the fields we need to update
+      // pricing_typeに応じて適切なフィールドを設定
       const updateData = {
         name: values.name,
         description: values.description || null,
         pricing_type: values.pricing_type,
-        price_per_person: values.price_per_person,
-        flat_price: values.flat_price,
+        price_per_person: values.pricing_type === 'flat' ? 0 : values.price_per_person,
+        flat_price: values.pricing_type === 'flat' ? values.flat_price : null,
         is_active: values.is_active,
       };
       
