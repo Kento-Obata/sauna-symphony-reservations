@@ -97,15 +97,19 @@ export const OptionManager = () => {
   const handleAddOption = async (values: OptionFormValues) => {
     setIsLoading(true);
     try {
+      console.log("Form values:", values);
+      
       // pricing_typeに応じて適切なフィールドを設定
       const insertData = {
         name: values.name,
         description: values.description || null,
         pricing_type: values.pricing_type,
-        price_per_person: values.pricing_type === 'flat' ? 0 : values.price_per_person,
-        flat_price: values.pricing_type === 'flat' ? values.flat_price : null,
+        price_per_person: values.pricing_type === 'flat' ? 0 : (values.price_per_person || 0),
+        flat_price: values.pricing_type === 'flat' ? (values.flat_price || 0) : null,
         is_active: values.is_active,
       };
+      
+      console.log("Insert data:", insertData);
       
       const { error } = await supabase.from("options").insert(insertData);
 
