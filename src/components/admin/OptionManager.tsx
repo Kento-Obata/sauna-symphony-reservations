@@ -30,6 +30,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { Option } from "@/types/option";
 import { formatPrice } from "@/utils/priceCalculations";
@@ -39,7 +46,9 @@ import { Textarea } from "@/components/ui/textarea";
 interface OptionFormValues {
   name: string;
   description: string;
+  pricing_type: 'per_person' | 'flat';
   price_per_person: number;
+  flat_price: number | null;
   is_active: boolean;
 }
 
@@ -54,7 +63,9 @@ export const OptionManager = () => {
     defaultValues: {
       name: "",
       description: "",
+      pricing_type: 'per_person',
       price_per_person: 0,
+      flat_price: null,
       is_active: true,
     },
   });
@@ -63,7 +74,9 @@ export const OptionManager = () => {
     defaultValues: {
       name: "",
       description: "",
+      pricing_type: 'per_person',
       price_per_person: 0,
+      flat_price: null,
       is_active: true,
     },
   });
@@ -73,7 +86,9 @@ export const OptionManager = () => {
       editOptionForm.reset({
         name: editingOption.name,
         description: editingOption.description || "",
+        pricing_type: editingOption.pricing_type,
         price_per_person: editingOption.price_per_person,
+        flat_price: editingOption.flat_price,
         is_active: editingOption.is_active,
       });
     }
@@ -85,7 +100,9 @@ export const OptionManager = () => {
       const { error } = await supabase.from("options").insert({
         name: values.name,
         description: values.description || null,
+        pricing_type: values.pricing_type,
         price_per_person: values.price_per_person,
+        flat_price: values.flat_price,
         is_active: values.is_active,
       });
 
@@ -112,7 +129,9 @@ export const OptionManager = () => {
       const updateData = {
         name: values.name,
         description: values.description || null,
+        pricing_type: values.pricing_type,
         price_per_person: values.price_per_person,
+        flat_price: values.flat_price,
         is_active: values.is_active,
       };
       
@@ -207,24 +226,68 @@ export const OptionManager = () => {
                 />
                 <FormField
                   control={addOptionForm.control}
-                  name="price_per_person"
+                  name="pricing_type"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>1人あたり料金（円）</FormLabel>
+                      <FormLabel>料金タイプ</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="number" 
-                          min="0" 
-                          placeholder="500" 
-                          {...field} 
-                          value={field.value} 
-                          onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 0)} 
-                        />
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="per_person">一人あたり料金</SelectItem>
+                            <SelectItem value="flat">一律料金</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+                {addOptionForm.watch("pricing_type") === "per_person" ? (
+                  <FormField
+                    control={addOptionForm.control}
+                    name="price_per_person"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>1人あたり料金（円）</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            min="0" 
+                            placeholder="500" 
+                            {...field} 
+                            value={field.value} 
+                            onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 0)} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ) : (
+                  <FormField
+                    control={addOptionForm.control}
+                    name="flat_price"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>一律料金（円）</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            min="0" 
+                            placeholder="3000" 
+                            {...field} 
+                            value={field.value || ""} 
+                            onChange={(e) => field.onChange(parseInt(e.target.value, 10) || null)} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
                 <FormField
                   control={addOptionForm.control}
                   name="is_active"
@@ -262,7 +325,8 @@ export const OptionManager = () => {
             <TableRow>
               <TableHead>オプション名</TableHead>
               <TableHead>説明</TableHead>
-              <TableHead>1人あたり料金</TableHead>
+              <TableHead>料金タイプ</TableHead>
+              <TableHead>料金</TableHead>
               <TableHead>ステータス</TableHead>
               <TableHead className="text-right">操作</TableHead>
             </TableRow>
@@ -272,7 +336,14 @@ export const OptionManager = () => {
               <TableRow key={option.id}>
                 <TableCell>{option.name}</TableCell>
                 <TableCell>{option.description || "-"}</TableCell>
-                <TableCell>{formatPrice(option.price_per_person)}</TableCell>
+                <TableCell>
+                  {option.pricing_type === 'per_person' ? '一人あたり' : '一律'}
+                </TableCell>
+                <TableCell>
+                  {option.pricing_type === 'per_person' 
+                    ? `${formatPrice(option.price_per_person)} / 人`
+                    : formatPrice(option.flat_price || 0)}
+                </TableCell>
                 <TableCell>
                   <span 
                     className={`px-2 py-1 text-xs rounded-full ${
@@ -304,7 +375,7 @@ export const OptionManager = () => {
             ))}
             {options?.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-4">
+                <TableCell colSpan={6} className="text-center py-4">
                   オプションがありません。新しいオプションを追加してください。
                 </TableCell>
               </TableRow>
@@ -354,24 +425,68 @@ export const OptionManager = () => {
                 />
                 <FormField
                   control={editOptionForm.control}
-                  name="price_per_person"
+                  name="pricing_type"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>1人あたり料金（円）</FormLabel>
+                      <FormLabel>料金タイプ</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="number" 
-                          min="0" 
-                          placeholder="500" 
-                          {...field} 
-                          value={field.value}
-                          onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 0)}
-                        />
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="per_person">一人あたり料金</SelectItem>
+                            <SelectItem value="flat">一律料金</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+                {editOptionForm.watch("pricing_type") === "per_person" ? (
+                  <FormField
+                    control={editOptionForm.control}
+                    name="price_per_person"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>1人あたり料金（円）</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            min="0" 
+                            placeholder="500" 
+                            {...field} 
+                            value={field.value}
+                            onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 0)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ) : (
+                  <FormField
+                    control={editOptionForm.control}
+                    name="flat_price"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>一律料金（円）</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            min="0" 
+                            placeholder="3000" 
+                            {...field} 
+                            value={field.value || ""}
+                            onChange={(e) => field.onChange(parseInt(e.target.value, 10) || null)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
                 <FormField
                   control={editOptionForm.control}
                   name="is_active"

@@ -153,28 +153,34 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
+          flat_price: number | null
           id: string
           is_active: boolean
           name: string
           price_per_person: number
+          pricing_type: Database["public"]["Enums"]["pricing_type"]
           updated_at: string
         }
         Insert: {
           created_at?: string
           description?: string | null
+          flat_price?: number | null
           id?: string
           is_active?: boolean
           name: string
           price_per_person: number
+          pricing_type?: Database["public"]["Enums"]["pricing_type"]
           updated_at?: string
         }
         Update: {
           created_at?: string
           description?: string | null
+          flat_price?: number | null
           id?: string
           is_active?: boolean
           name?: string
           price_per_person?: number
+          pricing_type?: Database["public"]["Enums"]["pricing_type"]
           updated_at?: string
         }
         Relationships: []
@@ -234,6 +240,7 @@ export type Database = {
           option_id: string
           quantity: number
           reservation_id: string
+          total_price: number
         }
         Insert: {
           created_at?: string
@@ -241,6 +248,7 @@ export type Database = {
           option_id: string
           quantity?: number
           reservation_id: string
+          total_price: number
         }
         Update: {
           created_at?: string
@@ -248,6 +256,7 @@ export type Database = {
           option_id?: string
           quantity?: number
           reservation_id?: string
+          total_price?: number
         }
         Relationships: [
           {
@@ -651,6 +660,7 @@ export type Database = {
     }
     Enums: {
       event_type: "event" | "schedule" | "note"
+      pricing_type: "per_person" | "flat"
       shift_preference: "available" | "unavailable"
       shift_status: "scheduled" | "cancelled"
       time_slot: "morning" | "afternoon" | "evening"
@@ -782,6 +792,7 @@ export const Constants = {
   public: {
     Enums: {
       event_type: ["event", "schedule", "note"],
+      pricing_type: ["per_person", "flat"],
       shift_preference: ["available", "unavailable"],
       shift_status: ["scheduled", "cancelled"],
       time_slot: ["morning", "afternoon", "evening"],

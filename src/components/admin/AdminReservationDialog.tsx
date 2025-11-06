@@ -172,23 +172,52 @@ export const AdminReservationDialog = ({
           });
           
           if (validOptions.length > 0) {
-            const reservationOptionsData = validOptions.map(option => ({
-              reservation_id: newReservation.id,
-              option_id: option.option_id,
-              quantity: option.quantity
-            }));
+            // Fetch option details to calculate total_price
+            const { data: optionsData, error: optionsError } = await supabase
+              .from("options")
+              .select("*")
+              .in("id", validOptions.map(o => o.option_id));
+
+            if (optionsError) {
+              console.error("Error fetching options:", optionsError);
+              toast.error("オプション情報の取得に失敗しました");
+              return;
+            }
+
+            const reservationOptionsData = validOptions.map(option => {
+              const optionData = optionsData?.find(o => o.id === option.option_id);
+              if (!optionData) {
+                console.error("Option not found:", option.option_id);
+                return null;
+              }
+              
+              // Calculate total_price based on pricing_type
+              let total_price: number;
+              if (optionData.pricing_type === 'flat') {
+                total_price = optionData.flat_price || 0;
+              } else {
+                total_price = optionData.price_per_person * option.quantity;
+              }
+
+              return {
+                reservation_id: newReservation.id,
+                option_id: option.option_id,
+                quantity: option.quantity,
+                total_price
+              };
+            }).filter(Boolean) as any[];
 
             console.log("Prepared admin option data for insertion:", reservationOptionsData);
 
             // バリデーションが成功したらオプションを挿入
-            const { error: optionsError } = await supabase
+            const { error: optionsError2 } = await supabase
               .from("reservation_options")
               .insert(reservationOptionsData);
 
-            if (optionsError) {
-              console.error("Error inserting reservation options:", optionsError);
+            if (optionsError2) {
+              console.error("Error inserting reservation options:", optionsError2);
               // より詳細なエラーメッセージを表示
-              toast.error(`オプション情報の保存に失敗しました: ${optionsError.message || 'データベースエラー'}`);
+              toast.error(`オプション情報の保存に失敗しました: ${optionsError2.message || 'データベースエラー'}`);
             } else {
               console.log("Successfully saved reservation options");
             }

@@ -3,7 +3,9 @@ export interface Option {
   id: string;
   name: string;
   description: string | null;
+  pricing_type: 'per_person' | 'flat';
   price_per_person: number;
+  flat_price: number | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;

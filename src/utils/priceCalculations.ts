@@ -45,7 +45,23 @@ export const fetchOptions = async (): Promise<Option[]> => {
   return data || [];
 };
 
-// 選択されたオプションの合計金額を計算
+// 個別オプションの合計金額を計算
+export const calculateOptionTotalPrice = (
+  option: Option,
+  quantity: number,
+  guestCount: number
+): number => {
+  if (option.pricing_type === 'flat') {
+    // 一律料金の場合
+    return option.flat_price || 0;
+  } else {
+    // 一人あたり料金の場合
+    const effectiveQuantity = Math.min(quantity, guestCount);
+    return option.price_per_person * effectiveQuantity;
+  }
+};
+
+// 選択されたオプションの合計金額を計算（後方互換性のために維持）
 export const calculateOptionsTotal = async (
   selectedOptions: ReservationOption[] = []
 ): Promise<number> => {
@@ -56,8 +72,12 @@ export const calculateOptionsTotal = async (
     return selectedOptions.reduce((total, selectedOption) => {
       const option = options.find(o => o.id === selectedOption.option_id);
       if (option) {
-        // オプションの料金 × 数量
-        return total + (option.price_per_person * selectedOption.quantity);
+        // pricing_typeに応じた計算（quantityはguestCountの代わりに使用）
+        if (option.pricing_type === 'flat') {
+          return total + (option.flat_price || 0);
+        } else {
+          return total + (option.price_per_person * selectedOption.quantity);
+        }
       }
       return total;
     }, 0);

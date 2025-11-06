@@ -276,11 +276,22 @@ export const AdminReservationDetailsDialog = ({
         
         // Then insert the new ones if there are any
         if (reservationOptions.length > 0) {
-          const optionsToInsert = reservationOptions.map(item => ({
-            reservation_id: reservation.id,
-            option_id: item.option.id,
-            quantity: item.quantity
-          }));
+          const optionsToInsert = reservationOptions.map(item => {
+            // Calculate total_price based on pricing_type
+            let total_price: number;
+            if (item.option.pricing_type === 'flat') {
+              total_price = item.option.flat_price || 0;
+            } else {
+              total_price = item.option.price_per_person * item.quantity;
+            }
+
+            return {
+              reservation_id: reservation.id,
+              option_id: item.option.id,
+              quantity: item.quantity,
+              total_price
+            };
+          });
           
           const { error: insertError } = await supabase
             .from("reservation_options")

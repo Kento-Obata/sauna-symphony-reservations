@@ -60,7 +60,11 @@ export const ReservationOptions = ({
     return selectedOptions.reduce((total, selectedOption) => {
       const option = options.find(o => o.id === selectedOption.option_id);
       if (option) {
-        return total + option.price_per_person * selectedOption.quantity;
+        if (option.pricing_type === 'flat') {
+          return total + (option.flat_price || 0);
+        } else {
+          return total + option.price_per_person * selectedOption.quantity;
+        }
       }
       return total;
     }, 0);
@@ -81,29 +85,37 @@ export const ReservationOptions = ({
                 <label htmlFor={`option-${option.id}`} className="text-sm font-medium flex justify-between cursor-pointer">
                   <span>{option.name}</span>
                   <span className="text-sauna-stone/80">
-                    {formatPrice(option.price_per_person)} / 人
+                    {option.pricing_type === 'flat' 
+                      ? `${formatPrice(option.flat_price || 0)}（一律）`
+                      : `${formatPrice(option.price_per_person)} / 人`}
                   </span>
                 </label>
                 {option.description && <p className="text-xs text-muted-foreground mt-1">
                     {option.description}
                   </p>}
                 {isSelected && <div className="mt-2 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">数量:</span>
-                      <div className="flex items-center space-x-2">
-                        <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleQuantityChange(option.id, -1)} disabled={selectedOption.quantity <= 1}>
-                          <Minus className="h-3 w-3" />
-                        </Button>
-                        <span className="w-5 text-center text-sm">
-                          {selectedOption.quantity}
-                        </span>
-                        <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleQuantityChange(option.id, 1)} disabled={selectedOption.quantity >= guestCount}>
-                          <Plus className="h-3 w-3" />
-                        </Button>
+                    {option.pricing_type === 'per_person' && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">数量:</span>
+                        <div className="flex items-center space-x-2">
+                          <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleQuantityChange(option.id, -1)} disabled={selectedOption.quantity <= 1}>
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                          <span className="w-5 text-center text-sm">
+                            {selectedOption.quantity}
+                          </span>
+                          <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleQuantityChange(option.id, 1)} disabled={selectedOption.quantity >= guestCount}>
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
-                    </div>
+                    )}
                     <p className="text-xs font-medium text-gray-950">
-                      合計: {formatPrice(option.price_per_person * selectedOption.quantity)}
+                      合計: {formatPrice(
+                        option.pricing_type === 'flat' 
+                          ? (option.flat_price || 0)
+                          : option.price_per_person * selectedOption.quantity
+                      )}
                     </p>
                   </div>}
               </div>
