@@ -77,7 +77,7 @@ export const OptionManager = () => {
         is_active: editingOption.is_active,
       });
     }
-  }, [editingOption, editOptionForm]);
+  }, [editingOption]);
 
   const handleAddOption = async (values: OptionFormValues) => {
     setIsLoading(true);
@@ -130,6 +130,7 @@ export const OptionManager = () => {
       
       toast.success("オプションを更新しました");
       setIsEditDialogOpen(false);
+      setEditingOption(null);
       refetch();
     } catch (error) {
       console.error("Error updating option:", error);
@@ -312,7 +313,12 @@ export const OptionManager = () => {
         </Table>
       </div>
 
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
+        setIsEditDialogOpen(open);
+        if (!open) {
+          setEditingOption(null);
+        }
+      }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>オプションの編集</DialogTitle>
