@@ -65,6 +65,8 @@ export const ReservationConfirmDialog = ({
       if (option) {
         if (option.pricing_type === 'flat') {
           return total + (option.flat_price || 0);
+        } else if (option.pricing_type === 'per_guest') {
+          return total + (option.price_per_person * reservation.guest_count);
         } else {
           return total + (option.price_per_person * selectedOption.quantity);
         }
