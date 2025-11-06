@@ -645,18 +645,9 @@ export type Database = {
       }
     }
     Functions: {
-      cleanup_expired_reservations: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      ensure_admin_role: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      generate_reservation_code: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      cleanup_expired_reservations: { Args: never; Returns: undefined }
+      ensure_admin_role: { Args: never; Returns: undefined }
+      generate_reservation_code: { Args: never; Returns: string }
     }
     Enums: {
       event_type: "event" | "schedule" | "note"
