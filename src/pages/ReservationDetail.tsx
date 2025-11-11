@@ -42,24 +42,23 @@ export const ReservationDetail = () => {
     queryFn: async () => {
       console.log("Searching for reservation code:", reservationCode);
       
-      const { data, error } = await supabase
-        .from("reservations")
-        .select()
-        .eq("reservation_code", reservationCode)
-        .maybeSingle();  // Changed from .single() to .maybeSingle()
+      // Use edge function to securely fetch reservation
+      const { data, error } = await supabase.functions.invoke('get-reservation-by-code', {
+        body: { reservationCode }
+      });
 
       if (error) {
         console.error("Error fetching reservation:", error);
         throw error;
       }
 
-      if (!data) {
-        console.log("No reservation found with code:", reservationCode);
-        return null;  // Return null instead of throwing error
+      if (data?.error) {
+        console.log("Reservation not found:", data.error);
+        return null;
       }
 
-      console.log("Found reservation:", data);
-      return data;
+      console.log("Found reservation:", data.reservation);
+      return data.reservation;
     },
     retry: false,
     enabled: !!reservationCode,

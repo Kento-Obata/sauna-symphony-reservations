@@ -9,3 +9,6 @@ verify_jwt = false
 
 [functions.cancel-reservation]
 verify_jwt = false
+
+[functions.get-reservation-by-code]
+verify_jwt = false
