@@ -129,20 +129,25 @@ export const useReservationForm = () => {
 
       console.log("Submitting reservation data:", reservationData);
 
-      // Check for existing confirmed reservations
-      const { data: existingReservations, error: checkError } = await supabase
-        .from("reservations")
-        .select("*")
-        .eq("date", reservationData.date)
-        .eq("time_slot", reservationData.time_slot)
-        .eq("status", "confirmed");
+      // Check for existing confirmed reservations using Edge Function
+      const { data: availabilityData, error: checkError } = await supabase.functions.invoke('check-availability', {
+        body: {
+          date: reservationData.date,
+          timeSlot: reservationData.time_slot
+        }
+      });
 
       if (checkError) {
-        console.error("Error checking existing reservations:", checkError);
+        console.error("Error checking availability:", checkError);
         throw checkError;
       }
 
-      if (existingReservations && existingReservations.length > 0) {
+      if (availabilityData?.error) {
+        console.error("Availability check error:", availabilityData.error);
+        throw new Error(availabilityData.error);
+      }
+
+      if (!availabilityData?.isAvailable) {
         toast.error("申し訳ありませんが、この時間帯はすでに予約が入っています。");
         setIsSubmitting(false);
         return;
