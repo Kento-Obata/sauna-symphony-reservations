@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { ReservationCalendar } from "@/components/reservation/ReservationCalendar";
-import { useReservations } from "@/hooks/useReservations";
+import { useAdminReservations } from "@/hooks/useAdminReservations";
 import { useShopClosures } from "@/hooks/useShopClosures";
 import { isShopClosed } from "@/utils/dateUtils";
 import { ReservationOption } from "@/types/option";
@@ -44,7 +44,7 @@ export const AdminReservationDialog = ({
     evening: 0,
   });
 
-  const { data: reservations } = useReservations();
+  const { data: reservations } = useAdminReservations();
   const { closures } = useShopClosures();
 
   useEffect(() => {

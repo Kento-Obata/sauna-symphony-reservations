@@ -17,11 +17,11 @@ import { OptionManager } from "@/components/admin/OptionManager";
 import { AvailabilityTextGenerator } from "@/components/admin/AvailabilityTextGenerator";
 import { CustomerManagement } from "@/components/admin/CustomerManagement";
 import { DailyTimeSlotManager } from "@/components/admin/DailyTimeSlotManager";
-import { useReservations } from "@/hooks/useReservations";
+import { useAdminReservations } from "@/hooks/useAdminReservations";
 
 const Admin = () => {
   const [showNewReservationDialog, setShowNewReservationDialog] = useState(false);
-  const { data: reservations } = useReservations();
+  const { data: reservations } = useAdminReservations();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const navigate = useNavigate();
   const [nameQuery, setNameQuery] = useState("");

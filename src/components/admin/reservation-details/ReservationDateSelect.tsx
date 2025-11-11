@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
-import { useReservations } from "@/hooks/useReservations";
+import { useAdminReservations } from "@/hooks/useAdminReservations";
 import { ReservationStatus } from "@/components/ReservationStatus";
 
 interface ReservationDateSelectProps {
@@ -17,7 +17,7 @@ export const ReservationDateSelect = ({
   isEditing,
   currentReservationId,
 }: ReservationDateSelectProps) => {
-  const { data: reservations } = useReservations();
+  const { data: reservations } = useAdminReservations();
 
   const getDayContent = (day: Date) => {
     if (!reservations) return null;

@@ -12,3 +12,6 @@ verify_jwt = false
 
 [functions.get-reservation-by-code]
 verify_jwt = false
+
+[functions.get-availability]
+verify_jwt = false

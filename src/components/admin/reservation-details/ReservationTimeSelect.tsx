@@ -1,7 +1,7 @@
 
 import { TIME_SLOTS } from "@/components/TimeSlotSelect";
 import { TimeSlot } from "@/types/reservation";
-import { useReservations } from "@/hooks/useReservations";
+import { useAdminReservations } from "@/hooks/useAdminReservations";
 import { useDailyTimeSlots } from "@/hooks/useDailyTimeSlots";
 import {
   Select,
@@ -26,7 +26,7 @@ export const ReservationTimeSelect = ({
   date,
   currentReservationId,
 }: ReservationTimeSelectProps) => {
-  const { data: reservations } = useReservations();
+  const { data: reservations } = useAdminReservations();
   const { data: dailyTimeSlots } = useDailyTimeSlots();
 
   const isTimeSlotDisabled = (slot: TimeSlot) => {

@@ -8,7 +8,7 @@ import { useShopClosures } from "@/hooks/useShopClosures";
 interface ReservationCalendarProps {
   date: Date | undefined;
   setDate: (date: Date | undefined) => void;
-  reservations: Reservation[] | undefined;
+  reservations: Pick<Reservation, 'date' | 'time_slot' | 'status'>[] | undefined;
 }
 
 export const ReservationCalendar = ({
