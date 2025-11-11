@@ -99,183 +99,43 @@ export const useReservationForm = () => {
         return;
       }
 
-      // Calculate total price including options before creating the reservation
-      const totalPrice = await getTotalPrice(
-        parseInt(people),
-        temperature,
-        date,
-        selectedOptions
-      );
-      
-      console.log("Calculated total price:", totalPrice);
-      console.log("Selected options:", selectedOptions);
-
       const guestCount = parseInt(people);
       
-      const reservationData = {
-        date: format(date!, "yyyy-MM-dd"),
-        time_slot: timeSlot as TimeSlot,
-        guest_name: name,
-        guest_count: guestCount,
-        email: email || null,
-        phone: phone,
-        // 水温を常に15°Cに固定
-        water_temperature: 15,
-        status: "pending" as const,
-        is_confirmed: false, // フロントエンドから作成される予約は最初は未確認
-        // Include the total price in the reservation data
-        total_price: totalPrice
-      };
+      console.log("Creating reservation via edge function");
 
-      console.log("Submitting reservation data:", reservationData);
-
-      // Check for existing confirmed reservations using Edge Function
-      const { data: availabilityData, error: checkError } = await supabase.functions.invoke('check-availability', {
+      // Call the create-reservation edge function
+      const { data, error } = await supabase.functions.invoke('create-reservation', {
         body: {
-          date: reservationData.date,
-          timeSlot: reservationData.time_slot
+          date: format(date!, "yyyy-MM-dd"),
+          timeSlot: timeSlot as TimeSlot,
+          guestName: name,
+          guestCount: guestCount,
+          email: email || null,
+          phone: phone,
+          waterTemperature: 15, // 水温を常に15°Cに固定
+          selectedOptions: selectedOptions
         }
       });
 
-      if (checkError) {
-        console.error("Error checking availability:", checkError);
-        throw checkError;
-      }
-
-      if (availabilityData?.error) {
-        console.error("Availability check error:", availabilityData.error);
-        throw new Error(availabilityData.error);
-      }
-
-      if (!availabilityData?.isAvailable) {
-        toast.error("申し訳ありませんが、この時間帯はすでに予約が入っています。");
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Insert the reservation
-      const { data: newReservation, error } = await supabase
-        .from("reservations")
-        .insert(reservationData)
-        .select()
-        .single();
-
       if (error) {
-        console.error("Error inserting reservation:", error);
+        console.error("Error creating reservation:", error);
         throw error;
       }
 
-      if (!newReservation?.reservation_code || !newReservation.confirmation_token) {
-        throw new Error("予約コードまたは確認トークンが生成されませんでした。");
+      if (data?.error) {
+        console.error("Reservation creation error:", data.error);
+        throw new Error(data.error);
       }
 
-      setReservationCode(newReservation.reservation_code);
-
-      // オプションが選択されている場合は予約オプションを保存
-      if (selectedOptions && selectedOptions.length > 0) {
-        console.log("Saving reservation options:", selectedOptions, "for reservation ID:", newReservation.id);
-        
-        try {
-          // 配列を作成する前に各オプションIDが有効か確認
-          const validOptions = selectedOptions.filter(option => {
-            const isValid = option.option_id && option.option_id.trim() !== '' && option.quantity && option.quantity > 0;
-            if (!isValid) {
-              console.error("Invalid option data:", option);
-            }
-            return isValid;
-          });
-          
-          if (validOptions.length > 0) {
-            // Fetch option details to calculate total_price
-            const { data: optionsData, error: optionsError } = await supabase
-              .from("options")
-              .select("*")
-              .in("id", validOptions.map(o => o.option_id));
-
-            if (optionsError) {
-              console.error("Error fetching options:", optionsError);
-              toast.error("オプション情報の取得に失敗しました");
-              return;
-            }
-
-            const reservationOptionsData = validOptions.map(option => {
-              const optionData = optionsData?.find(o => o.id === option.option_id);
-              if (!optionData) {
-                console.error("Option not found:", option.option_id);
-                return null;
-              }
-              
-              // per_guestの場合は予約人数を使用、それ以外は指定されたquantityを使用
-              const effectiveQuantity = optionData.pricing_type === 'per_guest' 
-                ? guestCount 
-                : option.quantity;
-              
-              // Calculate total_price based on pricing_type
-              let total_price: number;
-              if (optionData.pricing_type === 'flat') {
-                total_price = optionData.flat_price || 0;
-              } else {
-                total_price = optionData.price_per_person * effectiveQuantity;
-              }
-
-              return {
-                reservation_id: newReservation.id,
-                option_id: option.option_id,
-                quantity: effectiveQuantity,
-                total_price
-              };
-            }).filter(Boolean) as any[];
-
-            console.log("Prepared option data for insertion:", reservationOptionsData);
-
-            // バリデーションが成功したらオプションを挿入
-            const { error: optionsError2 } = await supabase
-              .from("reservation_options")
-              .insert(reservationOptionsData);
-
-            if (optionsError2) {
-              console.error("Error inserting reservation options:", optionsError2);
-              // より詳細なエラーメッセージを表示
-              toast.error(`オプション情報の保存に失敗しました: ${optionsError2.message || 'データベースエラー'}`);
-            } else {
-              console.log("Successfully saved reservation options");
-            }
-          }
-        } catch (optionError: any) {
-          console.error("オプション保存中にエラーが発生しました:", optionError);
-          toast.error(`オプション情報の保存に失敗しました: ${optionError.message || '不明なエラー'}`);
-        }
+      if (!data?.reservationCode) {
+        throw new Error("予約コードが生成されませんでした。");
       }
 
-      // Send pending notification
-      const notificationResponse = await supabase.functions.invoke(
-        "send-pending-notification",
-        {
-          body: {
-            date: reservationData.date,
-            timeSlot: reservationData.time_slot,
-            guestName: reservationData.guest_name,
-            guestCount: reservationData.guest_count,
-            email: reservationData.email,
-            phone: reservationData.phone,
-            waterTemperature: reservationData.water_temperature,
-            reservationCode: newReservation.reservation_code,
-            confirmationToken: newReservation.confirmation_token,
-            reservationDate: date.toISOString(),
-            total_price: newReservation.total_price,
-            options: selectedOptions
-          },
-        }
-      );
-
-      if (notificationResponse.error) {
-        console.error("通知の送信に失敗しました:", notificationResponse.error);
-        toast.error("予約は完了しましたが、通知の送信に失敗しました。");
-      }
+      setReservationCode(data.reservationCode);
 
       // Navigate to temporary reservation page
       navigate('/reservation/pending', { 
-        state: { reservationCode: newReservation.reservation_code },
+        state: { reservationCode: data.reservationCode },
         replace: true
       });
 
