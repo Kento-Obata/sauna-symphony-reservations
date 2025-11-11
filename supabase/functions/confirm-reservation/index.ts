@@ -78,6 +78,45 @@ serve(async (req) => {
       throw new Error("Failed to update reservation");
     }
 
+    // Send confirmation notification
+    try {
+      console.log("Sending confirmation notification...");
+      const notificationPayload = {
+        date: reservation.date,
+        timeSlot: reservation.time_slot,
+        guestName: reservation.guest_name,
+        guestCount: reservation.guest_count,
+        email: reservation.email,
+        phone: reservation.phone,
+        waterTemperature: reservation.water_temperature,
+        reservationCode: reservation.reservation_code,
+        total_price: reservation.total_price,
+      };
+
+      const notificationResponse = await fetch(
+        `${supabaseUrl}/functions/v1/send-confirmation-notification`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${supabaseServiceKey}`,
+          },
+          body: JSON.stringify(notificationPayload),
+        }
+      );
+
+      const notificationResult = await notificationResponse.json();
+      console.log("Notification result:", notificationResult);
+
+      if (!notificationResponse.ok) {
+        console.error("Failed to send notification:", notificationResult);
+        // Don't fail the whole operation if notification fails
+      }
+    } catch (notificationError) {
+      console.error("Error sending notification:", notificationError);
+      // Don't fail the whole operation if notification fails
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
