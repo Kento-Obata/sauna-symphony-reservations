@@ -61,16 +61,9 @@ const Index = () => {
       <div className="h-[30vh] relative bg-sauna-base">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-w-4xl w-full px-4">
           <div className="glass-card p-2 space-y-2 w-full hover-lift text-center">
-            <div className="text-lg font-mplus font-extralight tracking-[0.2em] text-black">
-              1日3組限定
-            </div>
-            <div className="text-sm font-mplus font-extralight tracking-[0.15em] text-black/80">体験型サウナU</div>
-            <p className="text-xs text-black/90 mt-2 font-mplus font-extralight">
-              pre-open<br />
-              2025.03.01<br />
-              grand-open<br />
-              2025.04.01
-            </p>
+            <div className="text-lg font-mplus font-extralight tracking-[0.2em] text-black">体験型サウナU</div>
+            
+            
           </div>
         </div>
       </div>
