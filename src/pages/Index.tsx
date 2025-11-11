@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { fetchPriceSettings } from "@/utils/priceCalculations";
 import { PriceSetting } from "@/types/price";
 import { CreditCard, Wallet } from "lucide-react";
-import yukusumuLogo from "@/assets/yukusumu-logo.png";
 const Index = () => {
   const [priceData, setPriceData] = useState<{
     people: number;
@@ -63,9 +62,8 @@ const Index = () => {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-w-4xl w-full px-4">
           <div className="glass-card p-2 space-y-2 w-full hover-lift text-center">
             <div className="text-lg font-mplus font-extralight tracking-[0.2em] text-black">体験型サウナU</div>
-            <div className="flex justify-center">
-              <img src={yukusumuLogo} alt="湯風宇空素無" className="w-1/2 h-auto" />
-            </div>
+            
+            
           </div>
         </div>
       </div>
