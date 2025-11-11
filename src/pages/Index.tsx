@@ -1,11 +1,9 @@
-
 import { Header } from "@/components/Header";
 import ReservationForm from "@/components/ReservationForm";
 import { useEffect, useState } from "react";
 import { fetchPriceSettings } from "@/utils/priceCalculations";
 import { PriceSetting } from "@/types/price";
 import { CreditCard, Wallet } from "lucide-react";
-
 const Index = () => {
   const [priceData, setPriceData] = useState<{
     people: number;
@@ -13,13 +11,11 @@ const Index = () => {
     total: number;
   }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
   useEffect(() => {
     const loadPriceData = async () => {
       try {
         setIsLoading(true);
         const priceSettings = await fetchPriceSettings();
-        
         if (priceSettings.length > 0) {
           // データベースから取得した料金設定を使用
           const formattedData = priceSettings.map(setting => ({
@@ -58,10 +54,8 @@ const Index = () => {
         setIsLoading(false);
       }
     };
-
     loadPriceData();
   }, []);
-
   return <div className="min-h-screen flex flex-col bg-sauna-base">
       <Header />
       <div className="h-[30vh] relative bg-sauna-base">
@@ -70,9 +64,7 @@ const Index = () => {
             <div className="text-lg font-mplus font-extralight tracking-[0.2em] text-black">
               1日3組限定
             </div>
-            <div className="text-sm font-mplus font-extralight tracking-[0.15em] text-black/80">
-              詳細非公開体験型サウナ
-            </div>
+            <div className="text-sm font-mplus font-extralight tracking-[0.15em] text-black/80">体験型サウナU</div>
             <p className="text-xs text-black/90 mt-2 font-mplus font-extralight">
               pre-open<br />
               2025.03.01<br />
@@ -106,27 +98,21 @@ const Index = () => {
                 </tr>
               </thead>
               <tbody>
-                {isLoading ? (
-                  <tr>
+                {isLoading ? <tr>
                     <td colSpan={3} className="py-4 px-6 text-center">
                       <div className="flex justify-center">
                         <div className="animate-pulse h-4 w-24 bg-sauna-stone/10 rounded"></div>
                       </div>
                     </td>
-                  </tr>
-                ) : (
-                  priceData.map(({
-                    people,
-                    perPerson,
-                    total
-                  }) => (
-                    <tr key={people} className="border-b border-sauna-stone/10">
+                  </tr> : priceData.map(({
+                people,
+                perPerson,
+                total
+              }) => <tr key={people} className="border-b border-sauna-stone/10">
                       <td className="py-4 px-6 text-left">{people}</td>
                       <td className="py-4 px-6 text-right">¥{perPerson.toLocaleString()}</td>
                       <td className="py-4 px-6 text-right">¥{total.toLocaleString()}</td>
-                    </tr>
-                  ))
-                )}
+                    </tr>)}
               </tbody>
             </table>
           </div>
