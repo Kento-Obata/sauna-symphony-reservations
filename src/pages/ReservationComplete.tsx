@@ -34,15 +34,20 @@ export default function ReservationComplete() {
         setIsLoading(true);
         setError(null);
         
-        // 予約情報を取得
-        const { data: reservation, error } = await supabase
-          .from("reservations")
-          .select("id, total_price")
-          .eq("reservation_code", reservationCode)
-          .single();
+        // Use edge function to securely fetch reservation
+        const { data: reservationData, error: reservationError } = await supabase.functions.invoke('get-reservation-by-code', {
+          body: { reservationCode }
+        });
 
-        if (error || !reservation) {
-          console.error("予約情報取得エラー:", error);
+        if (reservationError || reservationData?.error) {
+          console.error("予約情報取得エラー:", reservationError || reservationData?.error);
+          setError("予約情報の取得に失敗しました");
+          return;
+        }
+
+        const reservation = reservationData.reservation;
+        if (!reservation) {
+          console.error("予約情報が見つかりません");
           setError("予約情報の取得に失敗しました");
           return;
         }
@@ -54,7 +59,7 @@ export default function ReservationComplete() {
             quantity,
             option_id,
             options:option_id (
-              id, name, description, price_per_person, is_active
+              id, name, description, price_per_person, pricing_type, flat_price, is_active
             )
           `)
           .eq("reservation_id", reservation.id);
