@@ -63,11 +63,9 @@ const Index = () => {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-w-4xl w-full px-4">
           <div className="glass-card p-2 space-y-2 w-full hover-lift text-center">
             <div className="text-lg font-mplus font-extralight tracking-[0.2em] text-black">体験型サウナU</div>
-            
-            
-          </div>
-          <div className="mt-8 flex justify-center">
-            <img src={yukusumuLogo} alt="湯風宇空素無" className="max-w-full h-auto" />
+            <div className="flex justify-center">
+              <img src={yukusumuLogo} alt="湯風宇空素無" className="w-1/2 h-auto" />
+            </div>
           </div>
         </div>
       </div>
