@@ -8,7 +8,9 @@ export const useReservations = () => {
     queryKey: ["reservations"],
     queryFn: async () => {
       // Use edge function to get availability (no personal info)
-      const { data, error } = await supabase.functions.invoke('get-availability');
+      const { data, error } = await supabase.functions.invoke('get-availability', {
+        body: {}
+      });
 
       if (error) {
         console.error("Error fetching availability:", error);
