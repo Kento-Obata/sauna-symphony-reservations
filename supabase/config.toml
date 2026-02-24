@@ -21,3 +21,6 @@ verify_jwt = false
 
 [functions.create-reservation]
 verify_jwt = false
+
+[functions.send-pending-reminder]
+verify_jwt = false
