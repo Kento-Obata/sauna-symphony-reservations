@@ -74,6 +74,17 @@ serve(async (req) => {
       );
     }
 
+    // Check if reservation is today (same-day cancellation not allowed)
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    if (reservation.date === todayStr) {
+      console.log("Same-day cancellation not allowed");
+      return new Response(
+        JSON.stringify({ error: "当日のキャンセルはできません。直接お電話にてご連絡ください。" }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Check if already cancelled
     if (reservation.status === 'cancelled') {
       console.log("Reservation already cancelled");
