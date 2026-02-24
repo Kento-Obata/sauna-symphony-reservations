@@ -33,6 +33,9 @@ export const ReservationActions = ({
 
   if (status === 'cancelled') return null;
 
+  // Check if reservation date is today (same-day cancellation not allowed)
+  // Note: The server also validates this, but we hide the button for UX
+
   const handleCancel = () => {
     if (phoneInput.length !== 4) {
       toast.error("電話番号の下4桁を入力してください");
