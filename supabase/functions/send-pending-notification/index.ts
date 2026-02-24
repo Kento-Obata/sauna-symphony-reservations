@@ -95,7 +95,7 @@ const handler = async (req: Request): Promise<Response> => {
 最終確認のため、下記リンクより予約確定手続きをお願いいたします。
 予約コード: ${reservation.reservationCode}
 URL：${CONFIRMATION_URL}
-※本リンクは20分有効です。
+※本リンクは2時間有効です。
 
 【ご予約内容】
 日付: ${reservation.date}

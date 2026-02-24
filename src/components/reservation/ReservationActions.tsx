@@ -19,12 +19,14 @@ import { toast } from "sonner";
 
 interface ReservationActionsProps {
   status: string;
+  date: string;
   setShowEditDialog: (show: boolean) => void;
   cancelReservation: UseMutationResult<void, Error, string, unknown>;
 }
 
 export const ReservationActions = ({
   status,
+  date,
   setShowEditDialog,
   cancelReservation,
 }: ReservationActionsProps) => {
@@ -33,8 +35,9 @@ export const ReservationActions = ({
 
   if (status === 'cancelled') return null;
 
-  // Check if reservation date is today (same-day cancellation not allowed)
-  // Note: The server also validates this, but we hide the button for UX
+  // Check if reservation date is today
+  const today = new Date().toISOString().split('T')[0];
+  const isSameDay = date === today;
 
   const handleCancel = () => {
     if (phoneInput.length !== 4) {
@@ -57,51 +60,57 @@ export const ReservationActions = ({
         予約を変更
       </Button>
 
-      <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <AlertDialogTrigger asChild>
-          <Button
-            variant="destructive"
-            className="flex items-center gap-2"
-          >
-            <XCircle className="h-4 w-4" />
-            予約をキャンセル
-          </Button>
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>予約をキャンセルしますか？</AlertDialogTitle>
-            <AlertDialogDescription>
-              この操作は取り消すことができません。
-              <br />
-              ご本人確認のため、予約時の電話番号の下4桁を入力してください。
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="py-4">
-            <Label htmlFor="phone-verification">電話番号の下4桁</Label>
-            <Input
-              id="phone-verification"
-              type="text"
-              maxLength={4}
-              pattern="[0-9]*"
-              inputMode="numeric"
-              placeholder="0000"
-              value={phoneInput}
-              onChange={(e) => setPhoneInput(e.target.value.replace(/\D/g, ''))}
-              className="mt-2"
-            />
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setPhoneInput("")}>戻る</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleCancel}
-              disabled={phoneInput.length !== 4}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+      {isSameDay ? (
+        <p className="text-sm text-muted-foreground">
+          ※当日のキャンセルはお電話にてご連絡ください
+        </p>
+      ) : (
+        <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="destructive"
+              className="flex items-center gap-2"
             >
-              キャンセルする
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+              <XCircle className="h-4 w-4" />
+              予約をキャンセル
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>予約をキャンセルしますか？</AlertDialogTitle>
+              <AlertDialogDescription>
+                この操作は取り消すことができません。
+                <br />
+                ご本人確認のため、予約時の電話番号の下4桁を入力してください。
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="py-4">
+              <Label htmlFor="phone-verification">電話番号の下4桁</Label>
+              <Input
+                id="phone-verification"
+                type="text"
+                maxLength={4}
+                pattern="[0-9]*"
+                inputMode="numeric"
+                placeholder="0000"
+                value={phoneInput}
+                onChange={(e) => setPhoneInput(e.target.value.replace(/\D/g, ''))}
+                className="mt-2"
+              />
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setPhoneInput("")}>戻る</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleCancel}
+                disabled={phoneInput.length !== 4}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                キャンセルする
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </div>
   );
 };

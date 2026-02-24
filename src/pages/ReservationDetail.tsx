@@ -164,6 +164,7 @@ export const ReservationDetail = () => {
           <ReservationInfo reservation={reservation} />
           <ReservationActions 
             status={reservation.status}
+            date={reservation.date}
             setShowEditDialog={setShowEditDialog}
             cancelReservation={cancelReservation}
           />
