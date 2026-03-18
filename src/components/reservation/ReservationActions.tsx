@@ -62,7 +62,7 @@ export const ReservationActions = ({
 
       {isSameDay ? (
         <p className="text-sm text-muted-foreground">
-          ※当日のキャンセルはお電話にてご連絡ください
+          ※当日のキャンセルはお電話かDMにてご連絡ください
         </p>
       ) : (
         <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
