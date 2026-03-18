@@ -162,6 +162,11 @@ export const ReservationDetail = () => {
         
         <div className="space-y-4">
           <ReservationInfo reservation={reservation} />
+          <div className="bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground space-y-1">
+            <p className="font-medium text-foreground">キャンセルポリシー</p>
+            <p>・前日までのキャンセルは無料です。</p>
+            <p>・当日のキャンセルはお電話かDMにてご連絡ください。</p>
+          </div>
           <ReservationActions 
             status={reservation.status}
             date={reservation.date}
