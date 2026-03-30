@@ -62,14 +62,19 @@ const Index = () => {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-w-4xl w-full px-4">
           <div className="glass-card p-2 space-y-2 w-full hover-lift text-center">
             <div className="text-lg font-mplus font-extralight tracking-[0.2em] text-black">体験型サウナU</div>
-            <a
-              href="https://reserva.be/usauna"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block mt-2 text-sm font-mplus font-extralight text-black/80 hover:text-black underline underline-offset-4 decoration-black/30 hover:decoration-black transition-colors"
-            >
-              パブリックサウナイベントのご予約はこちらから →
-            </a>
+            <div className="flex flex-col items-center gap-1 mt-2">
+              <a
+                href="https://reserva.be/usauna"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-mplus font-extralight text-black/80 hover:text-black underline underline-offset-4 decoration-black/30 hover:decoration-black transition-colors"
+              >
+                パブリックサウナイベントのご予約はこちらから →
+              </a>
+              <span className="text-sm font-mplus font-extralight text-black/80">
+                通常貸切予約は↓
+              </span>
+            </div>
           </div>
         </div>
       </div>
