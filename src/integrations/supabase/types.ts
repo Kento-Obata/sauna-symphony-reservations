@@ -575,6 +575,45 @@ export type Database = {
           },
         ]
       }
+      time_slot_patterns: {
+        Row: {
+          afternoon_end: string
+          afternoon_start: string
+          created_at: string
+          evening_end: string
+          evening_start: string
+          id: string
+          morning_end: string
+          morning_start: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          afternoon_end?: string
+          afternoon_start?: string
+          created_at?: string
+          evening_end?: string
+          evening_start?: string
+          id?: string
+          morning_end?: string
+          morning_start?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          afternoon_end?: string
+          afternoon_start?: string
+          created_at?: string
+          evening_end?: string
+          evening_start?: string
+          id?: string
+          morning_end?: string
+          morning_start?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       customer_search: {

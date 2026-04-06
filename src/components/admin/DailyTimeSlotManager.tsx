@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
-import { Plus, Edit2, Trash2, Calendar } from "lucide-react";
+import { Plus, Edit2, Trash2, Calendar, Wand2 } from "lucide-react";
+import { PatternApplyDialog } from "./PatternApplyDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +26,7 @@ type DailyTimeSlot = Database["public"]["Tables"]["daily_time_slots"]["Row"];
 export const DailyTimeSlotManager = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSlot, setEditingSlot] = useState<DailyTimeSlot | null>(null);
+  const [patternDialogOpen, setPatternDialogOpen] = useState(false);
   
   const { data: timeSlots, isLoading } = useDailyTimeSlots();
   const deleteMutation = useDeleteDailyTimeSlot();
@@ -78,13 +80,23 @@ export const DailyTimeSlotManager = () => {
             <Calendar className="h-5 w-5" />
             日別時間スロット管理
           </CardTitle>
-          <Button
-            onClick={() => setDialogOpen(true)}
-            className="flex items-center gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            新規作成
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setPatternDialogOpen(true)}
+              className="flex items-center gap-2"
+            >
+              <Wand2 className="h-4 w-4" />
+              パターン適用
+            </Button>
+            <Button
+              onClick={() => setDialogOpen(true)}
+              className="flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              新規作成
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -143,6 +155,10 @@ export const DailyTimeSlotManager = () => {
         open={dialogOpen}
         onOpenChange={handleDialogClose}
         editingSlot={editingSlot}
+      />
+      <PatternApplyDialog
+        open={patternDialogOpen}
+        onOpenChange={setPatternDialogOpen}
       />
     </Card>
   );

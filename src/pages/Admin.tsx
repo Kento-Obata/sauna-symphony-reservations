@@ -17,6 +17,7 @@ import { OptionManager } from "@/components/admin/OptionManager";
 import { AvailabilityTextGenerator } from "@/components/admin/AvailabilityTextGenerator";
 import { CustomerManagement } from "@/components/admin/CustomerManagement";
 import { DailyTimeSlotManager } from "@/components/admin/DailyTimeSlotManager";
+import { TimeSlotPatternManager } from "@/components/admin/TimeSlotPatternManager";
 import { useAdminReservations } from "@/hooks/useAdminReservations";
 
 const Admin = () => {
@@ -188,6 +189,7 @@ const Admin = () => {
           <div className="space-y-8">
             <PriceSettingsManager />
             <OptionManager />
+            <TimeSlotPatternManager />
             <DailyTimeSlotManager />
           </div>
         </TabsContent>
