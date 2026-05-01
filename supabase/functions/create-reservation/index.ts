@@ -215,7 +215,8 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({
         success: true,
         reservationCode: newReservation.reservation_code,
-        confirmationToken: newReservation.confirmation_token
+        confirmationToken: newReservation.confirmation_token,
+        accessToken: newReservation.access_token
       }),
       { 
         headers: { ...corsHeaders, "Content-Type": "application/json" },

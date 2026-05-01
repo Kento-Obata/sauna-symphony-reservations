@@ -98,7 +98,14 @@ const handler = async (req: Request): Promise<Response> => {
     // Get dynamic time slot label
     const timeSlotLabel = await getTimeSlotLabel(reservation.timeSlot, reservation.date, supabase);
 
-    const reservationDetailUrl = `https://www.u-sauna-private.com/reservation/${reservation.reservationCode}`;
+    // Fetch access_token to build a signed detail URL (so the link auto-authenticates)
+    const { data: tokenRow } = await supabase
+      .from("reservations")
+      .select("access_token")
+      .eq("reservation_code", reservation.reservationCode)
+      .maybeSingle();
+    const tokenQuery = tokenRow?.access_token ? `?t=${tokenRow.access_token}` : "";
+    const reservationDetailUrl = `https://www.u-sauna-private.com/reservation/${reservation.reservationCode}${tokenQuery}`;
     
     const messageContent = `
 ご予約いただきありがとうございます！
