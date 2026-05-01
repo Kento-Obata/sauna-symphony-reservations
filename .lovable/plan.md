@@ -1,62 +1,108 @@
-# 予約詳細ページのアクセス保護
+# セキュリティ棚卸しと修正計画
 
-## 現状の問題
-`/reservation/:code` は予約コードさえ知っていれば、氏名・電話・日時・人数・金額など全ての情報が閲覧できてしまう。`get-reservation-by-code` Edge Function はコードだけで全データを返している。
+Supabase linter + コード監査で出た懸念を、**重大度順**にまとめました。重要なものから順に潰していく想定です。
 
-## 方針（ユーザー承認済み）
-- **直接URLアクセス**: 電話番号下4桁の入力を必須に
-- **メール/SMS内リンク**: 署名付きトークンで自動アクセス可
-- **完了直後ページ** (`/reservation/pending`, `/reservation/complete`): `location.state` 経由のときのみ表示（現状維持）
+---
 
-## DB変更
-`reservations` に以下のカラムを追加:
-- `access_token text` — 推測不能なランダムトークン（gen_random_bytes(32)）
-- `access_token_expires_at timestamptz` — トークン有効期限（予約日 +7日 など）
+## 🔴 重大（早めに修正推奨）
 
-予約作成トリガー (`set_reservation_code_and_expiration`) を更新し `access_token` を自動生成。既存予約にもバックフィル。
+### 1. `cancel-reservation` の電話番号比較が timing-attack に弱い
+`get-reservation-by-code` は `safeEqual` で定数時間比較していますが、`cancel-reservation` は普通の `!==` 比較です。攻撃難易度は高いものの、統一しておくべき。
 
-## Edge Function 変更
+→ `safeEqual` を導入。
 
-### `get-reservation-by-code` を改修
-入力に応じて2モード:
-1. `{ reservationCode, accessToken }` — トークン一致で全情報を返す
-2. `{ reservationCode, phoneLastFourDigits }` — 電話番号下4桁一致で全情報を返す
-3. どちらも無い、または不正 → 401 を返し、`{ requiresAuth: true, exists: true/false }` のみ返す（情報漏洩防止のため exists も曖昧に）
+### 2. `confirm-reservation` のトークン使い回し
+`confirmation_token` で予約を取得した後、`is_confirmed=true` にしつつ `confirmation_token=null` にしているのは良いですが、**同じトークンが複数回叩かれても 200 を返す可能性**（既に確認済みでも処理が走らない）など、リプレイ防止のログを残しておく価値あり。
 
-レート制限的な観点で、不正試行はログ出力のみ（短期的にはOK）。
+→ 既に `is_confirmed=true` の場合は早期 return。
 
-### メール/SMS の本文リンク変更
-現在 `reservation/{code}` のような URL を送っている箇所を `reservation/{code}?t={accessToken}` に変更:
-- `send-reservation-notification`
-- `send-confirmation-notification`
-- `send-pending-notification`
-- `send-reservation-reminders`
-- `_shared/email.ts` 経由のもの
+### 3. RLS未設定テーブルが1件存在（linter ERROR）
+linter で `RLS Disabled in Public` が1件報告されています。`shift_preferences` テーブルが RLS 有効だがポリシー未定義の可能性が高い（schemaで policies が空）。
 
-## フロント変更
+→ どのテーブルか特定して RLS有効化 + ポリシー追加（admin/staff 用）。
 
-### `src/pages/ReservationDetail.tsx`
-- URL クエリ `?t=xxx` があれば自動でトークン認証 → 予約取得
-- 無い、または失敗時は「電話番号下4桁を入力してください」フォーム表示
-- 認証成功で `ReservationInfo` / `ReservationActions` を表示
-- 認証前は予約の存在有無も含めて何も表示しない
+### 4. `staff_auth` テーブルに `password_hash` が直接保存されている
+独自のスタッフログイン用と思われますが、Supabase Auth ではなく自前ハッシュ管理は脆弱性混入リスクが高いです（ハッシュ方式不明、ソルト管理、ブルートフォース対策など）。
 
-### `src/pages/ReservationPending.tsx` / `ReservationComplete.tsx`
-- 現状の `location.state` ベースを維持（変更なし）
-- ただし内部で呼ぶ `get-reservation-by-code` には、作成直後に発行された `accessToken` を `location.state` 経由で受け取り渡す
+→ 中期的に Supabase Auth に統合することを推奨（今回はメモのみ、即修正はしない）。
 
-### 予約作成フロー
-予約作成 Edge Function（`create-reservation` 等）のレスポンスに `access_token` を含めるよう修正。フロント側は予約完了時にこれを `location.state` に格納し、Pending/Complete 画面で利用、また内部リンク生成にも使用。
+---
 
-## 技術詳細
-- トークンは `crypto.randomUUID()` ではなく `encode(gen_random_bytes(32), 'hex')` で 64 文字
-- 電話番号下4桁検証は既存 `cancel-reservation` のロジックを流用
-- 認証失敗時のレスポンスは予約の存在を示唆しないよう統一メッセージ
-- `accessToken` は URL に載るため HTTPS 前提（Lovable は標準対応）
+## 🟡 中程度
 
-## 影響範囲
-- DB マイグレーション 1件
-- Edge Function 改修: `get-reservation-by-code` + 各通知系（リンクURL）+ 予約作成系（レスポンス）
-- フロント: `ReservationDetail.tsx`, `ReservationPending.tsx`, `ReservationComplete.tsx`, 予約作成フックまたはコンポーネント
+### 5. DB関数の `search_path` 未設定（linter WARN × 8件）
+`generate_reservation_code`, `set_reservation_code` など複数の関数で `SET search_path` 未設定。SQL injection 経路ではないものの、ベストプラクティス。
 
-承認いただければ実装に入ります。
+→ 各関数に `SET search_path = public` を追加するマイグレーション。
+
+### 6. `SECURITY DEFINER` View が3件（linter ERROR）
+schema には View が見えないので Supabase 内部ビューの可能性もありますが、自作なら作成者権限で動くため危険。
+
+→ 該当 View を特定し、`SECURITY INVOKER` に変更 or 削除。
+
+### 7. `cancel-reservation` に Zod 等の入力バリデーションなし
+`reservationCode`, `phoneLastFourDigits` の型・形式チェックが薄い。
+
+→ 形式バリデーション追加（英数8文字 / 数字4桁）。
+
+### 8. `create-reservation` に rate-limit / 入力上限なし
+`guestName` / `phone` / `email` の長さ・形式チェックなし。悪意ある長文や不正フォーマットが通る可能性。
+
+→ Zod で形式・長さチェック追加。電話番号は数字のみ＆10〜11桁、メールは email 形式、名前は 1〜100 文字。
+
+---
+
+## 🟢 推奨（任意）
+
+### 9. Leaked Password Protection が無効（linter WARN）
+Supabase Auth の流出パスワード検出機能が OFF。スタッフログインに Supabase Auth 使うなら有効化推奨。
+
+→ Supabase ダッシュボードで ON。
+
+### 10. Postgres バージョンに security patch あり（linter WARN）
+Supabase ダッシュボードからアップグレード推奨。
+
+### 11. `RLS Policy Always True` が1件（linter WARN）
+SELECT 以外で `USING (true)` / `WITH CHECK (true)` を使っているポリシー。`reservation_options` の INSERT が `true` になっている可能性大。
+
+→ Edge Function 経由で挿入する設計なので、anon からの直接 INSERT は禁止に変更（`false` または authenticated 限定）。
+
+### 12. `extension in public` schema（linter WARN）
+拡張機能が public schema にある。本番影響は低いが整理推奨。
+
+---
+
+## 実装順序
+
+```text
+Phase 1（即対応・低リスク）
+  ├─ #1  cancel-reservation safeEqual 導入
+  ├─ #2  confirm-reservation の二重実行防止
+  ├─ #7  cancel-reservation Zod バリデーション
+  └─ #8  create-reservation Zod バリデーション
+
+Phase 2（DBマイグレーション）
+  ├─ #3  RLS未設定テーブル修正
+  ├─ #5  DB関数 search_path 固定
+  ├─ #6  SECURITY DEFINER View 修正
+  └─ #11 reservation_options INSERT ポリシー厳格化
+
+Phase 3（手動 / ダッシュボード作業）
+  ├─ #9  Leaked Password Protection 有効化
+  └─ #10 Postgres アップグレード
+
+Phase 4（中長期）
+  └─ #4  staff_auth → Supabase Auth 移行
+```
+
+---
+
+## どこまでやりますか？
+
+選択肢:
+- **A**: Phase 1 + 2 全部やる（コード＋マイグレーションで影響範囲やや広い）
+- **B**: Phase 1 だけ（Edge Function のみ、安全に小さく）
+- **C**: 重大（🔴）だけ
+- **D**: 上記から個別ピックアップ（番号で指定）
+
+どれにします？

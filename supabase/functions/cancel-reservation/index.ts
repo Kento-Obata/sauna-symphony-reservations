@@ -6,6 +6,16 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Constant-time comparison to mitigate timing attacks
+function safeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -15,20 +25,27 @@ serve(async (req) => {
   try {
     console.log("Cancel reservation function called");
 
-    const { reservationCode, phoneLastFourDigits } = await req.json();
-
-    if (!reservationCode || !phoneLastFourDigits) {
-      console.error("Missing required fields");
+    const body = await req.json().catch(() => null);
+    if (!body || typeof body !== 'object') {
       return new Response(
-        JSON.stringify({ error: "予約コードと電話番号が必要です" }),
+        JSON.stringify({ error: "リクエストが不正です" }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    const { reservationCode, phoneLastFourDigits } = body as Record<string, unknown>;
+
+    // Validate reservation code: 8 alphanumeric chars (matches generate_reservation_code)
+    if (typeof reservationCode !== 'string' || !/^[A-Z0-9]{8}$/.test(reservationCode)) {
+      return new Response(
+        JSON.stringify({ error: "予約コードの形式が正しくありません" }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    if (phoneLastFourDigits.length !== 4) {
-      console.error("Invalid phone digits length");
+    // Validate phone last 4 digits: exactly 4 digits
+    if (typeof phoneLastFourDigits !== 'string' || !/^\d{4}$/.test(phoneLastFourDigits)) {
       return new Response(
-        JSON.stringify({ error: "電話番号は4桁で入力してください" }),
+        JSON.stringify({ error: "電話番号は4桁の数字で入力してください" }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -64,9 +81,9 @@ serve(async (req) => {
 
     console.log(`Found reservation for phone: ${reservation.phone}`);
 
-    // Verify phone number last 4 digits
-    const last4Digits = reservation.phone.slice(-4);
-    if (last4Digits !== phoneLastFourDigits) {
+    // Verify phone number last 4 digits with constant-time comparison
+    const last4Digits = (reservation.phone || '').slice(-4);
+    if (last4Digits.length !== 4 || !safeEqual(last4Digits, phoneLastFourDigits)) {
       console.error("Phone verification failed");
       return new Response(
         JSON.stringify({ error: "電話番号の下4桁が一致しません" }),
