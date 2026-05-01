@@ -1,7 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { buildSimpleEmailHtml, sendAppEmail } from "../_shared/lovable-email.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -62,19 +62,17 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
     const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID');
     const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN');
     const TWILIO_PHONE_NUMBER = Deno.env.get('TWILIO_PHONE_NUMBER');
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-    if (!RESEND_API_KEY || !TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
       throw new Error("Missing required environment variables");
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    const resend = new Resend(RESEND_API_KEY);
     const reservation: ReservationNotification = await req.json();
     const notifications = [];
 
@@ -110,11 +108,13 @@ URL：${CONFIRMATION_URL}
 
     if (reservation.email) {
       try {
-        const emailRes = await resend.emails.send({
-          from: "体験型サウナU <noreply@notify.u-sync.jp>",
-          to: [reservation.email],
+        const emailRes = await sendAppEmail({
+          to: reservation.email,
           subject: "サウナのご仮予約確認",
-          html: messageContent.split('\n').map(line => `<p>${line}</p>`).join(''),
+          html: buildSimpleEmailHtml("仮予約を受け付けました", messageContent),
+          text: messageContent,
+          idempotencyKey: `reservation-pending-${reservation.reservationCode}`,
+          label: "reservation-pending",
         });
         console.log("Email sent successfully:", emailRes);
         notifications.push("email");
