@@ -185,18 +185,18 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
       <div>{getTimeSlotDisplay(reservation.time_slot, reservation.date, dailyTimeSlots || [])}</div>
       
       <div className="text-sauna-stone">お名前:</div>
-      <div>{maskName(reservation.guest_name)}</div>
+      <div>{reservation.guest_name}</div>
       
       <div className="text-sauna-stone">人数:</div>
       <div>{reservation.guest_count}名</div>
       
       <div className="text-sauna-stone">電話番号:</div>
-      <div>{maskPhone(reservation.phone)}</div>
+      <div>{reservation.phone}</div>
       
       {reservation.email && (
         <>
           <div className="text-sauna-stone">メールアドレス:</div>
-          <div>{maskEmail(reservation.email)}</div>
+          <div>{reservation.email}</div>
         </>
       )}
       
