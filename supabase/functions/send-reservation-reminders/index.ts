@@ -2,8 +2,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { format, addDays } from "https://esm.sh/date-fns@3.3.1";
+import { sendAppEmail, buildSimpleEmailHtml } from "../_shared/lovable-email.ts";
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
 const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
 const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER");
@@ -56,37 +56,33 @@ const formatPhoneNumber = (phone: string): string => {
 
 const sendEmail = async (to: string, reservation: any, timeSlotLabel: string) => {
   try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: "Sauna Reservation <onboarding@resend.dev>",
-        to: [to],
-        subject: "【明日】サウナのご予約リマインダー",
-        html: `
-          <h1>ご予約リマインダー</h1>
-          <p>${reservation.guest_name}様</p>
-          <p>明日のサウナのご予約についてお知らせいたします：</p>
-          <ul>
-            <li>日時: ${reservation.date}</li>
-            <li>時間: ${timeSlotLabel}</li>
-            <li>人数: ${reservation.guest_count}名</li>
-            <li>水風呂温度: ${reservation.water_temperature}°C</li>
-          </ul>
-          <p>住所: 〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4</p>
-          <p>Plus Code: 8Q5GHG7V+J5</p>
-          <p>Google Maps: https://maps.google.com/maps?q=8Q5GHG7V%2BJ5</p>
-          <p>ご来店を心よりお待ちしております。</p>
-        `,
-      }),
-    });
+    const subject = "【明日】サウナUのご予約リマインダー";
+    const heading = "明日のご予約のお知らせ";
+    const body = `${reservation.guest_name}様
 
-    if (!res.ok) {
-      throw new Error(`メール送信に失敗しました: ${await res.text()}`);
-    }
+明日のサウナのご予約についてお知らせいたします。
+
+【ご予約内容】
+日時: ${reservation.date}
+時間: ${timeSlotLabel}
+人数: ${reservation.guest_count}名
+水風呂温度: ${reservation.water_temperature}°C
+
+【所在地】
+〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4
+Plus Code: 8Q5GHG7V+J5
+Google Maps: https://maps.google.com/maps?q=8Q5GHG7V%2BJ5
+
+ご来店を心よりお待ちしております。`;
+
+    await sendAppEmail({
+      to,
+      subject,
+      html: buildSimpleEmailHtml(heading, body),
+      text: body,
+      idempotencyKey: `reservation-reminder-${reservation.reservation_code}-${reservation.date}`,
+      label: "reservation-reminder",
+    });
     console.log(`メールを送信しました: ${to}`);
   } catch (error) {
     console.error("メール送信エラー:", error);
