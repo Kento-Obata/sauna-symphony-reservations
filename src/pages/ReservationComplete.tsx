@@ -147,7 +147,7 @@ export default function ReservationComplete() {
 
           <div className="space-y-4 pt-6">
             <Button 
-              onClick={() => navigate(`/reservation/${reservationCode}`)}
+              onClick={() => navigate(`/reservation/${reservationCode}${accessToken ? `?t=${accessToken}` : ''}`)}
               className="w-full sm:w-auto"
             >
               予約詳細を確認
