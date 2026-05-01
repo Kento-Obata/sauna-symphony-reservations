@@ -21,7 +21,9 @@ export const ReservationDetail = () => {
 
   // Auth state: URL token grants automatic access; phone-verification stores
   // the resulting reservation directly in `phoneVerifiedReservation`.
-  const [accessToken] = useState<string | undefined>(tokenFromUrl);
+  // IMPORTANT: derive directly from URL (not useState) so that removing `?t=...`
+  // immediately revokes access without relying on stale state.
+  const accessToken = tokenFromUrl;
   const [phoneVerifiedReservation, setPhoneVerifiedReservation] = useState<any>(null);
   const [phoneInput, setPhoneInput] = useState("");
   const [phoneSubmitting, setPhoneSubmitting] = useState(false);
