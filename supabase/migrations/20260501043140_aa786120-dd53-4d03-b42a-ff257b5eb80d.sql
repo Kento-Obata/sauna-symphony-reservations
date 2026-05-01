@@ -1,0 +1,3 @@
+UPDATE public.daily_time_slots SET start_time = '12:00', end_time = '14:30' WHERE time_slot = 'morning' AND date IN ('2026-05-20','2026-05-27');
+UPDATE public.daily_time_slots SET start_time = '15:30', end_time = '18:00' WHERE time_slot = 'afternoon' AND date IN ('2026-05-20','2026-05-27');
+UPDATE public.daily_time_slots SET start_time = '19:00', end_time = '22:00' WHERE time_slot = 'evening' AND date IN ('2026-05-20','2026-05-27');
