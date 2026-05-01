@@ -43,28 +43,26 @@ export const ReservationDetail = () => {
     );
   }
 
-  const { data: reservation, isLoading, error, refetch } = useQuery({
+  const { data: queryReservation, isLoading: queryLoading, error } = useQuery({
     queryKey: ["reservation", reservationCode, accessToken],
     queryFn: async () => {
-      // Without auth credentials, do not even attempt — show the auth gate.
       if (!accessToken) return { requiresAuth: true } as any;
 
       const { data, error } = await supabase.functions.invoke('get-reservation-by-code', {
         body: { reservationCode, accessToken }
       });
 
-      if (error) {
-        // 401 from the function is delivered as an invocation error in some cases
-        return { requiresAuth: true } as any;
-      }
-      if (data?.requiresAuth || data?.error) {
-        return { requiresAuth: true } as any;
-      }
+      if (error) return { requiresAuth: true } as any;
+      if (data?.requiresAuth || data?.error) return { requiresAuth: true } as any;
       return data.reservation;
     },
     retry: false,
-    enabled: !!reservationCode,
+    enabled: !!reservationCode && !!accessToken,
   });
+
+  // Effective reservation: phone-verified takes precedence, then query result.
+  const reservation = phoneVerifiedReservation ?? queryReservation;
+  const isLoading = !phoneVerifiedReservation && !!accessToken && queryLoading;
 
   const cancelReservation = useMutation({
     mutationFn: async (phoneInput: string) => {
@@ -79,8 +77,16 @@ export const ReservationDetail = () => {
       if (data?.error) throw new Error(data.error);
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["reservation", reservationCode] });
+    onSuccess: async () => {
+      // Refresh whichever source we used to load this reservation.
+      if (phoneVerifiedReservation) {
+        const { data } = await supabase.functions.invoke('get-reservation-by-code', {
+          body: { reservationCode, phoneLastFourDigits: phoneVerifiedReservation.phone?.slice(-4) }
+        });
+        if (data?.reservation) setPhoneVerifiedReservation(data.reservation);
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["reservation", reservationCode] });
+      }
       toast.success("予約をキャンセルしました");
     },
     onError: (error: Error) => {
@@ -105,11 +111,7 @@ export const ReservationDetail = () => {
         setPhoneError("認証に失敗しました。電話番号下4桁または予約コードをご確認ください。");
         return;
       }
-      // Cache the reservation under a synthetic auth key so subsequent reads work.
-      queryClient.setQueryData(["reservation", reservationCode, "phone"], data.reservation);
-      // Re-render with reservation manually injected via accessToken sentinel.
-      setAccessToken("__phone_verified__");
-      queryClient.setQueryData(["reservation", reservationCode, "__phone_verified__"], data.reservation);
+      setPhoneVerifiedReservation(data.reservation);
     } catch (err: any) {
       setPhoneError(err.message || "認証に失敗しました");
     } finally {
@@ -118,8 +120,8 @@ export const ReservationDetail = () => {
   };
 
   const needsAuth =
-    !accessToken ||
-    (reservation && (reservation as any).requiresAuth);
+    !phoneVerifiedReservation &&
+    (!accessToken || (queryReservation && (queryReservation as any).requiresAuth));
 
   if (isLoading) {
     return (
