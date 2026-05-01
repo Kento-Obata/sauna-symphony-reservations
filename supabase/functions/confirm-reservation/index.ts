@@ -36,11 +36,15 @@ serve(async (req) => {
     const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
 
     const { token } = await req.json();
-    console.log("Received token:", token);
+    console.log("Received token:", token ? `${String(token).slice(0, 8)}...` : 'null');
 
-    if (!token) {
-      console.error("No token provided");
-      throw new Error("Token is required");
+    // Validate token: 64 hex chars (gen_random_bytes(32) hex-encoded)
+    if (typeof token !== 'string' || !/^[a-f0-9]{64}$/.test(token)) {
+      console.error("Invalid token format");
+      return new Response(
+        JSON.stringify({ success: false, error: "Invalid token" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Find the reservation
@@ -48,14 +52,22 @@ serve(async (req) => {
       .from("reservations")
       .select("*")
       .eq("confirmation_token", token)
-      .single();
+      .maybeSingle();
 
-    console.log("Fetched reservation:", reservation);
     console.log("Fetch error:", fetchError);
 
     if (fetchError || !reservation) {
       console.error("Error finding reservation:", fetchError);
       throw new Error("Invalid or expired token");
+    }
+
+    // Replay protection: if already confirmed, return success without re-processing
+    if (reservation.is_confirmed) {
+      console.log("Reservation already confirmed, skipping re-processing");
+      return new Response(
+        JSON.stringify({ success: true, reservation_code: reservation.reservation_code, alreadyConfirmed: true }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Update the reservation

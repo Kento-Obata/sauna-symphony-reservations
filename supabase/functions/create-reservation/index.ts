@@ -42,10 +42,41 @@ const handler = async (req: Request): Promise<Response> => {
     if (!date || !timeSlot || !guestName || !guestCount || !phone) {
       return new Response(
         JSON.stringify({ error: "必須項目が入力されていません" }),
-        { 
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 400 
-        }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+      );
+    }
+
+    // Format validations
+    const errors: string[] = [];
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) errors.push("日付の形式が正しくありません");
+    if (!['morning', 'afternoon', 'evening'].includes(timeSlot)) errors.push("時間帯が不正です");
+    if (typeof guestName !== 'string' || guestName.trim().length === 0 || guestName.length > 100) {
+      errors.push("お名前は1〜100文字で入力してください");
+    }
+    if (!Number.isInteger(guestCount) || guestCount < 1 || guestCount > 20) {
+      errors.push("人数が不正です");
+    }
+    // Phone: digits/hyphens, 10-15 chars total, at least 10 digits
+    const phoneStr = String(phone);
+    const phoneDigits = phoneStr.replace(/[^\d]/g, '');
+    if (!/^[\d\-+()\s]{10,20}$/.test(phoneStr) || phoneDigits.length < 10 || phoneDigits.length > 15) {
+      errors.push("電話番号の形式が正しくありません");
+    }
+    if (email !== undefined && email !== null && email !== '') {
+      if (typeof email !== 'string' || email.length > 255 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        errors.push("メールアドレスの形式が正しくありません");
+      }
+    }
+    if (!Number.isInteger(waterTemperature) || waterTemperature < 0 || waterTemperature > 100) {
+      errors.push("水温が不正です");
+    }
+    if (selectedOptions && !Array.isArray(selectedOptions)) {
+      errors.push("オプションの形式が不正です");
+    }
+    if (errors.length > 0) {
+      return new Response(
+        JSON.stringify({ error: errors.join(' / ') }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
       );
     }
 
