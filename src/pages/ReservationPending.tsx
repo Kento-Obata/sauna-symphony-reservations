@@ -98,7 +98,7 @@ export default function ReservationPending() {
     };
 
     fetchReservation();
-  }, [reservationCode, navigate]);
+  }, [reservationCode, accessToken, navigate]);
 
   if (!reservationCode) return null;
 
