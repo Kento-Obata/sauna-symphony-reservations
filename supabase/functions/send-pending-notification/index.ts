@@ -110,7 +110,7 @@ URL：${CONFIRMATION_URL}
       try {
         const emailRes = await sendAppEmail({
           to: reservation.email,
-          subject: "サウナのご仮予約確認",
+          subject: "サウナU ⚠️まだご予約は確定しておりません",
           html: buildSimpleEmailHtml("仮予約を受け付けました", messageContent),
           text: messageContent,
           idempotencyKey: `reservation-pending-${reservation.reservationCode}`,
