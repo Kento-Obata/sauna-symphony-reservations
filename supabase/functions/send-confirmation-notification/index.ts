@@ -152,25 +152,18 @@ ${reservationDetailUrl}
 
     if (reservation.email) {
       try {
-        console.log("Enqueueing transactional confirmation email to:", reservation.email);
-        const { data: emailRes, error: emailErr } = await supabase.functions.invoke('send-transactional-email', {
-          body: {
-            templateName: 'reservation-confirmed',
-            recipientEmail: reservation.email,
-            idempotencyKey: `reservation-confirmed-${reservation.reservationCode}`,
-            templateData: {
-              guestName: reservation.guestName,
-              reservationCode: reservation.reservationCode,
-              date: reservation.date,
-              timeSlot: timeSlotLabel,
-              guestCount: reservation.guestCount,
-              totalPrice: totalPrice,
-              reservationUrl: reservationDetailUrl,
-            },
-          },
+        console.log("Attempting to send email to:", reservation.email);
+        const emailRes = await resend.emails.send({
+          from: "体験型サウナU <noreply@notify.u-sync.jp>",
+          to: [reservation.email],
+          subject: "サウナのご予約確定のお知らせ",
+          html: `
+            <h1>ご予約ありがとうございます</h1>
+            <p>${reservation.guestName}様</p>
+            ${messageContent.split('\n').map(line => `<p>${line}</p>`).join('')}
+          `,
         });
-        if (emailErr) throw emailErr;
-        console.log("Email enqueued successfully:", emailRes);
+        console.log("Email sent successfully:", emailRes);
         notifications.push("email");
       } catch (error) {
         console.error("Email sending error:", error);
