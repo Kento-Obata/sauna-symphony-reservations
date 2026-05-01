@@ -35,24 +35,22 @@ export const PatternApplyDialog = ({ open, onOpenChange }: Props) => {
 
     setIsApplying(true);
     try {
-      for (const date of selectedDates) {
+      const allSlots = selectedDates.flatMap((date) => {
         const dateStr = format(date, "yyyy-MM-dd");
-
-        // Delete existing slots for this date
-        await supabase
-          .from("daily_time_slots")
-          .delete()
-          .eq("date", dateStr);
-
-        // Insert 3 slots from pattern
-        const slots = [
+        return [
           { date: dateStr, time_slot: "morning" as const, start_time: pattern.morning_start, end_time: pattern.morning_end, is_active: true },
           { date: dateStr, time_slot: "afternoon" as const, start_time: pattern.afternoon_start, end_time: pattern.afternoon_end, is_active: true },
           { date: dateStr, time_slot: "evening" as const, start_time: pattern.evening_start, end_time: pattern.evening_end, is_active: true },
         ];
+      });
 
-        const { error } = await supabase.from("daily_time_slots").insert(slots);
-        if (error) throw error;
+      const { error } = await supabase
+        .from("daily_time_slots")
+        .upsert(allSlots, { onConflict: "date,time_slot" });
+
+      if (error) {
+        console.error("Upsert error detail:", error);
+        throw error;
       }
 
       queryClient.invalidateQueries({ queryKey: ["daily_time_slots"] });
