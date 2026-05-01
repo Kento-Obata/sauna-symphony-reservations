@@ -284,6 +284,7 @@ export type Database = {
       }
       reservations: {
         Row: {
+          access_token: string | null
           admin_memo: string | null
           admin_memo_updated_at: string | null
           admin_memo_updated_by: string | null
@@ -304,6 +305,7 @@ export type Database = {
           water_temperature: number
         }
         Insert: {
+          access_token?: string | null
           admin_memo?: string | null
           admin_memo_updated_at?: string | null
           admin_memo_updated_by?: string | null
@@ -324,6 +326,7 @@ export type Database = {
           water_temperature: number
         }
         Update: {
+          access_token?: string | null
           admin_memo?: string | null
           admin_memo_updated_at?: string | null
           admin_memo_updated_by?: string | null
