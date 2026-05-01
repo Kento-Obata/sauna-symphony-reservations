@@ -97,7 +97,7 @@ export default function ReservationComplete() {
     };
 
     fetchReservationDetails();
-  }, [reservationCode, navigate]);
+  }, [reservationCode, accessToken, navigate]);
 
   if (!reservationCode) return null;
 
