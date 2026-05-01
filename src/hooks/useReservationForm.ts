@@ -135,7 +135,7 @@ export const useReservationForm = () => {
 
       // Navigate to temporary reservation page
       navigate('/reservation/pending', { 
-        state: { reservationCode: data.reservationCode },
+        state: { reservationCode: data.reservationCode, accessToken: data.accessToken },
         replace: true
       });
 
