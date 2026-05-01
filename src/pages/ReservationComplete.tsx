@@ -18,6 +18,7 @@ export default function ReservationComplete() {
   const location = useLocation();
   const navigate = useNavigate();
   const reservationCode = location.state?.reservationCode;
+  const accessToken = location.state?.accessToken;
   const [details, setDetails] = useState<ReservationDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,9 +35,9 @@ export default function ReservationComplete() {
         setIsLoading(true);
         setError(null);
         
-        // Use edge function to securely fetch reservation
+        // Use edge function to securely fetch reservation (auth via accessToken)
         const { data: reservationData, error: reservationError } = await supabase.functions.invoke('get-reservation-by-code', {
-          body: { reservationCode }
+          body: { reservationCode, accessToken }
         });
 
         if (reservationError || reservationData?.error) {
