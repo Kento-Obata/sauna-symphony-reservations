@@ -1,8 +1,8 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "https://esm.sh/resend@2.0.0";
 import { sendSMS } from "../_shared/twilio.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { buildSimpleEmailHtml, sendAppEmail } from "../_shared/lovable-email.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -63,7 +63,6 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
     const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID');
     const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN');
     const TWILIO_PHONE_NUMBER = Deno.env.get('TWILIO_PHONE_NUMBER');
@@ -72,20 +71,18 @@ const handler = async (req: Request): Promise<Response> => {
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
     console.log("Environment variables check:", {
-      hasResendKey: !!RESEND_API_KEY,
       hasTwilioSid: !!TWILIO_ACCOUNT_SID,
       hasTwilioToken: !!TWILIO_AUTH_TOKEN,
       hasPhoneNumber: !!TWILIO_PHONE_NUMBER,
       hasOwnerPhone: !!OWNER_PHONE_NUMBER
     });
 
-    if (!RESEND_API_KEY || !TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER || !OWNER_PHONE_NUMBER || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER || !OWNER_PHONE_NUMBER || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
       console.error("Missing required environment variables");
       throw new Error("Server configuration error");
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    const resend = new Resend(RESEND_API_KEY);
     const reservation: ReservationNotification = await req.json();
     console.log("Received reservation data:", {
       ...reservation,
@@ -153,15 +150,13 @@ ${reservationDetailUrl}
     if (reservation.email) {
       try {
         console.log("Attempting to send email to:", reservation.email);
-        const emailRes = await resend.emails.send({
-          from: "体験型サウナU <noreply@notify.u-sync.jp>",
-          to: [reservation.email],
+        const emailRes = await sendAppEmail({
+          to: reservation.email,
           subject: "サウナのご予約確定のお知らせ",
-          html: `
-            <h1>ご予約ありがとうございます</h1>
-            <p>${reservation.guestName}様</p>
-            ${messageContent.split('\n').map(line => `<p>${line}</p>`).join('')}
-          `,
+          html: buildSimpleEmailHtml("ご予約ありがとうございます", `${reservation.guestName}様\n${messageContent}`),
+          text: `${reservation.guestName}様\n${messageContent}`,
+          idempotencyKey: `reservation-confirmed-${reservation.reservationCode}`,
+          label: "reservation-confirmed",
         });
         console.log("Email sent successfully:", emailRes);
         notifications.push("email");
