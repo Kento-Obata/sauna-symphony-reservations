@@ -19,9 +19,10 @@ export const ReservationDetail = () => {
   const queryClient = useQueryClient();
   const [showEditDialog, setShowEditDialog] = useState(false);
 
-  // Auth state: we hold either the URL token or, after a successful
-  // phone-last-4 verification, the canonical access token returned by the server.
-  const [accessToken, setAccessToken] = useState<string | undefined>(tokenFromUrl);
+  // Auth state: URL token grants automatic access; phone-verification stores
+  // the resulting reservation directly in `phoneVerifiedReservation`.
+  const [accessToken] = useState<string | undefined>(tokenFromUrl);
+  const [phoneVerifiedReservation, setPhoneVerifiedReservation] = useState<any>(null);
   const [phoneInput, setPhoneInput] = useState("");
   const [phoneSubmitting, setPhoneSubmitting] = useState(false);
   const [phoneError, setPhoneError] = useState<string | null>(null);
