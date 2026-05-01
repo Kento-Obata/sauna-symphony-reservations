@@ -20,6 +20,14 @@ const escapeHtml = (value: string) =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 
+const generateToken = () => {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes)
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+};
+
 export const buildSimpleEmailHtml = (heading: string, body: string) => {
   const paragraphs = body
     .trim()
@@ -59,6 +67,7 @@ export const sendAppEmail = async ({
       text,
       purpose: "transactional",
       idempotency_key: idempotencyKey,
+      unsubscribe_token: generateToken(),
       label,
       message_id: crypto.randomUUID(),
     },
