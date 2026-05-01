@@ -14,6 +14,7 @@ import { AdminGuard } from "./components/admin/AdminGuard";
 import { ShiftGuard } from "./components/shift/ShiftGuard";
 import Shift2 from "./pages/Shift2";
 import Shift2Dashboard from "./pages/Shift2Dashboard";
+import Unsubscribe from "./pages/Unsubscribe";
 
 export const router = createBrowserRouter([
   {
@@ -75,5 +76,9 @@ export const router = createBrowserRouter([
   {
     path: "/reservation/:code",
     element: <ReservationDetail />,
+  },
+  {
+    path: "/unsubscribe",
+    element: <Unsubscribe />,
   },
 ]);
