@@ -108,7 +108,14 @@ const handler = async (req: Request): Promise<Response> => {
     const GOOGLE_MAPS_URL = "https://maps.google.com/maps?q=8Q5GHG7V%2BJ5";
     const BASE_URL = "https://www.u-sauna-private.com";
     const CONFIRMATION_URL = `${BASE_URL}/reservation/confirm/${reservation.confirmationToken}`;
-    const RESERVATION_DETAILS_URL = `${BASE_URL}/reservation/${reservation.reservationCode}`;
+    // Fetch access_token to build a signed detail URL
+    const { data: tokenRow } = await supabase
+      .from("reservations")
+      .select("access_token")
+      .eq("reservation_code", reservation.reservationCode)
+      .maybeSingle();
+    const tokenQuery = tokenRow?.access_token ? `?t=${tokenRow.access_token}` : "";
+    const RESERVATION_DETAILS_URL = `${BASE_URL}/reservation/${reservation.reservationCode}${tokenQuery}`;
 
     console.log("Generated URLs:", {
       CONFIRMATION_URL,
