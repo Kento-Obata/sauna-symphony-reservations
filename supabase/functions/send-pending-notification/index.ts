@@ -110,13 +110,24 @@ URL：${CONFIRMATION_URL}
 
     if (reservation.email) {
       try {
-        const emailRes = await resend.emails.send({
-          from: "Sauna U <onboarding@resend.dev>",
-          to: [reservation.email],
-          subject: "サウナのご仮予約確認",
-          html: messageContent.split('\n').map(line => `<p>${line}</p>`).join(''),
+        const { data: emailRes, error: emailErr } = await supabase.functions.invoke('send-transactional-email', {
+          body: {
+            templateName: 'reservation-pending',
+            recipientEmail: reservation.email,
+            idempotencyKey: `reservation-pending-${reservation.reservationCode}`,
+            templateData: {
+              guestName: reservation.guestName,
+              reservationCode: reservation.reservationCode,
+              date: reservation.date,
+              timeSlot: timeSlotLabel,
+              guestCount: reservation.guestCount,
+              totalPrice: totalPrice,
+              confirmationUrl: CONFIRMATION_URL,
+            },
+          },
         });
-        console.log("Email sent successfully:", emailRes);
+        if (emailErr) throw emailErr;
+        console.log("Email enqueued successfully:", emailRes);
         notifications.push("email");
       } catch (error) {
         console.error("Email sending error:", error);
