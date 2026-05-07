@@ -8,31 +8,47 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 
 const Shift2 = () => {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!username || !password) {
-      toast.error("ユーザー名とパスワードを入力してください");
+
+    if (!email || !password) {
+      toast.error("メールアドレスとパスワードを入力してください");
       return;
     }
 
     setIsLoading(true);
-    
+
     try {
-      // スタッフ認証の実装（仮）
-      // 実際の認証ロジックは後で実装
-      console.log("Attempting login with:", { username, password });
-      
-      // 成功時はダッシュボードに遷移
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error || !data.session) {
+        throw error ?? new Error("ログインに失敗しました");
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", data.session.user.id)
+        .single();
+
+      if (!profile || !["admin", "staff", "viewer"].includes(profile.role ?? "")) {
+        await supabase.auth.signOut();
+        toast.error("アクセス権限がありません");
+        return;
+      }
+
       navigate("/shift2/dashboard");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error:", error);
-      toast.error("ログインに失敗しました");
+      toast.error(error?.message || "ログインに失敗しました");
     } finally {
       setIsLoading(false);
     }
