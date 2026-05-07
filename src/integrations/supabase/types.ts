@@ -589,6 +589,8 @@ export type Database = {
           morning_end: string
           morning_start: string
           name: string
+          night_end: string | null
+          night_start: string | null
           updated_at: string
         }
         Insert: {
@@ -601,6 +603,8 @@ export type Database = {
           morning_end?: string
           morning_start?: string
           name: string
+          night_end?: string | null
+          night_start?: string | null
           updated_at?: string
         }
         Update: {
@@ -613,6 +617,8 @@ export type Database = {
           morning_end?: string
           morning_start?: string
           name?: string
+          night_end?: string | null
+          night_start?: string | null
           updated_at?: string
         }
         Relationships: []

@@ -1,4 +1,4 @@
-export type TimeSlot = "morning" | "afternoon" | "evening";
+export type TimeSlot = "morning" | "afternoon" | "evening" | "night";
 
 export interface Reservation {
   id: string;
