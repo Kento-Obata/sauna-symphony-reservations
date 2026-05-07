@@ -55,6 +55,8 @@ export const DailyTimeSlotManager = () => {
         return "午後";
       case "evening":
         return "夕方";
+      case "night":
+        return "夜";
       default:
         return timeSlot;
     }
