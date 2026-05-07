@@ -5,6 +5,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   useCreateTimeSlotPattern,
   useUpdateTimeSlotPattern,
@@ -25,6 +26,9 @@ export const TimeSlotPatternDialog = ({ open, onOpenChange, editingPattern }: Pr
   const [afternoonEnd, setAfternoonEnd] = useState("16:00");
   const [eveningStart, setEveningStart] = useState("17:00");
   const [eveningEnd, setEveningEnd] = useState("19:30");
+  const [hasNight, setHasNight] = useState(false);
+  const [nightStart, setNightStart] = useState("20:00");
+  const [nightEnd, setNightEnd] = useState("22:30");
 
   const createMutation = useCreateTimeSlotPattern();
   const updateMutation = useUpdateTimeSlotPattern();
@@ -38,6 +42,11 @@ export const TimeSlotPatternDialog = ({ open, onOpenChange, editingPattern }: Pr
       setAfternoonEnd(editingPattern.afternoon_end.slice(0, 5));
       setEveningStart(editingPattern.evening_start.slice(0, 5));
       setEveningEnd(editingPattern.evening_end.slice(0, 5));
+      const ns = editingPattern.night_start;
+      const ne = editingPattern.night_end;
+      setHasNight(!!ns && !!ne);
+      setNightStart(ns ? ns.slice(0, 5) : "20:00");
+      setNightEnd(ne ? ne.slice(0, 5) : "22:30");
     } else {
       setName("");
       setMorningStart("10:00");
@@ -46,6 +55,9 @@ export const TimeSlotPatternDialog = ({ open, onOpenChange, editingPattern }: Pr
       setAfternoonEnd("16:00");
       setEveningStart("17:00");
       setEveningEnd("19:30");
+      setHasNight(false);
+      setNightStart("20:00");
+      setNightEnd("22:30");
     }
   }, [editingPattern, open]);
 
@@ -59,6 +71,8 @@ export const TimeSlotPatternDialog = ({ open, onOpenChange, editingPattern }: Pr
       afternoon_end: afternoonEnd,
       evening_start: eveningStart,
       evening_end: eveningEnd,
+      night_start: hasNight ? nightStart : null,
+      night_end: hasNight ? nightEnd : null,
     };
 
     if (editingPattern) {
@@ -92,6 +106,21 @@ export const TimeSlotPatternDialog = ({ open, onOpenChange, editingPattern }: Pr
                 <Input type="time" value={end} onChange={(e) => setEnd(e.target.value)} className="w-28" />
               </div>
             ))}
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div>
+                <Label className="text-base">夜枠を含める</Label>
+                <p className="text-xs text-muted-foreground">この日に4枠目を追加します</p>
+              </div>
+              <Switch checked={hasNight} onCheckedChange={setHasNight} />
+            </div>
+            {hasNight && (
+              <div className="flex items-center gap-2">
+                <Label className="w-12">夜</Label>
+                <Input type="time" value={nightStart} onChange={(e) => setNightStart(e.target.value)} className="w-28" />
+                <span>-</span>
+                <Input type="time" value={nightEnd} onChange={(e) => setNightEnd(e.target.value)} className="w-28" />
+              </div>
+            )}
           </div>
         </div>
         <DialogFooter>
