@@ -10,10 +10,11 @@ const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-const DEFAULT_TIME_SLOTS = {
+const DEFAULT_TIME_SLOTS: Record<string, string> = {
   morning: "10:00-12:30",
-  afternoon: "13:30-16:00", 
+  afternoon: "13:30-16:00",
   evening: "17:00-19:30",
+  night: "20:00-22:30",
 };
 
 const getTimeSlotLabel = async (supabase: any, timeSlot: string, date: string): Promise<string> => {
