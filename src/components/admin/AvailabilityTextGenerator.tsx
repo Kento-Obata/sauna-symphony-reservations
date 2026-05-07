@@ -10,6 +10,7 @@ import { ChevronLeft, ChevronRight, Copy, Check } from "lucide-react";
 import { generateAvailabilityText, getMondayOfWeek } from "@/utils/availabilityUtils";
 import { Reservation } from "@/types/reservation";
 import { useShopClosures } from "@/hooks/useShopClosures";
+import { useDailyTimeSlots } from "@/hooks/useDailyTimeSlots";
 import { toast } from "sonner";
 
 interface AvailabilityTextGeneratorProps {
@@ -20,12 +21,13 @@ export const AvailabilityTextGenerator = ({ reservations = [] }: AvailabilityTex
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(getMondayOfWeek(new Date()));
   const [copied, setCopied] = useState(false);
   const { closures: shopClosures } = useShopClosures();
-  
+  const { data: dailyTimeSlots } = useDailyTimeSlots();
+
   const handlePrevWeek = () => setCurrentWeekStart(subWeeks(currentWeekStart, 1));
   const handleNextWeek = () => setCurrentWeekStart(addWeeks(currentWeekStart, 1));
   const handleThisWeek = () => setCurrentWeekStart(getMondayOfWeek(new Date()));
-  
-  const availabilityText = generateAvailabilityText(currentWeekStart, reservations, shopClosures);
+
+  const availabilityText = generateAvailabilityText(currentWeekStart, reservations, shopClosures, dailyTimeSlots);
   
   const handleCopyText = () => {
     navigator.clipboard.writeText(availabilityText)
