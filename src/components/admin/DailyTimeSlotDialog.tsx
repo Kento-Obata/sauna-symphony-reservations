@@ -211,6 +211,7 @@ export const DailyTimeSlotDialog = ({
                       <SelectItem value="morning">午前</SelectItem>
                       <SelectItem value="afternoon">午後</SelectItem>
                       <SelectItem value="evening">夕方</SelectItem>
+                      <SelectItem value="night">夜</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
