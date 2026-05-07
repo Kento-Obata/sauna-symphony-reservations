@@ -32,16 +32,19 @@ export const ShiftRequestForm = () => {
     }
 
     setIsLoading(true);
-    
+
     try {
-      // 実際のユーザーIDを取得する必要がある
-      // 今は仮のIDを使用
-      const staffId = "temp-user-id";
-      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("ログインが必要です");
+        setIsLoading(false);
+        return;
+      }
+
       const { error } = await supabase
         .from("shift_requests")
         .insert({
-          staff_id: staffId,
+          staff_id: user.id,
           date,
           start_hour: parseInt(startHour),
           end_hour: parseInt(endHour),
