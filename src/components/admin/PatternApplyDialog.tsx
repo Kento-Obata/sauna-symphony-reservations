@@ -99,6 +99,9 @@ export const PatternApplyDialog = ({ open, onOpenChange }: Props) => {
               <div>午前: {selectedPattern.morning_start.slice(0, 5)}-{selectedPattern.morning_end.slice(0, 5)}</div>
               <div>午後: {selectedPattern.afternoon_start.slice(0, 5)}-{selectedPattern.afternoon_end.slice(0, 5)}</div>
               <div>夕方: {selectedPattern.evening_start.slice(0, 5)}-{selectedPattern.evening_end.slice(0, 5)}</div>
+              {selectedPattern.night_start && selectedPattern.night_end && (
+                <div>夜: {selectedPattern.night_start.slice(0, 5)}-{selectedPattern.night_end.slice(0, 5)}</div>
+              )}
             </div>
           )}
 
