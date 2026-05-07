@@ -59,7 +59,11 @@ export const router = createBrowserRouter([
   },
   {
     path: "/shift2/dashboard",
-    element: <Shift2Dashboard />,
+    element: (
+      <ShiftGuard>
+        <Shift2Dashboard />
+      </ShiftGuard>
+    ),
   },
   {
     path: "/reservation/confirm/:token",
