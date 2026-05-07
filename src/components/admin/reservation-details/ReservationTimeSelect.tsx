@@ -52,7 +52,7 @@ export const ReservationTimeSelect = ({
       return { start: dailySlot.start_time, end: dailySlot.end_time };
     }
     
-    return TIME_SLOTS[slot];
+    return ALL_TIME_SLOT_DEFAULTS[slot];
   };
 
   const currentTimeSlotLabel = getTimeSlotLabel(timeSlot);
