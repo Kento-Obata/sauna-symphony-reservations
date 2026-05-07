@@ -82,7 +82,8 @@ const ReservationForm = () => {
     const defaultSlotReservations: Record<TimeSlot, number> = {
       morning: 0,
       afternoon: 0,
-      evening: 0
+      evening: 0,
+      night: 0,
     };
 
     if (!reservations || !selectedDate || !isValid(selectedDate)) {
