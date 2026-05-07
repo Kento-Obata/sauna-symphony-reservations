@@ -49,7 +49,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Format validations
     const errors: string[] = [];
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) errors.push("日付の形式が正しくありません");
-    if (!['morning', 'afternoon', 'evening'].includes(timeSlot)) errors.push("時間帯が不正です");
+    if (!['morning', 'afternoon', 'evening', 'night'].includes(timeSlot)) errors.push("時間帯が不正です");
     if (typeof guestName !== 'string' || guestName.trim().length === 0 || guestName.length > 100) {
       errors.push("お名前は1〜100文字で入力してください");
     }
