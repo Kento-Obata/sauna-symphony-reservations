@@ -1,5 +1,5 @@
 
-import { TIME_SLOTS } from "@/components/TimeSlotSelect";
+import { TIME_SLOTS, ALL_TIME_SLOT_DEFAULTS } from "@/components/TimeSlotSelect";
 import { TimeSlot } from "@/types/reservation";
 import { useAdminReservations } from "@/hooks/useAdminReservations";
 import { useDailyTimeSlots } from "@/hooks/useDailyTimeSlots";
