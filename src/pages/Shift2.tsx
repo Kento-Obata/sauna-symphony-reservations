@@ -63,15 +63,15 @@ const Shift2 = () => {
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium mb-1">
-                ユーザー名
+              <label htmlFor="email" className="block text-sm font-medium mb-1">
+                メールアドレス
               </label>
               <Input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="ユーザー名を入力"
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="メールアドレスを入力"
                 required
                 disabled={isLoading}
               />
