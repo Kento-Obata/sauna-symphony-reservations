@@ -45,7 +45,8 @@ export const isTimeSlotDisabled = (slot: TimeSlot, selectedDate: Date, dailyTime
     dts.date === dateStr && dts.time_slot === slot && dts.is_active
   );
   
-  const startTime = dailySlot?.start_time || TIME_SLOTS[slot].start;
+  const startTime = dailySlot?.start_time || ALL_TIME_SLOT_DEFAULTS[slot]?.start || TIME_SLOTS[slot as keyof typeof TIME_SLOTS]?.start;
+  if (!startTime) return true;
   const [startHour, startMinute] = startTime.split(':').map(Number);
   const slotTime = setMinutes(setHours(selectedDate, startHour), startMinute);
   
@@ -61,9 +62,10 @@ export const TimeSlotSelect = ({
   timeSlotReservations,
 }: TimeSlotSelectProps) => {
   const { data: dailyTimeSlots } = useDailyTimeSlots();
-  
+
   const getTimeSlotLabel = (slot: TimeSlot) => {
-    if (!selectedDate) return TIME_SLOTS[slot];
+    const fallback = ALL_TIME_SLOT_DEFAULTS[slot];
+    if (!selectedDate) return fallback;
     
     const dateStr = format(selectedDate, 'yyyy-MM-dd');
     const dailySlot = dailyTimeSlots?.find(dts => 
