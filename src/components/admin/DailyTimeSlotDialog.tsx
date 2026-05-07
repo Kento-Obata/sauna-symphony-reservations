@@ -123,10 +123,11 @@ export const DailyTimeSlotDialog = ({
 
   const handleTimeSlotChange = (timeSlot: TimeSlot) => {
     // Set default times based on time slot
-    const defaults = {
+    const defaults: Record<TimeSlot, { start: string; end: string }> = {
       morning: { start: "10:00", end: "12:30" },
       afternoon: { start: "13:30", end: "16:00" },
       evening: { start: "17:00", end: "19:30" },
+      night: { start: "20:00", end: "22:30" },
     };
 
     const defaultTimes = defaults[timeSlot];
