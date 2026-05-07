@@ -69,8 +69,9 @@ export const AdminSearchResults = ({
                     {format(new Date(reservation.date), "yyyy年MM月dd日", { locale: ja })}
                   </TableCell>
                   <TableCell>
-                    {reservation.time_slot === "morning" ? "午前" : 
-                     reservation.time_slot === "afternoon" ? "午後" : "夜"}
+                    {reservation.time_slot === "morning" ? "午前" :
+                     reservation.time_slot === "afternoon" ? "午後" :
+                     reservation.time_slot === "evening" ? "夕方" : "夜"}
                   </TableCell>
                   <TableCell>{reservation.guest_name}</TableCell>
                   <TableCell>{reservation.phone}</TableCell>
