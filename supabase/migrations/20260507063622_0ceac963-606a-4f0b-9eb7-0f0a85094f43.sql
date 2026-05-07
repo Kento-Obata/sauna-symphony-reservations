@@ -1,0 +1,1 @@
+ALTER TYPE public.time_slot ADD VALUE IF NOT EXISTS 'night';
