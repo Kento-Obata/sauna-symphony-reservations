@@ -60,6 +60,7 @@ export const TimeSlotPatternManager = () => {
                 <TableHead>午前</TableHead>
                 <TableHead>午後</TableHead>
                 <TableHead>夕方</TableHead>
+                <TableHead>夜</TableHead>
                 <TableHead>操作</TableHead>
               </TableRow>
             </TableHeader>
