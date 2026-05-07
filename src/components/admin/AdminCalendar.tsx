@@ -329,7 +329,7 @@ export const AdminCalendar = ({
           <div className="py-4">
             <p>
               {selectedDate && format(selectedDate, "yyyy年MM月dd日", { locale: ja })}の
-              {selectedTimeSlot && TIME_SLOTS[selectedTimeSlot].start}
+              {selectedTimeSlot && ALL_TIME_SLOT_DEFAULTS[selectedTimeSlot].start}
               の枠を休枠として設定します。
             </p>
           </div>
