@@ -705,7 +705,7 @@ export type Database = {
       pricing_type: "per_person" | "flat" | "per_guest"
       shift_preference: "available" | "unavailable"
       shift_status: "scheduled" | "cancelled"
-      time_slot: "morning" | "afternoon" | "evening"
+      time_slot: "morning" | "afternoon" | "evening" | "night"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -837,7 +837,7 @@ export const Constants = {
       pricing_type: ["per_person", "flat", "per_guest"],
       shift_preference: ["available", "unavailable"],
       shift_status: ["scheduled", "cancelled"],
-      time_slot: ["morning", "afternoon", "evening"],
+      time_slot: ["morning", "afternoon", "evening", "night"],
     },
   },
 } as const
