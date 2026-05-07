@@ -16,6 +16,18 @@ export const TIME_SLOTS = {
   evening: { start: '17:00', end: '19:30' }
 } as const;
 
+// Optional slots are only displayed when explicitly enabled per-date via daily_time_slots.
+// Do NOT add these to TIME_SLOTS — keeping them separate guarantees existing pages
+// render the same 3-slot UI when night is not configured.
+export const OPTIONAL_TIME_SLOTS = {
+  night: { start: '20:00', end: '22:30' },
+} as const;
+
+export const ALL_TIME_SLOT_DEFAULTS: Record<TimeSlot, { start: string; end: string }> = {
+  ...TIME_SLOTS,
+  ...OPTIONAL_TIME_SLOTS,
+};
+
 interface TimeSlotSelectProps {
   value: string;
   onValueChange: (value: TimeSlot) => void;
