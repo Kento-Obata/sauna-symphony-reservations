@@ -3,8 +3,16 @@ import { format, addDays, startOfWeek } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Reservation, TimeSlot } from "@/types/reservation";
 import { isShopClosed } from "./dateUtils";
-import { TIME_SLOTS } from "@/components/TimeSlotSelect";
+import { TIME_SLOTS, ALL_TIME_SLOT_DEFAULTS } from "@/components/TimeSlotSelect";
 import type { ShopClosure } from "@/types/reservation";
+
+interface DailyTimeSlotRow {
+  date: string;
+  time_slot: TimeSlot;
+  is_active: boolean;
+  start_time?: string;
+  end_time?: string;
+}
 
 // 指定された日付と時間枠の予約を取得する
 export const getReservationsForDateAndSlot = (
@@ -14,84 +22,106 @@ export const getReservationsForDateAndSlot = (
 ) => {
   const dateString = format(date, "yyyy-MM-dd");
   return reservations.filter(
-    (r) => 
-      r.date === dateString && 
+    (r) =>
+      r.date === dateString &&
       r.time_slot === timeSlot &&
       (r.status === "confirmed" || r.status === "pending")
   );
 };
 
-// 指定された日付の時間枠が予約で埋まっているか、休枠かをチェック
 export const isTimeSlotOccupied = (
   date: Date,
   timeSlot: TimeSlot,
   reservations: Reservation[]
 ) => {
   const slotReservations = getReservationsForDateAndSlot(date, timeSlot, reservations);
-  // 休枠は "休枠" という名前の予約として保存されています
   return slotReservations.length > 0;
 };
 
-// 指定された日付の利用可能な時間枠を返す
-export const getAvailableTimeSlotsForDate = (
-  date: Date, 
-  reservations: Reservation[], 
-  shopClosures?: ShopClosure[]
+// その日に表示すべき時間枠（3固定 + night は daily_time_slots で有効化されている時のみ）
+const getApplicableSlotsForDate = (
+  date: Date,
+  dailyTimeSlots?: DailyTimeSlotRow[]
 ): TimeSlot[] => {
-  // ショップが休業日ならば、空の配列を返す
+  const dateString = format(date, "yyyy-MM-dd");
+  const base: TimeSlot[] = ["morning", "afternoon", "evening"];
+  const hasNight = !!dailyTimeSlots?.some(
+    (dts) => dts.date === dateString && dts.time_slot === "night" && dts.is_active
+  );
+  return hasNight ? [...base, "night"] : base;
+};
+
+export const getAvailableTimeSlotsForDate = (
+  date: Date,
+  reservations: Reservation[],
+  shopClosures?: ShopClosure[],
+  dailyTimeSlots?: DailyTimeSlotRow[]
+): TimeSlot[] => {
   if (isShopClosed(date, shopClosures)) {
     return [];
   }
-  
-  // 利用可能な時間枠をフィルタリング
-  return (Object.keys(TIME_SLOTS) as TimeSlot[]).filter(
+
+  return getApplicableSlotsForDate(date, dailyTimeSlots).filter(
     (slot) => !isTimeSlotOccupied(date, slot, reservations)
   );
 };
 
-// 指定された週の空き枠情報をSNS投稿用のテキストフォーマットで生成
+const getSlotTimeForDate = (
+  slot: TimeSlot,
+  date: Date,
+  dailyTimeSlots?: DailyTimeSlotRow[]
+) => {
+  const dateString = format(date, "yyyy-MM-dd");
+  const dailySlot = dailyTimeSlots?.find(
+    (dts) => dts.date === dateString && dts.time_slot === slot && dts.is_active
+  );
+  if (dailySlot?.start_time && dailySlot?.end_time) {
+    return { start: dailySlot.start_time.slice(0, 5), end: dailySlot.end_time.slice(0, 5) };
+  }
+  return ALL_TIME_SLOT_DEFAULTS[slot];
+};
+
 export const generateAvailabilityText = (
-  weekStartDate: Date, 
-  reservations: Reservation[], 
-  shopClosures?: ShopClosure[]
+  weekStartDate: Date,
+  reservations: Reservation[],
+  shopClosures?: ShopClosure[],
+  dailyTimeSlots?: DailyTimeSlotRow[]
 ): string => {
   let result = "";
-  
-  // 週の初めの日（月曜日）から各日を処理
+
   for (let i = 0; i < 7; i++) {
     const currentDate = addDays(weekStartDate, i);
     const dateString = format(currentDate, "M/d(E)", { locale: ja });
-    
-    // ショップが休業日かどうか
+
     if (isShopClosed(currentDate, shopClosures)) {
       result += `${dateString} 定休\n`;
       continue;
     }
-    
-    // 利用可能な時間枠を取得
+
     const availableTimeSlots = getAvailableTimeSlotsForDate(
-      currentDate, 
-      reservations, 
-      shopClosures
+      currentDate,
+      reservations,
+      shopClosures,
+      dailyTimeSlots
     );
-    
-    // 利用可能な時間枠がない場合は「完売」
+
     if (availableTimeSlots.length === 0) {
       result += `${dateString} 完売\n`;
     } else {
-      // 利用可能な時間枠を表示（開始時間-終了時間の形式で）
       const timeSlotsText = availableTimeSlots
-        .map((slot) => `${TIME_SLOTS[slot].start}-${TIME_SLOTS[slot].end}`)
+        .map((slot) => {
+          const t = getSlotTimeForDate(slot, currentDate, dailyTimeSlots);
+          return `${t.start}-${t.end}`;
+        })
         .join(", ");
-      
+
       result += `${dateString} ${timeSlotsText}\n`;
     }
   }
-  
+
   return result;
 };
 
-// 特定の週の月曜日を取得
 export const getMondayOfWeek = (date: Date): Date => {
   return startOfWeek(date, { weekStartsOn: 1 });
 };
