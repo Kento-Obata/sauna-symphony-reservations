@@ -63,6 +63,28 @@ export const AdminCalendar = ({
     },
   });
 
+  // Detect which days in the current week have a `night` slot enabled.
+  // Only render the 4th row when at least one day in the week has it.
+  const { data: weekDailySlots } = useQuery({
+    queryKey: ["daily_time_slots_week", format(start, "yyyy-MM-dd"), format(end, "yyyy-MM-dd")],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("daily_time_slots")
+        .select("date, time_slot, is_active")
+        .gte("date", format(start, "yyyy-MM-dd"))
+        .lte("date", format(end, "yyyy-MM-dd"));
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const nightActiveDates = new Set(
+    (weekDailySlots ?? [])
+      .filter((s) => s.time_slot === "night" && s.is_active)
+      .map((s) => s.date)
+  );
+  const showNightRow = nightActiveDates.size > 0;
+
   const handlePrevWeek = () => setCurrentDate(subWeeks(currentDate, 1));
   const handleNextWeek = () => setCurrentDate(addWeeks(currentDate, 1));
 
