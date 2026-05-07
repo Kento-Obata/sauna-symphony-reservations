@@ -243,46 +243,62 @@ export const AdminCalendar = ({
           </button>
         ))}
 
-        {(Object.entries(TIME_SLOTS) as [TimeSlot, { start: string }][]).map(([slot, time]) => (
-          <React.Fragment key={`time-${slot}`}>
-            <div className="col-span-1 p-2 text-sm text-right text-gray-600 dark:text-gray-300">
-              {time.start}
-            </div>
-            {days.map((day) => {
-              const slotReservations = getReservationsForDateAndSlot(day, slot);
-              const isBlocked = slotReservations.some(r => r.guest_name === "休枠");
-              return (
-                <div
-                  key={`${day}-${slot}`}
-                  className="col-span-1 p-2 border rounded relative"
-                >
-                  <button
-                    onClick={() => handleCellClick(day, slot)}
-                    className={`w-full h-full ${
-                      isDateClosed(day) ? 'bg-gray-100 cursor-not-allowed' : ''
-                    } ${
-                      isSameDay(day, selectedDate) && selectedTimeSlot === slot
-                        ? "ring-2 ring-primary"
-                        : ""
-                    }`}
-                  >
-                    {getStatusDisplay(day, slotReservations)}
-                  </button>
-                  {!isDateClosed(day) && !isBlocked && slotReservations.length === 0 && (
+        {(() => {
+          const slotsToRender: [TimeSlot, { start: string }][] = [
+            ...(Object.entries(TIME_SLOTS) as [TimeSlot, { start: string }][]),
+          ];
+          if (showNightRow) {
+            slotsToRender.push(["night", { start: ALL_TIME_SLOT_DEFAULTS.night.start }]);
+          }
+          return slotsToRender.map(([slot, time]) => (
+            <React.Fragment key={`time-${slot}`}>
+              <div className="col-span-1 p-2 text-sm text-right text-gray-600 dark:text-gray-300">
+                {time.start}
+              </div>
+              {days.map((day) => {
+                const dateStr = format(day, "yyyy-MM-dd");
+                const isNightDisabledForDay = slot === "night" && !nightActiveDates.has(dateStr);
+                const slotReservations = getReservationsForDateAndSlot(day, slot);
+                const isBlocked = slotReservations.some((r) => r.guest_name === "休枠");
+                if (isNightDisabledForDay) {
+                  return (
+                    <div
+                      key={`${day}-${slot}`}
+                      className="col-span-1 p-2 border rounded relative bg-gray-50 dark:bg-gray-800/40"
+                    />
+                  );
+                }
+                return (
+                  <div key={`${day}-${slot}`} className="col-span-1 p-2 border rounded relative">
                     <button
-                      onClick={(e) => handleBlockClick(e, day, slot)}
-                      className="absolute top-0 right-0 p-1 text-gray-500 hover:text-gray-700"
-                      title="休枠設定"
+                      onClick={() => handleCellClick(day, slot)}
+                      className={`w-full h-full ${
+                        isDateClosed(day) ? "bg-gray-100 cursor-not-allowed" : ""
+                      } ${
+                        isSameDay(day, selectedDate) && selectedTimeSlot === slot
+                          ? "ring-2 ring-primary"
+                          : ""
+                      }`}
                     >
-                      <Ban className="h-4 w-4" />
+                      {getStatusDisplay(day, slotReservations)}
                     </button>
-                  )}
-                </div>
-              );
-            })}
-          </React.Fragment>
-        ))}
+                    {!isDateClosed(day) && !isBlocked && slotReservations.length === 0 && (
+                      <button
+                        onClick={(e) => handleBlockClick(e, day, slot)}
+                        className="absolute top-0 right-0 p-1 text-gray-500 hover:text-gray-700"
+                        title="休枠設定"
+                      >
+                        <Ban className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </React.Fragment>
+          ));
+        })()}
       </div>
+
 
       <AdminReservationDialog
         open={showReservationDialog}
