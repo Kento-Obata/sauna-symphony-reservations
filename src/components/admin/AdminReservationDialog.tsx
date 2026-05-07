@@ -42,6 +42,7 @@ export const AdminReservationDialog = ({
     morning: 0,
     afternoon: 0,
     evening: 0,
+    night: 0,
   });
 
   const { data: reservations } = useAdminReservations();
@@ -60,6 +61,7 @@ export const AdminReservationDialog = ({
             morning: 0,
             afternoon: 0,
             evening: 0,
+    night: 0,
           };
 
           reservations.forEach((reservation) => {
