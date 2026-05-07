@@ -60,6 +60,7 @@ export const TimeSlotPatternManager = () => {
                 <TableHead>午前</TableHead>
                 <TableHead>午後</TableHead>
                 <TableHead>夕方</TableHead>
+                <TableHead>夜</TableHead>
                 <TableHead>操作</TableHead>
               </TableRow>
             </TableHeader>
@@ -70,6 +71,7 @@ export const TimeSlotPatternManager = () => {
                   <TableCell>{p.morning_start.slice(0, 5)}-{p.morning_end.slice(0, 5)}</TableCell>
                   <TableCell>{p.afternoon_start.slice(0, 5)}-{p.afternoon_end.slice(0, 5)}</TableCell>
                   <TableCell>{p.evening_start.slice(0, 5)}-{p.evening_end.slice(0, 5)}</TableCell>
+                  <TableCell>{p.night_start && p.night_end ? `${p.night_start.slice(0,5)}-${p.night_end.slice(0,5)}` : "-"}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" onClick={() => handleEdit(p)}>

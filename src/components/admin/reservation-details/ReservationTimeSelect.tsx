@@ -1,5 +1,5 @@
 
-import { TIME_SLOTS } from "@/components/TimeSlotSelect";
+import { TIME_SLOTS, ALL_TIME_SLOT_DEFAULTS } from "@/components/TimeSlotSelect";
 import { TimeSlot } from "@/types/reservation";
 import { useAdminReservations } from "@/hooks/useAdminReservations";
 import { useDailyTimeSlots } from "@/hooks/useDailyTimeSlots";
@@ -52,7 +52,7 @@ export const ReservationTimeSelect = ({
       return { start: dailySlot.start_time, end: dailySlot.end_time };
     }
     
-    return TIME_SLOTS[slot];
+    return ALL_TIME_SLOT_DEFAULTS[slot];
   };
 
   const currentTimeSlotLabel = getTimeSlotLabel(timeSlot);
@@ -70,19 +70,26 @@ export const ReservationTimeSelect = ({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {Object.entries(TIME_SLOTS).map(([key, slot]) => {
-                const timeSlotLabel = getTimeSlotLabel(key as TimeSlot);
-                return (
-                  <SelectItem 
-                    key={key} 
-                    value={key as TimeSlot}
-                    disabled={isTimeSlotDisabled(key as TimeSlot)}
-                  >
-                    {timeSlotLabel.start}-{timeSlotLabel.end}
-                    {isTimeSlotDisabled(key as TimeSlot) && " (予約済み)"}
-                  </SelectItem>
+              {(() => {
+                const slotKeys: TimeSlot[] = ["morning", "afternoon", "evening"];
+                const hasNight = !!dailyTimeSlots?.some(
+                  (dts) => dts.date === date && dts.time_slot === "night" && dts.is_active
                 );
-              })}
+                if (hasNight || timeSlot === "night") slotKeys.push("night");
+                return slotKeys.map((key) => {
+                  const timeSlotLabel = getTimeSlotLabel(key);
+                  return (
+                    <SelectItem
+                      key={key}
+                      value={key}
+                      disabled={isTimeSlotDisabled(key)}
+                    >
+                      {timeSlotLabel.start}-{timeSlotLabel.end}
+                      {isTimeSlotDisabled(key) && " (予約済み)"}
+                    </SelectItem>
+                  );
+                });
+              })()}
             </SelectContent>
           </Select>
         ) : (

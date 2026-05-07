@@ -11,7 +11,7 @@ import {
 import { ja } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Ban } from "lucide-react";
-import { TIME_SLOTS } from "@/components/TimeSlotSelect";
+import { TIME_SLOTS, ALL_TIME_SLOT_DEFAULTS } from "@/components/TimeSlotSelect";
 import { Reservation, TimeSlot } from "@/types/reservation";
 import { AdminReservationDialog } from "./AdminReservationDialog";
 import { AdminReservationDetailsDialog } from "./AdminReservationDetailsDialog";
@@ -62,6 +62,28 @@ export const AdminCalendar = ({
       return data;
     },
   });
+
+  // Detect which days in the current week have a `night` slot enabled.
+  // Only render the 4th row when at least one day in the week has it.
+  const { data: weekDailySlots } = useQuery({
+    queryKey: ["daily_time_slots_week", format(start, "yyyy-MM-dd"), format(end, "yyyy-MM-dd")],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("daily_time_slots")
+        .select("date, time_slot, is_active")
+        .gte("date", format(start, "yyyy-MM-dd"))
+        .lte("date", format(end, "yyyy-MM-dd"));
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const nightActiveDates = new Set(
+    (weekDailySlots ?? [])
+      .filter((s) => s.time_slot === "night" && s.is_active)
+      .map((s) => s.date)
+  );
+  const showNightRow = nightActiveDates.size > 0;
 
   const handlePrevWeek = () => setCurrentDate(subWeeks(currentDate, 1));
   const handleNextWeek = () => setCurrentDate(addWeeks(currentDate, 1));
@@ -221,46 +243,62 @@ export const AdminCalendar = ({
           </button>
         ))}
 
-        {(Object.entries(TIME_SLOTS) as [TimeSlot, { start: string }][]).map(([slot, time]) => (
-          <React.Fragment key={`time-${slot}`}>
-            <div className="col-span-1 p-2 text-sm text-right text-gray-600 dark:text-gray-300">
-              {time.start}
-            </div>
-            {days.map((day) => {
-              const slotReservations = getReservationsForDateAndSlot(day, slot);
-              const isBlocked = slotReservations.some(r => r.guest_name === "休枠");
-              return (
-                <div
-                  key={`${day}-${slot}`}
-                  className="col-span-1 p-2 border rounded relative"
-                >
-                  <button
-                    onClick={() => handleCellClick(day, slot)}
-                    className={`w-full h-full ${
-                      isDateClosed(day) ? 'bg-gray-100 cursor-not-allowed' : ''
-                    } ${
-                      isSameDay(day, selectedDate) && selectedTimeSlot === slot
-                        ? "ring-2 ring-primary"
-                        : ""
-                    }`}
-                  >
-                    {getStatusDisplay(day, slotReservations)}
-                  </button>
-                  {!isDateClosed(day) && !isBlocked && slotReservations.length === 0 && (
+        {(() => {
+          const slotsToRender: [TimeSlot, { start: string }][] = [
+            ...(Object.entries(TIME_SLOTS) as [TimeSlot, { start: string }][]),
+          ];
+          if (showNightRow) {
+            slotsToRender.push(["night", { start: ALL_TIME_SLOT_DEFAULTS.night.start }]);
+          }
+          return slotsToRender.map(([slot, time]) => (
+            <React.Fragment key={`time-${slot}`}>
+              <div className="col-span-1 p-2 text-sm text-right text-gray-600 dark:text-gray-300">
+                {time.start}
+              </div>
+              {days.map((day) => {
+                const dateStr = format(day, "yyyy-MM-dd");
+                const isNightDisabledForDay = slot === "night" && !nightActiveDates.has(dateStr);
+                const slotReservations = getReservationsForDateAndSlot(day, slot);
+                const isBlocked = slotReservations.some((r) => r.guest_name === "休枠");
+                if (isNightDisabledForDay) {
+                  return (
+                    <div
+                      key={`${day}-${slot}`}
+                      className="col-span-1 p-2 border rounded relative bg-gray-50 dark:bg-gray-800/40"
+                    />
+                  );
+                }
+                return (
+                  <div key={`${day}-${slot}`} className="col-span-1 p-2 border rounded relative">
                     <button
-                      onClick={(e) => handleBlockClick(e, day, slot)}
-                      className="absolute top-0 right-0 p-1 text-gray-500 hover:text-gray-700"
-                      title="休枠設定"
+                      onClick={() => handleCellClick(day, slot)}
+                      className={`w-full h-full ${
+                        isDateClosed(day) ? "bg-gray-100 cursor-not-allowed" : ""
+                      } ${
+                        isSameDay(day, selectedDate) && selectedTimeSlot === slot
+                          ? "ring-2 ring-primary"
+                          : ""
+                      }`}
                     >
-                      <Ban className="h-4 w-4" />
+                      {getStatusDisplay(day, slotReservations)}
                     </button>
-                  )}
-                </div>
-              );
-            })}
-          </React.Fragment>
-        ))}
+                    {!isDateClosed(day) && !isBlocked && slotReservations.length === 0 && (
+                      <button
+                        onClick={(e) => handleBlockClick(e, day, slot)}
+                        className="absolute top-0 right-0 p-1 text-gray-500 hover:text-gray-700"
+                        title="休枠設定"
+                      >
+                        <Ban className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </React.Fragment>
+          ));
+        })()}
       </div>
+
 
       <AdminReservationDialog
         open={showReservationDialog}
@@ -291,7 +329,7 @@ export const AdminCalendar = ({
           <div className="py-4">
             <p>
               {selectedDate && format(selectedDate, "yyyy年MM月dd日", { locale: ja })}の
-              {selectedTimeSlot && TIME_SLOTS[selectedTimeSlot].start}
+              {selectedTimeSlot && ALL_TIME_SLOT_DEFAULTS[selectedTimeSlot].start}
               の枠を休枠として設定します。
             </p>
           </div>

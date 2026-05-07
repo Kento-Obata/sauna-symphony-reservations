@@ -82,7 +82,8 @@ const ReservationForm = () => {
     const defaultSlotReservations: Record<TimeSlot, number> = {
       morning: 0,
       afternoon: 0,
-      evening: 0
+      evening: 0,
+      night: 0,
     };
 
     if (!reservations || !selectedDate || !isValid(selectedDate)) {
@@ -119,10 +120,11 @@ const ReservationForm = () => {
     return <div>予約情報の読み込みに失敗しました。</div>;
   }
 
-  const timeSlotReservations = date ? getTimeSlotReservations(date) : {
+  const timeSlotReservations: Record<TimeSlot, number> = date ? getTimeSlotReservations(date) : {
     morning: 0,
     afternoon: 0,
-    evening: 0
+    evening: 0,
+    night: 0,
   };
 
   const currentReservation: ReservationFormData | null = date && timeSlot ? {

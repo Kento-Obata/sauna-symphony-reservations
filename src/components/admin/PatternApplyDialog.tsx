@@ -37,11 +37,15 @@ export const PatternApplyDialog = ({ open, onOpenChange }: Props) => {
     try {
       const allSlots = selectedDates.flatMap((date) => {
         const dateStr = format(date, "yyyy-MM-dd");
-        return [
-          { date: dateStr, time_slot: "morning" as const, start_time: pattern.morning_start, end_time: pattern.morning_end, is_active: true },
-          { date: dateStr, time_slot: "afternoon" as const, start_time: pattern.afternoon_start, end_time: pattern.afternoon_end, is_active: true },
-          { date: dateStr, time_slot: "evening" as const, start_time: pattern.evening_start, end_time: pattern.evening_end, is_active: true },
+        const slots: Array<{ date: string; time_slot: "morning" | "afternoon" | "evening" | "night"; start_time: string; end_time: string; is_active: boolean }> = [
+          { date: dateStr, time_slot: "morning", start_time: pattern.morning_start, end_time: pattern.morning_end, is_active: true },
+          { date: dateStr, time_slot: "afternoon", start_time: pattern.afternoon_start, end_time: pattern.afternoon_end, is_active: true },
+          { date: dateStr, time_slot: "evening", start_time: pattern.evening_start, end_time: pattern.evening_end, is_active: true },
         ];
+        if (pattern.night_start && pattern.night_end) {
+          slots.push({ date: dateStr, time_slot: "night", start_time: pattern.night_start, end_time: pattern.night_end, is_active: true });
+        }
+        return slots;
       });
 
       const { error } = await supabase
@@ -95,6 +99,9 @@ export const PatternApplyDialog = ({ open, onOpenChange }: Props) => {
               <div>午前: {selectedPattern.morning_start.slice(0, 5)}-{selectedPattern.morning_end.slice(0, 5)}</div>
               <div>午後: {selectedPattern.afternoon_start.slice(0, 5)}-{selectedPattern.afternoon_end.slice(0, 5)}</div>
               <div>夕方: {selectedPattern.evening_start.slice(0, 5)}-{selectedPattern.evening_end.slice(0, 5)}</div>
+              {selectedPattern.night_start && selectedPattern.night_end && (
+                <div>夜: {selectedPattern.night_start.slice(0, 5)}-{selectedPattern.night_end.slice(0, 5)}</div>
+              )}
             </div>
           )}
 

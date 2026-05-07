@@ -11,6 +11,8 @@ export interface TimeSlotPattern {
   afternoon_end: string;
   evening_start: string;
   evening_end: string;
+  night_start: string | null;
+  night_end: string | null;
   created_at: string;
   updated_at: string;
 }

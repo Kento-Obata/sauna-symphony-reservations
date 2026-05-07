@@ -16,6 +16,18 @@ export const TIME_SLOTS = {
   evening: { start: '17:00', end: '19:30' }
 } as const;
 
+// Optional slots are only displayed when explicitly enabled per-date via daily_time_slots.
+// Do NOT add these to TIME_SLOTS — keeping them separate guarantees existing pages
+// render the same 3-slot UI when night is not configured.
+export const OPTIONAL_TIME_SLOTS = {
+  night: { start: '20:00', end: '22:30' },
+} as const;
+
+export const ALL_TIME_SLOT_DEFAULTS: Record<TimeSlot, { start: string; end: string }> = {
+  ...TIME_SLOTS,
+  ...OPTIONAL_TIME_SLOTS,
+};
+
 interface TimeSlotSelectProps {
   value: string;
   onValueChange: (value: TimeSlot) => void;
@@ -33,7 +45,8 @@ export const isTimeSlotDisabled = (slot: TimeSlot, selectedDate: Date, dailyTime
     dts.date === dateStr && dts.time_slot === slot && dts.is_active
   );
   
-  const startTime = dailySlot?.start_time || TIME_SLOTS[slot].start;
+  const startTime = dailySlot?.start_time || ALL_TIME_SLOT_DEFAULTS[slot]?.start || TIME_SLOTS[slot as keyof typeof TIME_SLOTS]?.start;
+  if (!startTime) return true;
   const [startHour, startMinute] = startTime.split(':').map(Number);
   const slotTime = setMinutes(setHours(selectedDate, startHour), startMinute);
   
@@ -49,9 +62,10 @@ export const TimeSlotSelect = ({
   timeSlotReservations,
 }: TimeSlotSelectProps) => {
   const { data: dailyTimeSlots } = useDailyTimeSlots();
-  
+
   const getTimeSlotLabel = (slot: TimeSlot) => {
-    if (!selectedDate) return TIME_SLOTS[slot];
+    const fallback = ALL_TIME_SLOT_DEFAULTS[slot];
+    if (!selectedDate) return fallback;
     
     const dateStr = format(selectedDate, 'yyyy-MM-dd');
     const dailySlot = dailyTimeSlots?.find(dts => 
@@ -62,8 +76,23 @@ export const TimeSlotSelect = ({
       return { start: dailySlot.start_time, end: dailySlot.end_time };
     }
     
-    return TIME_SLOTS[slot];
+    return fallback;
   };
+
+  // Build the list of slots to render. Always include the 3 default slots so
+  // the existing UI is unchanged. Append `night` only when the selected date
+  // has an active night row in daily_time_slots.
+  const dateStr = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null;
+  const hasNight = !!(dateStr && dailyTimeSlots?.some(
+    (dts) => dts.date === dateStr && dts.time_slot === 'night' && dts.is_active
+  ));
+
+  const slotOptions: { value: TimeSlot; label: string }[] = [
+    { value: 'morning', label: '午前' },
+    { value: 'afternoon', label: '午後' },
+    { value: 'evening', label: '夕方' },
+  ];
+  if (hasNight) slotOptions.push({ value: 'night', label: '夜' });
 
   return (
     <div className="space-y-2">
@@ -75,16 +104,12 @@ export const TimeSlotSelect = ({
           <SelectValue placeholder="時間帯を選択" />
         </SelectTrigger>
         <SelectContent>
-          {[
-            { value: 'morning', label: '午前' },
-            { value: 'afternoon', label: '午後' },
-            { value: 'evening', label: '夕方' }
-          ].map(({ value, label }) => {
-            const timeSlot = getTimeSlotLabel(value as TimeSlot);
+          {slotOptions.map(({ value, label }) => {
+            const timeSlot = getTimeSlotLabel(value);
             const displayLabel = `${label} ${timeSlot.start.slice(0, 5)}-${timeSlot.end.slice(0, 5)}`;
-            const reservationCount = timeSlotReservations[value as TimeSlot];
-            const isDisabled = selectedDate 
-              ? (isTimeSlotDisabled(value as TimeSlot, selectedDate, dailyTimeSlots) || 
+            const reservationCount = timeSlotReservations[value] ?? 0;
+            const isDisabled = selectedDate
+              ? (isTimeSlotDisabled(value, selectedDate, dailyTimeSlots) ||
                  reservationCount >= MAX_RESERVATIONS)
               : true;
             const statusLabel = reservationCount > 0 
