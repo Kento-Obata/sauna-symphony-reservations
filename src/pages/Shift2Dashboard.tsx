@@ -8,26 +8,41 @@ import { ShiftRequestForm } from "@/components/shift2/ShiftRequestForm";
 import { ShiftRequestList } from "@/components/shift2/ShiftRequestList";
 import { ApprovedShiftsList } from "@/components/shift2/ApprovedShiftsList";
 import { AdminShiftManagement } from "@/components/shift2/AdminShiftManagement";
+import { supabase } from "@/integrations/supabase/client";
 
 const Shift2Dashboard = () => {
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<{ id: string; username: string } | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // 実際の認証チェックは後で実装
-    // 今は仮のユーザー情報を設定
-    setCurrentUser({ id: "test", username: "テストユーザー" });
-    setIsAdmin(true); // デモ用
-  }, []);
+    const load = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate("/shift2");
+        return;
+      }
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("username, role")
+        .eq("id", user.id)
+        .single();
+      setCurrentUser({ id: user.id, username: profile?.username || user.email || "" });
+      setIsAdmin(profile?.role === "admin");
+      setIsLoading(false);
+    };
+    load();
+  }, [navigate]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     setCurrentUser(null);
     navigate("/shift2");
   };
 
-  if (!currentUser) {
-    return <div>認証中...</div>;
+  if (isLoading || !currentUser) {
+    return <div className="min-h-screen flex items-center justify-center">認証中...</div>;
   }
 
   return (
