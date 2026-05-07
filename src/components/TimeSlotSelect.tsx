@@ -104,16 +104,12 @@ export const TimeSlotSelect = ({
           <SelectValue placeholder="時間帯を選択" />
         </SelectTrigger>
         <SelectContent>
-          {[
-            { value: 'morning', label: '午前' },
-            { value: 'afternoon', label: '午後' },
-            { value: 'evening', label: '夕方' }
-          ].map(({ value, label }) => {
-            const timeSlot = getTimeSlotLabel(value as TimeSlot);
+          {slotOptions.map(({ value, label }) => {
+            const timeSlot = getTimeSlotLabel(value);
             const displayLabel = `${label} ${timeSlot.start.slice(0, 5)}-${timeSlot.end.slice(0, 5)}`;
-            const reservationCount = timeSlotReservations[value as TimeSlot];
-            const isDisabled = selectedDate 
-              ? (isTimeSlotDisabled(value as TimeSlot, selectedDate, dailyTimeSlots) || 
+            const reservationCount = timeSlotReservations[value] ?? 0;
+            const isDisabled = selectedDate
+              ? (isTimeSlotDisabled(value, selectedDate, dailyTimeSlots) ||
                  reservationCount >= MAX_RESERVATIONS)
               : true;
             const statusLabel = reservationCount > 0 
