@@ -56,6 +56,79 @@ export const PatternApplyDialog = ({ open, onOpenChange }: Props) => {
   const { data: patterns } = useTimeSlotPatterns();
   const queryClient = useQueryClient();
 
+  // ルール有効化タブ
+  const [ruleLookaheadMonths, setRuleLookaheadMonths] = useState<number>(24);
+  const [ruleLockedDates, setRuleLockedDates] = useState<string[]>([]);
+  const [ruleExplicitDates, setRuleExplicitDates] = useState<Set<string>>(new Set());
+  const [ruleLoading, setRuleLoading] = useState(false);
+
+  // ルール対象期間の予約済み日 + 既に明示行のある日をロード
+  useEffect(() => {
+    if (!open) return;
+    const load = async () => {
+      setRuleLoading(true);
+      const from = RULE_DEFAULT_4SLOT_FROM;
+      const to = format(addMonths(new Date(from), ruleLookaheadMonths), "yyyy-MM-dd");
+
+      const [resvRes, slotRes] = await Promise.all([
+        supabase
+          .from("reservations")
+          .select("date")
+          .gte("date", from)
+          .lte("date", to)
+          .in("status", ["confirmed", "pending"]),
+        supabase
+          .from("daily_time_slots")
+          .select("date")
+          .gte("date", from)
+          .lte("date", to),
+      ]);
+
+      const reservedSet = new Set<string>(resvRes.data?.map((r) => r.date) ?? []);
+      const explicitSet = new Set<string>(slotRes.data?.map((r) => r.date) ?? []);
+
+      // 6/6以降の土日祝のうち、予約があり、かつまだ明示行が無い日 = ロック対象
+      const start = new Date(from);
+      const end = new Date(to);
+      const targets = enumerateWeekendsAndHolidays(start, end)
+        .map((d) => format(d, "yyyy-MM-dd"))
+        .filter((d) => reservedSet.has(d) && !explicitSet.has(d));
+
+      setRuleLockedDates(targets);
+      setRuleExplicitDates(explicitSet);
+      setRuleLoading(false);
+    };
+    load();
+  }, [open, ruleLookaheadMonths]);
+
+  const handleEnableRule = async () => {
+    if (ruleLockedDates.length === 0) {
+      toast.success("ロックすべき予約済み日付はありません。ルールはすでに安全に動作します。");
+      return;
+    }
+    setIsApplying(true);
+    try {
+      // 3枠のみ（night なし）を upsert してロック
+      const rows = ruleLockedDates.flatMap((dateStr) => [
+        { date: dateStr, time_slot: "morning" as const, start_time: "10:00", end_time: "12:30", is_active: true },
+        { date: dateStr, time_slot: "afternoon" as const, start_time: "13:30", end_time: "16:00", is_active: true },
+        { date: dateStr, time_slot: "evening" as const, start_time: "17:00", end_time: "19:30", is_active: true },
+      ]);
+      const { error } = await supabase
+        .from("daily_time_slots")
+        .upsert(rows, { onConflict: "date,time_slot" });
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["daily_time_slots"] });
+      toast.success(`${ruleLockedDates.length}日を3枠でロックしました。ルール有効化完了`);
+      setRuleLockedDates([]);
+    } catch (e) {
+      console.error(e);
+      toast.error("ロックに失敗しました");
+    } finally {
+      setIsApplying(false);
+    }
+  };
+
   // 「土日4枠」を初期パターンに
   useEffect(() => {
     if (!bulkPatternId && patterns?.length) {
