@@ -84,7 +84,7 @@ const getSlotTimeForDate = (
   if (dailySlot?.start_time && dailySlot?.end_time) {
     return { start: dailySlot.start_time.slice(0, 5), end: dailySlot.end_time.slice(0, 5) };
   }
-  return ALL_TIME_SLOT_DEFAULTS[slot];
+  return getDefaultSlotTimesForDate(date, slot, dailyTimeSlots);
 };
 
 export const generateAvailabilityText = (
