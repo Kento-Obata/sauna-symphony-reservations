@@ -5,6 +5,7 @@ import { Reservation, TimeSlot } from "@/types/reservation";
 import { isShopClosed } from "./dateUtils";
 import { TIME_SLOTS, ALL_TIME_SLOT_DEFAULTS } from "@/components/TimeSlotSelect";
 import type { ShopClosure } from "@/types/reservation";
+import { shouldApplyDefault4Slot } from "./timeSlotRules";
 
 interface DailyTimeSlotRow {
   date: string;
