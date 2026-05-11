@@ -77,3 +77,20 @@ export const getDefaultSlotTimesForDate = (
   }
   return WEEKDAY[slot] ?? { start: "00:00", end: "00:00" };
 };
+
+/**
+ * その日付の最大予約枠数（3 or 4）。
+ * 明示的な night の active 行 or 土日祝デフォルト4枠ルールが適用されれば 4。
+ */
+export const getMaxSlotsForDate = (
+  date: Date | string,
+  dailyTimeSlots?: DailyTimeSlotRowLite[]
+): number => {
+  const dateStr = typeof date === "string" ? date : format(date, "yyyy-MM-dd");
+  const hasExplicitNight = !!dailyTimeSlots?.some(
+    (dts) => dts.date === dateStr && dts.time_slot === "night" && (dts as any).is_active
+  );
+  if (hasExplicitNight) return 4;
+  if (shouldApplyDefault4Slot(date, dailyTimeSlots)) return 4;
+  return 3;
+};
