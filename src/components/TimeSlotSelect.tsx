@@ -40,13 +40,12 @@ export const isTimeSlotDisabled = (slot: TimeSlot, selectedDate: Date, dailyTime
   const now = new Date();
   const twoHoursFromNow = addHours(now, 2);
   
-  // Get start time from daily time slots or fallback to default
   const dateStr = format(selectedDate, 'yyyy-MM-dd');
   const dailySlot = dailyTimeSlots?.find(dts => 
     dts.date === dateStr && dts.time_slot === slot && dts.is_active
   );
   
-  const startTime = dailySlot?.start_time || ALL_TIME_SLOT_DEFAULTS[slot]?.start || TIME_SLOTS[slot as keyof typeof TIME_SLOTS]?.start;
+  const startTime = dailySlot?.start_time || getDefaultSlotTimesForDate(selectedDate, slot, dailyTimeSlots).start;
   if (!startTime) return true;
   const [startHour, startMinute] = startTime.split(':').map(Number);
   const slotTime = setMinutes(setHours(selectedDate, startHour), startMinute);
