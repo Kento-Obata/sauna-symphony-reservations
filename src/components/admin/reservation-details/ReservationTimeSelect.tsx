@@ -3,7 +3,7 @@ import { TIME_SLOTS, ALL_TIME_SLOT_DEFAULTS } from "@/components/TimeSlotSelect"
 import { TimeSlot } from "@/types/reservation";
 import { useAdminReservations } from "@/hooks/useAdminReservations";
 import { useDailyTimeSlots } from "@/hooks/useDailyTimeSlots";
-import { shouldApplyDefault4Slot } from "@/utils/timeSlotRules";
+import { shouldApplyDefault4Slot, getDefaultSlotTimesForDate } from "@/utils/timeSlotRules";
 import { parseISO } from "date-fns";
 import {
   Select,
