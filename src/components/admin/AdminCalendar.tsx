@@ -11,7 +11,7 @@ import {
 import { ja } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Ban } from "lucide-react";
-import { TIME_SLOTS, ALL_TIME_SLOT_DEFAULTS } from "@/components/TimeSlotSelect";
+import { TIME_SLOTS } from "@/components/TimeSlotSelect";
 import { Reservation, TimeSlot } from "@/types/reservation";
 import { AdminReservationDialog } from "./AdminReservationDialog";
 import { AdminReservationDetailsDialog } from "./AdminReservationDetailsDialog";
@@ -22,7 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { shouldApplyDefault4Slot, WEEKEND_4SLOT_TIMES } from "@/utils/timeSlotRules";
+import { getDefaultSlotTimesForDate, shouldApplyDefault4Slot, WEEKEND_4SLOT_TIMES } from "@/utils/timeSlotRules";
 
 interface AdminCalendarProps {
   reservations?: Reservation[];
@@ -336,7 +336,7 @@ export const AdminCalendar = ({
           <div className="py-4">
             <p>
               {selectedDate && format(selectedDate, "yyyy年MM月dd日", { locale: ja })}の
-              {selectedTimeSlot && ALL_TIME_SLOT_DEFAULTS[selectedTimeSlot].start}
+              {selectedDate && selectedTimeSlot && getDefaultSlotTimesForDate(selectedDate, selectedTimeSlot, weekDailySlots ?? []).start}
               の枠を休枠として設定します。
             </p>
           </div>
