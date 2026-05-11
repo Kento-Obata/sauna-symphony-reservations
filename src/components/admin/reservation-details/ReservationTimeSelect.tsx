@@ -74,9 +74,10 @@ export const ReservationTimeSelect = ({
             <SelectContent>
               {(() => {
                 const slotKeys: TimeSlot[] = ["morning", "afternoon", "evening"];
-                const hasNight = !!dailyTimeSlots?.some(
+                const hasExplicitNight = !!dailyTimeSlots?.some(
                   (dts) => dts.date === date && dts.time_slot === "night" && dts.is_active
                 );
+                const hasNight = hasExplicitNight || shouldApplyDefault4Slot(parseISO(date), dailyTimeSlots);
                 if (hasNight || timeSlot === "night") slotKeys.push("night");
                 return slotKeys.map((key) => {
                   const timeSlotLabel = getTimeSlotLabel(key);
