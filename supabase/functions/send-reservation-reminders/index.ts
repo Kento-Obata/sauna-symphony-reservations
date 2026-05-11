@@ -10,11 +10,29 @@ const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-const DEFAULT_TIME_SLOTS: Record<string, string> = {
+const RULE_DEFAULT_4SLOT_FROM = "2026-06-06";
+
+const WEEKDAY_TIMES: Record<string, string> = {
   morning: "10:00-12:30",
   afternoon: "13:30-16:00",
   evening: "17:00-19:30",
   night: "20:00-22:30",
+};
+
+const WEEKEND_4SLOT_TIMES: Record<string, string> = {
+  morning: "10:00-12:30",
+  afternoon: "13:00-15:30",
+  evening: "16:00-18:30",
+  night: "19:00-21:30",
+};
+
+const getDefaultSlotLabel = (timeSlot: string, date: string): string => {
+  const d = new Date(date + "T00:00:00+09:00");
+  const dow = d.getUTCDay();
+  const isWeekend = dow === 0 || dow === 6;
+  const useWeekend = isWeekend && date >= RULE_DEFAULT_4SLOT_FROM;
+  const table = useWeekend ? WEEKEND_4SLOT_TIMES : WEEKDAY_TIMES;
+  return table[timeSlot] ?? WEEKDAY_TIMES[timeSlot] ?? timeSlot;
 };
 
 const getTimeSlotLabel = async (supabase: any, timeSlot: string, date: string): Promise<string> => {
@@ -28,13 +46,13 @@ const getTimeSlotLabel = async (supabase: any, timeSlot: string, date: string): 
       .maybeSingle();
 
     if (error || !data) {
-      return DEFAULT_TIME_SLOTS[timeSlot as keyof typeof DEFAULT_TIME_SLOTS];
+      return getDefaultSlotLabel(timeSlot, date);
     }
 
     return `${data.start_time.slice(0, 5)}-${data.end_time.slice(0, 5)}`;
   } catch (error) {
     console.error('Error fetching time slot:', error);
-    return DEFAULT_TIME_SLOTS[timeSlot as keyof typeof DEFAULT_TIME_SLOTS];
+    return getDefaultSlotLabel(timeSlot, date);
   }
 };
 
