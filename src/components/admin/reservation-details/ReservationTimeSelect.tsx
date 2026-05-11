@@ -3,7 +3,7 @@ import { TIME_SLOTS, ALL_TIME_SLOT_DEFAULTS } from "@/components/TimeSlotSelect"
 import { TimeSlot } from "@/types/reservation";
 import { useAdminReservations } from "@/hooks/useAdminReservations";
 import { useDailyTimeSlots } from "@/hooks/useDailyTimeSlots";
-import { shouldApplyDefault4Slot } from "@/utils/timeSlotRules";
+import { shouldApplyDefault4Slot, getDefaultSlotTimesForDate } from "@/utils/timeSlotRules";
 import { parseISO } from "date-fns";
 import {
   Select,
@@ -54,7 +54,7 @@ export const ReservationTimeSelect = ({
       return { start: dailySlot.start_time, end: dailySlot.end_time };
     }
     
-    return ALL_TIME_SLOT_DEFAULTS[slot];
+    return getDefaultSlotTimesForDate(parseISO(date), slot, dailyTimeSlots);
   };
 
   const currentTimeSlotLabel = getTimeSlotLabel(timeSlot);

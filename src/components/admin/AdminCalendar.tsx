@@ -22,7 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { shouldApplyDefault4Slot } from "@/utils/timeSlotRules";
+import { shouldApplyDefault4Slot, WEEKEND_4SLOT_TIMES } from "@/utils/timeSlotRules";
 
 interface AdminCalendarProps {
   reservations?: Reservation[];
@@ -255,7 +255,7 @@ export const AdminCalendar = ({
             ...(Object.entries(TIME_SLOTS) as [TimeSlot, { start: string }][]),
           ];
           if (showNightRow) {
-            slotsToRender.push(["night", { start: ALL_TIME_SLOT_DEFAULTS.night.start }]);
+            slotsToRender.push(["night", { start: WEEKEND_4SLOT_TIMES.night.start }]);
           }
           return slotsToRender.map(([slot, time]) => (
             <React.Fragment key={`time-${slot}`}>

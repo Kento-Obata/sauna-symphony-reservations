@@ -9,7 +9,7 @@ import {
 import { TimeSlot } from "@/types/reservation";
 import { isBefore, addHours, setHours, setMinutes, format } from "date-fns";
 import { useDailyTimeSlots } from "@/hooks/useDailyTimeSlots";
-import { shouldApplyDefault4Slot } from "@/utils/timeSlotRules";
+import { shouldApplyDefault4Slot, getDefaultSlotTimesForDate } from "@/utils/timeSlotRules";
 
 export const TIME_SLOTS = {
   morning: { start: '10:00', end: '12:30' },
@@ -40,13 +40,12 @@ export const isTimeSlotDisabled = (slot: TimeSlot, selectedDate: Date, dailyTime
   const now = new Date();
   const twoHoursFromNow = addHours(now, 2);
   
-  // Get start time from daily time slots or fallback to default
   const dateStr = format(selectedDate, 'yyyy-MM-dd');
   const dailySlot = dailyTimeSlots?.find(dts => 
     dts.date === dateStr && dts.time_slot === slot && dts.is_active
   );
   
-  const startTime = dailySlot?.start_time || ALL_TIME_SLOT_DEFAULTS[slot]?.start || TIME_SLOTS[slot as keyof typeof TIME_SLOTS]?.start;
+  const startTime = dailySlot?.start_time || getDefaultSlotTimesForDate(selectedDate, slot, dailyTimeSlots).start;
   if (!startTime) return true;
   const [startHour, startMinute] = startTime.split(':').map(Number);
   const slotTime = setMinutes(setHours(selectedDate, startHour), startMinute);
@@ -65,8 +64,7 @@ export const TimeSlotSelect = ({
   const { data: dailyTimeSlots } = useDailyTimeSlots();
 
   const getTimeSlotLabel = (slot: TimeSlot) => {
-    const fallback = ALL_TIME_SLOT_DEFAULTS[slot];
-    if (!selectedDate) return fallback;
+    if (!selectedDate) return ALL_TIME_SLOT_DEFAULTS[slot];
     
     const dateStr = format(selectedDate, 'yyyy-MM-dd');
     const dailySlot = dailyTimeSlots?.find(dts => 
@@ -77,7 +75,7 @@ export const TimeSlotSelect = ({
       return { start: dailySlot.start_time, end: dailySlot.end_time };
     }
     
-    return fallback;
+    return getDefaultSlotTimesForDate(selectedDate, slot, dailyTimeSlots);
   };
 
   // Build the list of slots to render. Always include the 3 default slots so
