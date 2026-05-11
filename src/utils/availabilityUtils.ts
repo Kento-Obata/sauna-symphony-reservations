@@ -39,17 +39,22 @@ export const isTimeSlotOccupied = (
   return slotReservations.length > 0;
 };
 
-// その日に表示すべき時間枠（3固定 + night は daily_time_slots で有効化されている時のみ）
+// その日に表示すべき時間枠
+//  - 明示的に night 行が active なら 4 枠
+//  - そうでなくても 6/6 以降の土日祝 かつ 明示行が一切無い日は 4 枠（デフォルトルール）
+//  - それ以外は 3 枠
 const getApplicableSlotsForDate = (
   date: Date,
   dailyTimeSlots?: DailyTimeSlotRow[]
 ): TimeSlot[] => {
   const dateString = format(date, "yyyy-MM-dd");
   const base: TimeSlot[] = ["morning", "afternoon", "evening"];
-  const hasNight = !!dailyTimeSlots?.some(
+  const hasExplicitNight = !!dailyTimeSlots?.some(
     (dts) => dts.date === dateString && dts.time_slot === "night" && dts.is_active
   );
-  return hasNight ? [...base, "night"] : base;
+  if (hasExplicitNight) return [...base, "night"];
+  if (shouldApplyDefault4Slot(date, dailyTimeSlots)) return [...base, "night"];
+  return base;
 };
 
 export const getAvailableTimeSlotsForDate = (
