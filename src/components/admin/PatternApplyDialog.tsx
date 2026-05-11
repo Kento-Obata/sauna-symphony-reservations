@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { enumerateWeekendsAndHolidays, isHoliday, isWeekend } from "@/utils/holidayUtils";
+import { RULE_DEFAULT_4SLOT_FROM } from "@/utils/timeSlotRules";
 
 interface Props {
   open: boolean;
