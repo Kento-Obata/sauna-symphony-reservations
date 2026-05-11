@@ -6,24 +6,19 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Option } from "@/types/option";
 import { useDailyTimeSlots } from "@/hooks/useDailyTimeSlots";
-
-const TIME_SLOTS = {
-  morning: { start: "10:00", end: "12:30" },
-  afternoon: { start: "13:30", end: "16:00" },
-  evening: { start: "17:00", end: "19:30" },
-};
+import { getDefaultSlotTimesForDate } from "@/utils/timeSlotRules";
 
 const getTimeSlotDisplay = (timeSlot: string, date: string, dailyTimeSlots: any[]) => {
-  const dailySlot = dailyTimeSlots?.find(dts => 
+  const dailySlot = dailyTimeSlots?.find(dts =>
     dts.date === date && dts.time_slot === timeSlot && dts.is_active
   );
-  
+
   if (dailySlot) {
     return `${dailySlot.start_time.slice(0, 5)}-${dailySlot.end_time.slice(0, 5)}`;
   }
-  
-  const defaultSlot = TIME_SLOTS[timeSlot as keyof typeof TIME_SLOTS];
-  return defaultSlot ? `${defaultSlot.start}-${defaultSlot.end}` : timeSlot;
+
+  const defaultSlot = getDefaultSlotTimesForDate(date, timeSlot, dailyTimeSlots);
+  return `${defaultSlot.start}-${defaultSlot.end}`;
 };
 
 interface ReservationInfoProps {
