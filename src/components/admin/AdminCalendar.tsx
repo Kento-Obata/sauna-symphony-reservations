@@ -255,7 +255,7 @@ export const AdminCalendar = ({
             ...(Object.entries(TIME_SLOTS) as [TimeSlot, { start: string }][]),
           ];
           if (showNightRow) {
-            slotsToRender.push(["night", { start: ALL_TIME_SLOT_DEFAULTS.night.start }]);
+            slotsToRender.push(["night", { start: WEEKEND_4SLOT_TIMES.night.start }]);
           }
           return slotsToRender.map(([slot, time]) => (
             <React.Fragment key={`time-${slot}`}>
