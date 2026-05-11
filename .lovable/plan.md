@@ -1,64 +1,47 @@
-# 1日4枠対応プラン（確定版）
+# 土日祝を1日4枠化する仕組み
 
-## ゴール
-予約の時間帯に4つ目の枠（`night`）を追加。**4枠目を有効化した日のみ**4枠表示、それ以外の日は現状の3枠UIを完全維持。
+## 挙動の説明（DBレベル）
 
-## 大原則（既存サイトへの非破壊保証）
-- `TIME_SLOTS` 定数（公開UIで使用）には **night を追加しない**。デフォルト時間は別マップ `OPTIONAL_TIME_SLOTS` に分離
-- 表示判定は **`daily_time_slots` を真とする**：該当日に `time_slot='night'` の有効レコードが無い限り、UIに4枠目は一切現れない
-- 結果：night パターン未適用の既存日 = 完全に現状のまま
+**「自動で未来永劫4枠」というルールはDBに存在しません。** 表示判定は常に `daily_time_slots` テーブルの実レコードを見ているので、4枠化したい日付について `daily_time_slots` に「night」行をINSERTする操作が必要です。
 
----
+→ つまり「**一括適用ボタン**」を押した瞬間に、対象日付分の行がDBに書き込まれる、というワンショット操作になります。後から追加された日付（例：1年後の祝日）には自動反映されません。必要な時にもう一度ボタンを押せば足りる、シンプルな運用です。
 
-## 影響範囲
+## 実装方針
 
-### Index（公開）
-- `src/types/reservation.ts` — `TimeSlot` に `"night"` 追加
-- `src/components/TimeSlotSelect.tsx` — 表示候補を `[morning, afternoon, evening]` 固定 + 「該当日に night の有効 daily_time_slot がある場合のみ night を追加」
-- `src/utils/availabilityUtils.ts` — `getAvailableTimeSlotsForDate` を「daily_time_slots 参照ベース」に修正（既知の弱点修正も兼ねる）
-- `src/components/reservation/ReservationCalendar.tsx`, `ReservationInfo.tsx`, `ReservationDetails.tsx` — TimeSlot 型拡張に追従
-- `src/components/ReservationForm.tsx`, `ReservationConfirmDialog.tsx`, `src/hooks/useReservationForm.ts`, `useReservations.ts` — 型追従のみ
+### 1. 祝日ライブラリ導入
+- `japanese-holidays` (npm) を追加。`isHoliday(date)` で判定。
 
-### Admin
-- `src/components/admin/AdminCalendar.tsx` — 行レンダリングを「3固定行 + night 有効日のみ4行目セル描画」に変更
-- `src/components/admin/AdminReservationDialog.tsx` — `timeSlotReservations` 初期値に `night: 0` 追加
-- `src/components/admin/AdminReservationDetailsDialog.tsx`, `reservation-details/ReservationTimeSelect.tsx` — 型追従
-- `src/components/admin/AdminUpcomingReservations.tsx`, `AdminSearchResults.tsx` — ラベル変換に「夜」追加
-- `src/components/admin/DailyTimeSlotDialog.tsx` — Select 選択肢に night、デフォルト時間マップ追加
-- `src/components/admin/DailyTimeSlotManager.tsx` — `getTimeSlotLabel` に night
-- `src/components/admin/TimeSlotPatternDialog.tsx` / `TimeSlotPatternManager.tsx` / `PatternApplyDialog.tsx` — night フィールド（任意・NULLなら未使用）追加
-- `src/hooks/useTimeSlotPatterns.ts` — 型に night 追加
+### 2. PatternApplyDialog に「土日祝に一括適用」モードを追加
+- 既存の「カレンダーで複数日選択」UIに加え、**範囲指定モード**をタブ切替で用意：
+  - 開始日（デフォルト 2026-06-06）
+  - 終了日（デフォルト 開始日から3ヶ月後）
+  - 「土日祝のみ」チェックボックス（デフォルトON）
+- パターンは「土日4枠」を初期選択。
 
-### Shift
-- `ShiftCalendar.tsx` — 時間グリッド方式で enum 非依存。**影響なし**
-- `ShiftRequest.tsx` — `shift_preferences.time_slot`(text) は morning/afternoon/evening 固定で運用継続。**影響なし**（4枠目に対するスタッフ希望は将来別タスク）
+### 3. プレビュー＆スキップロジック
+適用ボタンを押す前に対象日を一覧表示：
+```
+2026-06-06 (土) ✅ 適用
+2026-06-07 (日) ⚠️ 既存予約あり → スキップ
+2026-06-13 (土) ✅ 適用
+...
+```
+- `reservations` テーブルから `status IN ('confirmed','pending')` の日付を取得し、その日付は完全スキップ。
+- スキップ件数も表示。
 
-### Edge Functions
-- `send-reservation-reminders` — 時間帯ラベルマップに `night` フォールバック追加（実値は daily_time_slots 参照）
-- `get-availability`, `check-availability`, `create-reservation`, `confirm-reservation`, `send-confirmation-notification`, `send-pending-notification` — enum 値受け入れ確認のみ（基本ノーコード変更）
+### 4. 適用実行
+- スキップ対象を除外した日付リストに対して、選択パターンの morning/afternoon/evening/night 4行を `daily_time_slots` に upsert（既存の PatternApplyDialog と同じロジック）。
+- 完了トースト：「12日に適用、3日はスキップ（既存予約あり）」
 
----
+## 影響ファイル
+- `package.json` — `japanese-holidays` 追加
+- `src/utils/holidayUtils.ts`（新規） — 祝日判定 & 土日祝列挙ヘルパー
+- `src/components/admin/PatternApplyDialog.tsx` — タブで「個別選択 / 範囲一括」切替、プレビュー表示、reservations 参照によるスキップ実装
 
-## DB マイグレーション
+## DBマイグレーション
+**不要。** 既存テーブル（daily_time_slots / time_slot_patterns）と既存「土日4枠」パターンをそのまま使います。
 
-1. `ALTER TYPE time_slot ADD VALUE 'night';` （単独トランザクションで先に流す）
-2. `time_slot_patterns` に `night_start TIME NULL`, `night_end TIME NULL` 追加
-3. `set_default_time_slot_times()` トリガーに night 分岐追加（フォールバック 20:00-22:30）
-
----
-
-## 実装順序
-
-1. DB マイグレーション（enum + パターン列）
-2. 型・定数整理（`TimeSlot` 拡張、`TIME_SLOTS` は3枠維持、`OPTIONAL_TIME_SLOTS` 新設）
-3. `availabilityUtils.ts` を daily_time_slots 参照に修正
-4. Admin 側 UI（パターン Dialog / DailyTimeSlot Dialog / Manager / PatternApply / AdminCalendar）に night 対応
-5. 公開 UI（`TimeSlotSelect` を「3固定 + night は有効日のみ」に変更）
-6. Edge Function ラベルマップ更新
-7. 動作確認：
-   - 既存日（daily_time_slots に night 行なし）→ 公開UI/Adminカレンダー共に3枠のみ
-   - night パターン適用日 → 4枠目が出現、予約可能、詳細表示・リマインダーOK
-
-## 技術メモ
-- `ALTER TYPE ADD VALUE` は同トランザクション内で直後に使用不可 → enum 追加と他DDLを別マイグレーションに分割
-- `availabilityUtils.ts` は今回 daily_time_slots を読む必要があるため引数追加が必要（呼び出し側 `AvailabilityTextGenerator` も追従）
+## 運用イメージ（確認）
+- 6/6以降を一度ボタンで適用 → 該当日の `daily_time_slots` に night 行が入り、公開UIに4枠目が出現。
+- 半年後に「もう半年分やりたい」 → 同じダイアログで開始日を変えて再実行。
+- 既存予約が入った日は触らないので、既に表示中の枠数が予期せず変わることはない。
