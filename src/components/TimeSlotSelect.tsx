@@ -64,8 +64,7 @@ export const TimeSlotSelect = ({
   const { data: dailyTimeSlots } = useDailyTimeSlots();
 
   const getTimeSlotLabel = (slot: TimeSlot) => {
-    const fallback = ALL_TIME_SLOT_DEFAULTS[slot];
-    if (!selectedDate) return fallback;
+    if (!selectedDate) return ALL_TIME_SLOT_DEFAULTS[slot];
     
     const dateStr = format(selectedDate, 'yyyy-MM-dd');
     const dailySlot = dailyTimeSlots?.find(dts => 
@@ -76,7 +75,7 @@ export const TimeSlotSelect = ({
       return { start: dailySlot.start_time, end: dailySlot.end_time };
     }
     
-    return fallback;
+    return getDefaultSlotTimesForDate(selectedDate, slot, dailyTimeSlots);
   };
 
   // Build the list of slots to render. Always include the 3 default slots so
