@@ -63,18 +63,17 @@ export const WEEKEND_4SLOT_TIMES = {
  */
 export const getDefaultSlotTimesForDate = (
   date: Date | string,
-  slot: "morning" | "afternoon" | "evening" | "night",
+  slot: string,
   dailyTimeSlots?: DailyTimeSlotRowLite[]
 ): { start: string; end: string } => {
-  if (shouldApplyDefault4Slot(date, dailyTimeSlots)) {
-    return WEEKEND_4SLOT_TIMES[slot];
-  }
-  // 平日デフォルト（既存）
   const WEEKDAY: Record<string, { start: string; end: string }> = {
     morning: { start: "10:00", end: "12:30" },
     afternoon: { start: "13:30", end: "16:00" },
     evening: { start: "17:00", end: "19:30" },
     night: { start: "20:00", end: "22:30" },
   };
-  return WEEKDAY[slot];
+  if (shouldApplyDefault4Slot(date, dailyTimeSlots)) {
+    return (WEEKEND_4SLOT_TIMES as Record<string, { start: string; end: string }>)[slot] ?? WEEKDAY[slot] ?? { start: "00:00", end: "00:00" };
+  }
+  return WEEKDAY[slot] ?? { start: "00:00", end: "00:00" };
 };
