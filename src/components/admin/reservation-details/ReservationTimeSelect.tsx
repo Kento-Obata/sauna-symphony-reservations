@@ -54,7 +54,7 @@ export const ReservationTimeSelect = ({
       return { start: dailySlot.start_time, end: dailySlot.end_time };
     }
     
-    return ALL_TIME_SLOT_DEFAULTS[slot];
+    return getDefaultSlotTimesForDate(parseISO(date), slot, dailyTimeSlots);
   };
 
   const currentTimeSlotLabel = getTimeSlotLabel(timeSlot);
