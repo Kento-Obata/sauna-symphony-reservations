@@ -4,6 +4,8 @@ import { isBefore, isAfter, addMonths, format } from "date-fns";
 import { ReservationStatus } from "@/components/ReservationStatus";
 import { Reservation } from "@/types/reservation";
 import { useShopClosures } from "@/hooks/useShopClosures";
+import { useDailyTimeSlots } from "@/hooks/useDailyTimeSlots";
+import { getMaxSlotsForDate } from "@/utils/timeSlotRules";
 
 interface ReservationCalendarProps {
   date: Date | undefined;
@@ -19,6 +21,7 @@ export const ReservationCalendar = ({
   const today = new Date();
   const threeMonthsFromNow = addMonths(today, 3);
   const { closures: shopClosures } = useShopClosures();
+  const { data: dailyTimeSlots } = useDailyTimeSlots();
 
   const isDateClosed = (day: Date) => {
     const dateString = format(day, 'yyyy-MM-dd');
@@ -26,10 +29,9 @@ export const ReservationCalendar = ({
   };
 
   const getDayContent = (day: Date) => {
-    // Only show reservation status for dates between today and three months from now
     if (
-      !reservations || 
-      isBefore(day, today) || 
+      !reservations ||
+      isBefore(day, today) ||
       isAfter(day, threeMonthsFromNow)
     ) return null;
 
@@ -39,14 +41,16 @@ export const ReservationCalendar = ({
     );
 
     const reservationCount = dateReservations.length;
-    
+    const maxSlots = getMaxSlotsForDate(day, dailyTimeSlots ?? []);
+
     return (
       <div className="w-full h-full flex flex-col items-center justify-start pt-0.5 border-b-[1px] border-sauna-stone/50">
         <span>{day.getDate()}</span>
         <div className="text-xs translate-y-[-2px]">
-          <ReservationStatus 
+          <ReservationStatus
             reservationCount={reservationCount}
-            isClosed={isDateClosed(day)} 
+            isClosed={isDateClosed(day)}
+            maxReservations={maxSlots}
           />
         </div>
       </div>
@@ -55,7 +59,7 @@ export const ReservationCalendar = ({
 
   const isDateDisabled = (day: Date) => {
     if (
-      isBefore(day, today) || 
+      isBefore(day, today) ||
       isAfter(day, threeMonthsFromNow) ||
       isDateClosed(day)
     ) return true;
@@ -67,7 +71,8 @@ export const ReservationCalendar = ({
       (r) => r.date === dateString && (r.status === "confirmed" || r.status === "pending")
     );
 
-    return dateReservations.length >= 3;
+    const maxSlots = getMaxSlotsForDate(day, dailyTimeSlots ?? []);
+    return dateReservations.length >= maxSlots;
   };
 
   return (
