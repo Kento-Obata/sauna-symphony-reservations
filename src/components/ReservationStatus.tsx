@@ -1,11 +1,10 @@
 interface ReservationStatusProps {
   reservationCount: number;
   isClosed?: boolean;
+  maxReservations?: number;
 }
 
-export const ReservationStatus = ({ reservationCount, isClosed }: ReservationStatusProps) => {
-  const MAX_RESERVATIONS = 3;
-
+export const ReservationStatus = ({ reservationCount, isClosed, maxReservations = 3 }: ReservationStatusProps) => {
   if (isClosed) {
     return <span className="text-black">×</span>;
   }
@@ -14,9 +13,9 @@ export const ReservationStatus = ({ reservationCount, isClosed }: ReservationSta
     return <span className="text-black">○</span>;
   }
 
-  if (reservationCount >= MAX_RESERVATIONS) {
+  if (reservationCount >= maxReservations) {
     return <span className="text-black">×</span>;
   }
 
-  return <span className="text-black">{MAX_RESERVATIONS - reservationCount}</span>;
+  return <span className="text-black">{maxReservations - reservationCount}</span>;
 };
