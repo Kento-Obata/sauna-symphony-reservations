@@ -22,6 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { shouldApplyDefault4Slot } from "@/utils/timeSlotRules";
 
 interface AdminCalendarProps {
   reservations?: Reservation[];
