@@ -9,6 +9,7 @@ import {
 import { TimeSlot } from "@/types/reservation";
 import { isBefore, addHours, setHours, setMinutes, format } from "date-fns";
 import { useDailyTimeSlots } from "@/hooks/useDailyTimeSlots";
+import { shouldApplyDefault4Slot } from "@/utils/timeSlotRules";
 
 export const TIME_SLOTS = {
   morning: { start: '10:00', end: '12:30' },
