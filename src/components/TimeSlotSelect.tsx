@@ -9,6 +9,7 @@ import {
 import { TimeSlot } from "@/types/reservation";
 import { isBefore, addHours, setHours, setMinutes, format } from "date-fns";
 import { useDailyTimeSlots } from "@/hooks/useDailyTimeSlots";
+import { shouldApplyDefault4Slot } from "@/utils/timeSlotRules";
 
 export const TIME_SLOTS = {
   morning: { start: '10:00', end: '12:30' },
@@ -83,9 +84,10 @@ export const TimeSlotSelect = ({
   // the existing UI is unchanged. Append `night` only when the selected date
   // has an active night row in daily_time_slots.
   const dateStr = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null;
-  const hasNight = !!(dateStr && dailyTimeSlots?.some(
+  const hasExplicitNight = !!(dateStr && dailyTimeSlots?.some(
     (dts) => dts.date === dateStr && dts.time_slot === 'night' && dts.is_active
   ));
+  const hasNight = hasExplicitNight || (selectedDate ? shouldApplyDefault4Slot(selectedDate, dailyTimeSlots) : false);
 
   const slotOptions: { value: TimeSlot; label: string }[] = [
     { value: 'morning', label: '午前' },
