@@ -243,11 +243,68 @@ export const PatternApplyDialog = ({ open, onOpenChange }: Props) => {
           <DialogTitle>パターンを日付に適用</DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="bulk" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="bulk">範囲一括（土日祝）</TabsTrigger>
+        <Tabs defaultValue="rule" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="rule">ルール有効化</TabsTrigger>
+            <TabsTrigger value="bulk">範囲一括</TabsTrigger>
             <TabsTrigger value="individual">個別選択</TabsTrigger>
           </TabsList>
+
+          {/* ========== ルール有効化 ========== */}
+          <TabsContent value="rule" className="space-y-4">
+            <div className="text-sm bg-muted p-3 rounded-md space-y-1">
+              <div className="font-medium">デフォルトルール</div>
+              <div>
+                <span className="font-mono">{RULE_DEFAULT_4SLOT_FROM}</span> 以降の <b>土日祝</b> は、
+                明示設定が無くても自動で <b>4枠（夜枠込み）</b>になります。
+              </div>
+              <div className="text-muted-foreground">
+                既に予約が入っている日付は意図せず4枠化されないよう、ここで <b>3枠でロック</b>してください。
+              </div>
+            </div>
+
+            <div>
+              <Label>先読み期間（月）</Label>
+              <Input
+                type="number"
+                min={1}
+                max={60}
+                value={ruleLookaheadMonths}
+                onChange={(e) => setRuleLookaheadMonths(Number(e.target.value) || 24)}
+              />
+              <div className="text-xs text-muted-foreground mt-1">
+                {RULE_DEFAULT_4SLOT_FROM} から {ruleLookaheadMonths} ヶ月先までの土日祝をチェックします
+              </div>
+            </div>
+
+            <div className="border rounded-md p-3 max-h-64 overflow-y-auto bg-background">
+              <div className="text-sm font-medium mb-2">
+                ロック対象 {ruleLockedDates.length}日（既存予約があり、まだ明示設定が無い土日祝）
+                {ruleLoading && <span className="text-muted-foreground ml-2">確認中...</span>}
+              </div>
+              {ruleLockedDates.length === 0 ? (
+                <div className="text-sm text-muted-foreground">
+                  {ruleLoading ? "" : "ロックすべき日付はありません ✅"}
+                </div>
+              ) : (
+                <ul className="text-sm space-y-0.5">
+                  {ruleLockedDates.map((d) => (
+                    <li key={d}>
+                      {format(new Date(d), "yyyy/MM/dd (E)", { locale: ja })}
+                      <span className="ml-2 text-xs text-destructive">予約あり → 3枠でロック</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>キャンセル</Button>
+              <Button onClick={handleEnableRule} disabled={isApplying || ruleLoading}>
+                {isApplying ? "ロック中..." : ruleLockedDates.length === 0 ? "ロック不要" : `${ruleLockedDates.length}日をロック`}
+              </Button>
+            </DialogFooter>
+          </TabsContent>
 
           {/* ========== 範囲一括 ========== */}
           <TabsContent value="bulk" className="space-y-4">
