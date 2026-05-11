@@ -84,9 +84,10 @@ export const TimeSlotSelect = ({
   // the existing UI is unchanged. Append `night` only when the selected date
   // has an active night row in daily_time_slots.
   const dateStr = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null;
-  const hasNight = !!(dateStr && dailyTimeSlots?.some(
+  const hasExplicitNight = !!(dateStr && dailyTimeSlots?.some(
     (dts) => dts.date === dateStr && dts.time_slot === 'night' && dts.is_active
   ));
+  const hasNight = hasExplicitNight || (selectedDate ? shouldApplyDefault4Slot(selectedDate, dailyTimeSlots) : false);
 
   const slotOptions: { value: TimeSlot; label: string }[] = [
     { value: 'morning', label: '午前' },
