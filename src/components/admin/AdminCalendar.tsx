@@ -83,6 +83,12 @@ export const AdminCalendar = ({
       .filter((s) => s.time_slot === "night" && s.is_active)
       .map((s) => s.date)
   );
+  // ルール：6/6以降の土日祝で、明示行が無い日は自動で night 枠あり扱い
+  days.forEach((d) => {
+    if (shouldApplyDefault4Slot(d, weekDailySlots ?? [])) {
+      nightActiveDates.add(format(d, "yyyy-MM-dd"));
+    }
+  });
   const showNightRow = nightActiveDates.size > 0;
 
   const handlePrevWeek = () => setCurrentDate(subWeeks(currentDate, 1));
