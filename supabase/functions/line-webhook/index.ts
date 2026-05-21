@@ -13,25 +13,33 @@ const TIME_SLOT_LABELS: Record<string, string> = {
 };
 const VALID_SLOTS = new Set(["morning", "afternoon", "evening", "night"]);
 
-function getSupabaseSecretKey(): string {
+function getSupabaseAdminKey(): { key: string; source: string } {
   const resolveKey = (candidate?: string): string => {
     if (!candidate) return "";
     if (candidate.startsWith("sb_secret_") || candidate.startsWith("eyJ")) return candidate;
     return Deno.env.get(candidate) ?? "";
   };
 
+  const legacyServiceRoleKey = resolveKey("SUPABASE_SERVICE_ROLE_KEY");
+  if (legacyServiceRoleKey.startsWith("eyJ")) {
+    return { key: legacyServiceRoleKey, source: "SUPABASE_SERVICE_ROLE_KEY" };
+  }
+
   const secretKeysJson = Deno.env.get("SUPABASE_SECRET_KEYS");
   if (secretKeysJson) {
     try {
       const keys = JSON.parse(secretKeysJson) as Record<string, string>;
       const secretKey = resolveKey(keys.default) || Object.values(keys).map(resolveKey).find(Boolean);
-      if (secretKey) return secretKey;
+      if (secretKey) return { key: secretKey, source: "SUPABASE_SECRET_KEYS" };
     } catch (error) {
       console.error("SUPABASE_SECRET_KEYS parse failed:", error);
     }
   }
 
-  return resolveKey("SUPABASE_SECRET_KEY") || resolveKey("SUPABASE_SERVICE_ROLE_KEY");
+  const singleSecretKey = resolveKey("SUPABASE_SECRET_KEY");
+  if (singleSecretKey) return { key: singleSecretKey, source: "SUPABASE_SECRET_KEY" };
+  if (legacyServiceRoleKey) return { key: legacyServiceRoleKey, source: "SUPABASE_SERVICE_ROLE_KEY" };
+  return { key: "", source: "missing" };
 }
 
 function describeSupabaseKey(key: string): string {
@@ -310,20 +318,21 @@ serve(async (req) => {
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-  const supabaseSecretKey = getSupabaseSecretKey();
+  const supabaseAdminKey = getSupabaseAdminKey();
   console.log("Supabase admin key status:", {
     has_url: !!supabaseUrl,
-    key_type: describeSupabaseKey(supabaseSecretKey),
+    key_type: describeSupabaseKey(supabaseAdminKey.key),
+    key_source: supabaseAdminKey.source,
     has_secret_keys_json: !!Deno.env.get("SUPABASE_SECRET_KEYS"),
     has_secret_key: !!Deno.env.get("SUPABASE_SECRET_KEY"),
     has_legacy_service_role_key: !!Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
   });
-  if (!supabaseUrl || !supabaseSecretKey) {
+  if (!supabaseUrl || !supabaseAdminKey.key) {
     console.error("Supabase admin credentials are not available");
     return new Response("Supabase not configured", { status: 500, headers: corsHeaders });
   }
 
-  const supabase = { url: supabaseUrl, key: supabaseSecretKey };
+  const supabase = { url: supabaseUrl, key: supabaseAdminKey.key };
 
   const events = Array.isArray(payload.events) ? payload.events : [];
 

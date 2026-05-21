@@ -19,12 +19,15 @@ const EVENT_LABELS: Record<string, string> = {
   updated: "✏️ 予約が変更されました",
 };
 
-function getSupabaseSecretKey(): string {
+function getSupabaseAdminKey(): string {
   const resolveKey = (candidate?: string): string => {
     if (!candidate) return "";
     if (candidate.startsWith("sb_secret_") || candidate.startsWith("eyJ")) return candidate;
     return Deno.env.get(candidate) ?? "";
   };
+
+  const legacyServiceRoleKey = resolveKey("SUPABASE_SERVICE_ROLE_KEY");
+  if (legacyServiceRoleKey.startsWith("eyJ")) return legacyServiceRoleKey;
 
   const secretKeysJson = Deno.env.get("SUPABASE_SECRET_KEYS");
   if (secretKeysJson) {
@@ -37,7 +40,7 @@ function getSupabaseSecretKey(): string {
     }
   }
 
-  return resolveKey("SUPABASE_SECRET_KEY") || resolveKey("SUPABASE_SERVICE_ROLE_KEY");
+  return resolveKey("SUPABASE_SECRET_KEY") || legacyServiceRoleKey;
 }
 
 async function restSelectRecipients(url: string, key: string) {
@@ -109,7 +112,7 @@ serve(async (req) => {
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseSecretKey = getSupabaseSecretKey();
+    const supabaseSecretKey = getSupabaseAdminKey();
     if (!supabaseUrl || !supabaseSecretKey) {
       throw new Error("Supabase admin credentials are not available");
     }
