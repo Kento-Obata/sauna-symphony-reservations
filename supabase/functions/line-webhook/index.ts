@@ -323,7 +323,7 @@ serve(async (req) => {
     return new Response("Supabase not configured", { status: 500, headers: corsHeaders });
   }
 
-  const supabase = createSupabaseAdminClient(supabaseUrl, supabaseSecretKey);
+  const supabase = { url: supabaseUrl, key: supabaseSecretKey };
 
   const events = Array.isArray(payload.events) ? payload.events : [];
 
@@ -342,11 +342,10 @@ serve(async (req) => {
       }
 
       // Lookup user
-      const { data: user, error: lookupErr } = await supabase
-        .from("line_allowed_users")
-        .select("line_user_id, display_name, is_active, can_write")
-        .eq("line_user_id", userId)
-        .maybeSingle();
+      const { data: user, error: lookupErr } = await maybeSingle<any>(restRequest<any[]>(
+        supabase,
+        `line_allowed_users?line_user_id=eq.${encodeURIComponent(userId)}&select=line_user_id,display_name,is_active,can_write&limit=1`
+      ));
 
       console.log("LINE webhook lookup:", {
         incoming_userId: userId,
