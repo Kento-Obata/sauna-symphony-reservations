@@ -197,30 +197,22 @@ async function handleCommand(
     if (!user.can_write) return "キャンセル権限がありません。";
     const code = parts[1];
     if (!code || !/^[A-Z0-9]{8}$/.test(code)) return "予約コードは英数字8桁で指定してください。例: キャンセル ABCD1234";
-    const { data: existing, error: fetchErr } = await supabase
-      .from("reservations")
-      .select("*")
-      .eq("reservation_code", code)
-      .maybeSingle();
+    const { data: existing, error: fetchErr } = await maybeSingle<any>(restRequest<any[]>(
+      supabase,
+      `reservations?reservation_code=eq.${encodeURIComponent(code)}&select=*&limit=1`
+    ));
     if (fetchErr) return `エラー: ${fetchErr.message}`;
     if (!existing) return "予約が見つかりませんでした。";
     if (existing.status === "cancelled") return "この予約はすでにキャンセル済みです。";
 
-    const { error: updErr } = await supabase
-      .from("reservations")
-      .update({ status: "cancelled", is_confirmed: true })
-      .eq("reservation_code", code);
+    const { error: updErr } = await restRequest<any[]>(
+      supabase,
+      `reservations?reservation_code=eq.${encodeURIComponent(code)}`,
+      { method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify({ status: "cancelled", is_confirmed: true }) }
+    );
     if (updErr) return `キャンセルに失敗しました: ${updErr.message}`;
 
     // notify other staff
-    await supabase.functions.invoke("line-notify-staff", {
-      body: {
-        event: "cancelled",
-        reservation: existing,
-        note: `LINE Botより (${user.display_name})`,
-      },
-    }).catch(() => {});
-
     return `❌ キャンセル完了: ${code}\n${existing.date} ${TIME_SLOT_LABELS[existing.time_slot] ?? ""}\n${existing.guest_name} 様`;
   }
 
@@ -243,12 +235,10 @@ async function handleCommand(
     }
 
     // Check availability
-    const { data: existing } = await supabase
-      .from("reservations")
-      .select("id")
-      .eq("date", date)
-      .eq("time_slot", slot)
-      .neq("status", "cancelled");
+    const { data: existing } = await restRequest<any[]>(
+      supabase,
+      `reservations?date=eq.${encodeURIComponent(date)}&time_slot=eq.${encodeURIComponent(slot)}&status=neq.cancelled&select=id`
+    );
     if (existing && existing.length > 0) return "この時間帯はすでに予約が入っています。";
 
     // Price
