@@ -318,20 +318,21 @@ serve(async (req) => {
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-  const supabaseSecretKey = getSupabaseSecretKey();
+  const supabaseAdminKey = getSupabaseAdminKey();
   console.log("Supabase admin key status:", {
     has_url: !!supabaseUrl,
-    key_type: describeSupabaseKey(supabaseSecretKey),
+    key_type: describeSupabaseKey(supabaseAdminKey.key),
+    key_source: supabaseAdminKey.source,
     has_secret_keys_json: !!Deno.env.get("SUPABASE_SECRET_KEYS"),
     has_secret_key: !!Deno.env.get("SUPABASE_SECRET_KEY"),
     has_legacy_service_role_key: !!Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
   });
-  if (!supabaseUrl || !supabaseSecretKey) {
+  if (!supabaseUrl || !supabaseAdminKey.key) {
     console.error("Supabase admin credentials are not available");
     return new Response("Supabase not configured", { status: 500, headers: corsHeaders });
   }
 
-  const supabase = { url: supabaseUrl, key: supabaseSecretKey };
+  const supabase = { url: supabaseUrl, key: supabaseAdminKey.key };
 
   const events = Array.isArray(payload.events) ? payload.events : [];
 
