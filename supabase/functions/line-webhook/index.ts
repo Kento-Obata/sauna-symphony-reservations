@@ -289,11 +289,20 @@ serve(async (req) => {
       }
 
       // Lookup user
-      const { data: user } = await supabase
+      const { data: user, error: lookupErr } = await supabase
         .from("line_allowed_users")
         .select("line_user_id, display_name, is_active, can_write")
         .eq("line_user_id", userId)
         .maybeSingle();
+
+      console.log("LINE webhook lookup:", {
+        incoming_userId: userId,
+        incoming_length: userId.length,
+        text,
+        found: !!user,
+        is_active: user?.is_active,
+        lookup_error: lookupErr?.message,
+      });
 
       if (!user || !user.is_active) {
         // Allow `ID` command for self-discovery even when not registered
@@ -303,7 +312,7 @@ serve(async (req) => {
           await lineReply(
             token,
             replyToken,
-            "このBotの使用権限がありません。\n「ID」と送信して表示されるuserIdを管理者に伝えてください。"
+            `このBotの使用権限がありません。\n受信ID: ${userId}\n登録状況: ${user ? "無効化されています" : "未登録"}\n「ID」と送信して表示されるuserIdを管理者に伝えてください。`
           );
         }
         continue;
