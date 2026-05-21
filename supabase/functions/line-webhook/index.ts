@@ -15,18 +15,31 @@ const TIME_SLOT_LABELS: Record<string, string> = {
 const VALID_SLOTS = new Set(["morning", "afternoon", "evening", "night"]);
 
 function getSupabaseSecretKey(): string {
+  const resolveKey = (candidate?: string): string => {
+    if (!candidate) return "";
+    if (candidate.startsWith("sb_secret_") || candidate.startsWith("eyJ")) return candidate;
+    return Deno.env.get(candidate) ?? "";
+  };
+
   const secretKeysJson = Deno.env.get("SUPABASE_SECRET_KEYS");
   if (secretKeysJson) {
     try {
       const keys = JSON.parse(secretKeysJson) as Record<string, string>;
-      const secretKey = keys.default ?? Object.values(keys).find(Boolean);
+      const secretKey = resolveKey(keys.default) || Object.values(keys).map(resolveKey).find(Boolean);
       if (secretKey) return secretKey;
     } catch (error) {
       console.error("SUPABASE_SECRET_KEYS parse failed:", error);
     }
   }
 
-  return Deno.env.get("SUPABASE_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  return resolveKey("SUPABASE_SECRET_KEY") || resolveKey("SUPABASE_SERVICE_ROLE_KEY");
+}
+
+function describeSupabaseKey(key: string): string {
+  if (!key) return "missing";
+  if (key.startsWith("sb_secret_")) return "sb_secret";
+  if (key.startsWith("eyJ")) return "jwt_legacy";
+  return "unknown_format";
 }
 
 const HELP_TEXT = [
@@ -283,6 +296,13 @@ serve(async (req) => {
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
   const supabaseSecretKey = getSupabaseSecretKey();
+  console.log("Supabase admin key status:", {
+    has_url: !!supabaseUrl,
+    key_type: describeSupabaseKey(supabaseSecretKey),
+    has_secret_keys_json: !!Deno.env.get("SUPABASE_SECRET_KEYS"),
+    has_secret_key: !!Deno.env.get("SUPABASE_SECRET_KEY"),
+    has_legacy_service_role_key: !!Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
+  });
   if (!supabaseUrl || !supabaseSecretKey) {
     console.error("Supabase admin credentials are not available");
     return new Response("Supabase not configured", { status: 500, headers: corsHeaders });

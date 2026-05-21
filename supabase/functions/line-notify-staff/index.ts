@@ -21,18 +21,24 @@ const EVENT_LABELS: Record<string, string> = {
 };
 
 function getSupabaseSecretKey(): string {
+  const resolveKey = (candidate?: string): string => {
+    if (!candidate) return "";
+    if (candidate.startsWith("sb_secret_") || candidate.startsWith("eyJ")) return candidate;
+    return Deno.env.get(candidate) ?? "";
+  };
+
   const secretKeysJson = Deno.env.get("SUPABASE_SECRET_KEYS");
   if (secretKeysJson) {
     try {
       const keys = JSON.parse(secretKeysJson) as Record<string, string>;
-      const secretKey = keys.default ?? Object.values(keys).find(Boolean);
+      const secretKey = resolveKey(keys.default) || Object.values(keys).map(resolveKey).find(Boolean);
       if (secretKey) return secretKey;
     } catch (error) {
       console.error("SUPABASE_SECRET_KEYS parse failed:", error);
     }
   }
 
-  return Deno.env.get("SUPABASE_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  return resolveKey("SUPABASE_SECRET_KEY") || resolveKey("SUPABASE_SERVICE_ROLE_KEY");
 }
 
 interface NotifyBody {
