@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -41,20 +40,17 @@ function getSupabaseSecretKey(): string {
   return resolveKey("SUPABASE_SECRET_KEY") || resolveKey("SUPABASE_SERVICE_ROLE_KEY");
 }
 
-function createSupabaseAdminClient(url: string, key: string) {
-  const shouldStripAuthHeader = key.startsWith("sb_secret_");
-  return createClient(url, key, {
-    auth: { autoRefreshToken: false, persistSession: false },
-    global: {
-      fetch: (input, init = {}) => {
-        if (!shouldStripAuthHeader) return fetch(input, init);
-        const headers = new Headers(init.headers ?? (input instanceof Request ? input.headers : undefined));
-        const auth = headers.get("authorization") ?? "";
-        if (auth === `Bearer ${key}`) headers.delete("authorization");
-        return fetch(input, { ...init, headers });
-      },
-    },
-  });
+async function restSelectRecipients(url: string, key: string) {
+  const headers: Record<string, string> = { apikey: key, "Content-Type": "application/json" };
+  if (key.startsWith("eyJ")) headers.Authorization = `Bearer ${key}`;
+  const res = await fetch(
+    `${url}/rest/v1/line_allowed_users?is_active=eq.true&receive_notifications=eq.true&select=line_user_id`,
+    { headers }
+  );
+  const raw = await res.text();
+  const parsed = raw ? JSON.parse(raw) : null;
+  if (!res.ok) throw new Error(parsed?.message ?? raw ?? `HTTP ${res.status}`);
+  return parsed as Array<{ line_user_id: string }>;
 }
 
 interface NotifyBody {
@@ -118,15 +114,7 @@ serve(async (req) => {
       throw new Error("Supabase admin credentials are not available");
     }
 
-    const supabase = createSupabaseAdminClient(supabaseUrl, supabaseSecretKey);
-
-    const { data: recipients, error } = await supabase
-      .from("line_allowed_users")
-      .select("line_user_id")
-      .eq("is_active", true)
-      .eq("receive_notifications", true);
-
-    if (error) throw error;
+    const recipients = await restSelectRecipients(supabaseUrl, supabaseSecretKey);
     if (!recipients || recipients.length === 0) {
       return new Response(JSON.stringify({ sent: 0 }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
