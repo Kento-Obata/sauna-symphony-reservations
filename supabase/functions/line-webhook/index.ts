@@ -138,7 +138,7 @@ function parseDateKeyword(token: string): string | null {
 
 async function handleCommand(
   text: string,
-  supabase: any,
+  supabase: SupabaseAdminContext,
   user: { line_user_id: string; can_write: boolean; display_name: string }
 ): Promise<string> {
   const trimmed = text.trim();
@@ -156,12 +156,10 @@ async function handleCommand(
   // Date keyword → list reservations of that day
   const dateOnly = parseDateKeyword(trimmed);
   if (dateOnly) {
-    const { data, error } = await supabase
-      .from("reservations")
-      .select("*")
-      .eq("date", dateOnly)
-      .neq("status", "cancelled")
-      .order("time_slot");
+    const { data, error } = await restRequest<any[]>(
+      supabase,
+      `reservations?date=eq.${encodeURIComponent(dateOnly)}&status=neq.cancelled&order=time_slot.asc&select=*`
+    );
     if (error) return `エラー: ${error.message}`;
     if (!data || data.length === 0) return `📅 ${dateOnly}\n予約はありません。`;
     return [`📅 ${dateOnly} の予約 (${data.length}件)`, "", ...data.map(formatReservationLine)].join("\n");
@@ -174,11 +172,10 @@ async function handleCommand(
   if (cmd === "照会" || cmd.toLowerCase() === "show") {
     const code = parts[1];
     if (!code || !/^[A-Z0-9]{8}$/.test(code)) return "予約コードは英数字8桁で指定してください。例: 照会 ABCD1234";
-    const { data, error } = await supabase
-      .from("reservations")
-      .select("*")
-      .eq("reservation_code", code)
-      .maybeSingle();
+    const { data, error } = await maybeSingle<any>(restRequest<any[]>(
+      supabase,
+      `reservations?reservation_code=eq.${encodeURIComponent(code)}&select=*&limit=1`
+    ));
     if (error) return `エラー: ${error.message}`;
     if (!data) return "予約が見つかりませんでした。";
     const slot = TIME_SLOT_LABELS[data.time_slot] ?? data.time_slot;
