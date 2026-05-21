@@ -15,19 +15,18 @@ const TIME_SLOT_LABELS: Record<string, string> = {
 const VALID_SLOTS = new Set(["morning", "afternoon", "evening", "night"]);
 
 function getSupabaseSecretKey(): string {
-  const legacyKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (legacyKey) return legacyKey;
-
   const secretKeysJson = Deno.env.get("SUPABASE_SECRET_KEYS");
-  if (!secretKeysJson) return "";
-
-  try {
-    const keys = JSON.parse(secretKeysJson) as Record<string, string>;
-    return keys.default ?? Object.values(keys).find(Boolean) ?? "";
-  } catch (error) {
-    console.error("SUPABASE_SECRET_KEYS parse failed:", error);
-    return "";
+  if (secretKeysJson) {
+    try {
+      const keys = JSON.parse(secretKeysJson) as Record<string, string>;
+      const secretKey = keys.default ?? Object.values(keys).find(Boolean);
+      if (secretKey) return secretKey;
+    } catch (error) {
+      console.error("SUPABASE_SECRET_KEYS parse failed:", error);
+    }
   }
+
+  return Deno.env.get("SUPABASE_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 }
 
 const HELP_TEXT = [
