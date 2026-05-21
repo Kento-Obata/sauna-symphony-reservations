@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,74 +13,6 @@ const TIME_SLOT_LABELS: Record<string, string> = {
   night: "20:00-22:30",
 };
 const VALID_SLOTS = new Set(["morning", "afternoon", "evening", "night"]);
-
-function getSupabaseAdminKey(): { key: string; source: string } {
-  const resolveKey = (candidate?: string): string => {
-    if (!candidate) return "";
-    if (candidate.startsWith("sb_secret_") || candidate.startsWith("eyJ")) return candidate;
-    return Deno.env.get(candidate) ?? "";
-  };
-
-  const legacyServiceRoleKey = resolveKey("SUPABASE_SERVICE_ROLE_KEY");
-  if (legacyServiceRoleKey.startsWith("eyJ")) {
-    return { key: legacyServiceRoleKey, source: "SUPABASE_SERVICE_ROLE_KEY" };
-  }
-
-  const secretKeysJson = Deno.env.get("SUPABASE_SECRET_KEYS");
-  if (secretKeysJson) {
-    try {
-      const keys = JSON.parse(secretKeysJson) as Record<string, string>;
-      const secretKey = resolveKey(keys.default) || Object.values(keys).map(resolveKey).find(Boolean);
-      if (secretKey) return { key: secretKey, source: "SUPABASE_SECRET_KEYS" };
-    } catch (error) {
-      console.error("SUPABASE_SECRET_KEYS parse failed:", error);
-    }
-  }
-
-  const singleSecretKey = resolveKey("SUPABASE_SECRET_KEY");
-  if (singleSecretKey) return { key: singleSecretKey, source: "SUPABASE_SECRET_KEY" };
-  if (legacyServiceRoleKey) return { key: legacyServiceRoleKey, source: "SUPABASE_SERVICE_ROLE_KEY" };
-  return { key: "", source: "missing" };
-}
-
-function describeSupabaseKey(key: string): string {
-  if (!key) return "missing";
-  if (key.startsWith("sb_secret_")) return "sb_secret";
-  if (key.startsWith("eyJ")) return "jwt_legacy";
-  return "unknown_format";
-}
-
-type SupabaseAdminContext = { url: string; key: string };
-
-function restHeaders(key: string, extra?: Record<string, string>): HeadersInit {
-  const headers: Record<string, string> = {
-    apikey: key,
-    "Content-Type": "application/json",
-    ...extra,
-  };
-  // New sb_secret keys must only be sent as apikey. Legacy JWT service_role keys may be used as Authorization.
-  if (key.startsWith("eyJ")) headers.Authorization = `Bearer ${key}`;
-  return headers;
-}
-
-async function restRequest<T>(ctx: SupabaseAdminContext, path: string, init: RequestInit = {}) {
-  const res = await fetch(`${ctx.url}/rest/v1/${path}`, {
-    ...init,
-    headers: restHeaders(ctx.key, init.headers ? Object.fromEntries(new Headers(init.headers).entries()) : undefined),
-  });
-  const raw = await res.text();
-  const parsed = raw ? JSON.parse(raw) : null;
-  if (!res.ok) {
-    const message = parsed?.message ?? raw ?? `HTTP ${res.status}`;
-    return { data: null as T | null, error: { message } };
-  }
-  return { data: parsed as T, error: null };
-}
-
-async function maybeSingle<T>(result: Promise<{ data: T[] | null; error: { message: string } | null }>) {
-  const { data, error } = await result;
-  return { data: data?.[0] ?? null, error };
-}
 
 const HELP_TEXT = [
   "📖 使い方",
@@ -146,7 +79,7 @@ function parseDateKeyword(token: string): string | null {
 
 async function handleCommand(
   text: string,
-  supabase: SupabaseAdminContext,
+  supabase: any,
   user: { line_user_id: string; can_write: boolean; display_name: string }
 ): Promise<string> {
   const trimmed = text.trim();
@@ -164,10 +97,12 @@ async function handleCommand(
   // Date keyword → list reservations of that day
   const dateOnly = parseDateKeyword(trimmed);
   if (dateOnly) {
-    const { data, error } = await restRequest<any[]>(
-      supabase,
-      `reservations?date=eq.${encodeURIComponent(dateOnly)}&status=neq.cancelled&order=time_slot.asc&select=*`
-    );
+    const { data, error } = await supabase
+      .from("reservations")
+      .select("*")
+      .eq("date", dateOnly)
+      .neq("status", "cancelled")
+      .order("time_slot");
     if (error) return `エラー: ${error.message}`;
     if (!data || data.length === 0) return `📅 ${dateOnly}\n予約はありません。`;
     return [`📅 ${dateOnly} の予約 (${data.length}件)`, "", ...data.map(formatReservationLine)].join("\n");
@@ -180,10 +115,11 @@ async function handleCommand(
   if (cmd === "照会" || cmd.toLowerCase() === "show") {
     const code = parts[1];
     if (!code || !/^[A-Z0-9]{8}$/.test(code)) return "予約コードは英数字8桁で指定してください。例: 照会 ABCD1234";
-    const { data, error } = await maybeSingle<any>(restRequest<any[]>(
-      supabase,
-      `reservations?reservation_code=eq.${encodeURIComponent(code)}&select=*&limit=1`
-    ));
+    const { data, error } = await supabase
+      .from("reservations")
+      .select("*")
+      .eq("reservation_code", code)
+      .maybeSingle();
     if (error) return `エラー: ${error.message}`;
     if (!data) return "予約が見つかりませんでした。";
     const slot = TIME_SLOT_LABELS[data.time_slot] ?? data.time_slot;
@@ -205,22 +141,30 @@ async function handleCommand(
     if (!user.can_write) return "キャンセル権限がありません。";
     const code = parts[1];
     if (!code || !/^[A-Z0-9]{8}$/.test(code)) return "予約コードは英数字8桁で指定してください。例: キャンセル ABCD1234";
-    const { data: existing, error: fetchErr } = await maybeSingle<any>(restRequest<any[]>(
-      supabase,
-      `reservations?reservation_code=eq.${encodeURIComponent(code)}&select=*&limit=1`
-    ));
+    const { data: existing, error: fetchErr } = await supabase
+      .from("reservations")
+      .select("*")
+      .eq("reservation_code", code)
+      .maybeSingle();
     if (fetchErr) return `エラー: ${fetchErr.message}`;
     if (!existing) return "予約が見つかりませんでした。";
     if (existing.status === "cancelled") return "この予約はすでにキャンセル済みです。";
 
-    const { error: updErr } = await restRequest<any[]>(
-      supabase,
-      `reservations?reservation_code=eq.${encodeURIComponent(code)}`,
-      { method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify({ status: "cancelled", is_confirmed: true }) }
-    );
+    const { error: updErr } = await supabase
+      .from("reservations")
+      .update({ status: "cancelled", is_confirmed: true })
+      .eq("reservation_code", code);
     if (updErr) return `キャンセルに失敗しました: ${updErr.message}`;
 
     // notify other staff
+    await supabase.functions.invoke("line-notify-staff", {
+      body: {
+        event: "cancelled",
+        reservation: existing,
+        note: `LINE Botより (${user.display_name})`,
+      },
+    }).catch(() => {});
+
     return `❌ キャンセル完了: ${code}\n${existing.date} ${TIME_SLOT_LABELS[existing.time_slot] ?? ""}\n${existing.guest_name} 様`;
   }
 
@@ -243,27 +187,26 @@ async function handleCommand(
     }
 
     // Check availability
-    const { data: existing } = await restRequest<any[]>(
-      supabase,
-      `reservations?date=eq.${encodeURIComponent(date)}&time_slot=eq.${encodeURIComponent(slot)}&status=neq.cancelled&select=id`
-    );
+    const { data: existing } = await supabase
+      .from("reservations")
+      .select("id")
+      .eq("date", date)
+      .eq("time_slot", slot)
+      .neq("status", "cancelled");
     if (existing && existing.length > 0) return "この時間帯はすでに予約が入っています。";
 
     // Price
     let basePrice = guestCount * 3000;
-    const { data: ps } = await maybeSingle<any>(restRequest<any[]>(
-      supabase,
-      `price_settings?guest_count=eq.${guestCount}&select=price_per_person&limit=1`
-    ));
+    const { data: ps } = await supabase
+      .from("price_settings")
+      .select("price_per_person")
+      .eq("guest_count", guestCount)
+      .maybeSingle();
     if (ps?.price_per_person) basePrice = ps.price_per_person * guestCount;
 
-    const { data: insertedRows, error: insErr } = await restRequest<any[]>(
-      supabase,
-      "reservations?select=*",
-      {
-        method: "POST",
-        headers: { Prefer: "return=representation" },
-        body: JSON.stringify({
+    const { data: inserted, error: insErr } = await supabase
+      .from("reservations")
+      .insert({
         date,
         time_slot: slot,
         guest_name: name,
@@ -274,12 +217,18 @@ async function handleCommand(
         status: "confirmed",
         is_confirmed: true,
         total_price: basePrice,
-        }),
-      }
-    );
+      })
+      .select()
+      .single();
     if (insErr) return `予約追加に失敗しました: ${insErr.message}`;
-    const inserted = insertedRows?.[0];
-    if (!inserted) return "予約追加に失敗しました: 作成結果を取得できませんでした";
+
+    await supabase.functions.invoke("line-notify-staff", {
+      body: {
+        event: "created",
+        reservation: inserted,
+        note: `LINE Botより (${user.display_name})`,
+      },
+    }).catch(() => {});
 
     return `✅ 予約追加完了\n🎫 ${inserted.reservation_code}\n📅 ${date} (${TIME_SLOT_LABELS[slot]})\n👤 ${name} 様 / ${guestCount}名\n💰 ¥${basePrice.toLocaleString()}`;
   }
@@ -317,22 +266,11 @@ serve(async (req) => {
     return new Response("Bad JSON", { status: 400, headers: corsHeaders });
   }
 
-  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-  const supabaseAdminKey = getSupabaseAdminKey();
-  console.log("Supabase admin key status:", {
-    has_url: !!supabaseUrl,
-    key_type: describeSupabaseKey(supabaseAdminKey.key),
-    key_source: supabaseAdminKey.source,
-    has_secret_keys_json: !!Deno.env.get("SUPABASE_SECRET_KEYS"),
-    has_secret_key: !!Deno.env.get("SUPABASE_SECRET_KEY"),
-    has_legacy_service_role_key: !!Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
-  });
-  if (!supabaseUrl || !supabaseAdminKey.key) {
-    console.error("Supabase admin credentials are not available");
-    return new Response("Supabase not configured", { status: 500, headers: corsHeaders });
-  }
-
-  const supabase = { url: supabaseUrl, key: supabaseAdminKey.key };
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
 
   const events = Array.isArray(payload.events) ? payload.events : [];
 
@@ -351,19 +289,11 @@ serve(async (req) => {
       }
 
       // Lookup user
-      const { data: user, error: lookupErr } = await maybeSingle<any>(restRequest<any[]>(
-        supabase,
-        `line_allowed_users?line_user_id=eq.${encodeURIComponent(userId)}&select=line_user_id,display_name,is_active,can_write&limit=1`
-      ));
-
-      console.log("LINE webhook lookup:", {
-        incoming_userId: userId,
-        incoming_length: userId.length,
-        text,
-        found: !!user,
-        is_active: user?.is_active,
-        lookup_error: lookupErr?.message,
-      });
+      const { data: user } = await supabase
+        .from("line_allowed_users")
+        .select("line_user_id, display_name, is_active, can_write")
+        .eq("line_user_id", userId)
+        .maybeSingle();
 
       if (!user || !user.is_active) {
         // Allow `ID` command for self-discovery even when not registered
@@ -373,7 +303,7 @@ serve(async (req) => {
           await lineReply(
             token,
             replyToken,
-            `このBotの使用権限がありません。\n受信ID: ${userId}\n登録状況: ${user ? "無効化されています" : "未登録"}\n「ID」と送信して表示されるuserIdを管理者に伝えてください。`
+            "このBotの使用権限がありません。\n「ID」と送信して表示されるuserIdを管理者に伝えてください。"
           );
         }
         continue;

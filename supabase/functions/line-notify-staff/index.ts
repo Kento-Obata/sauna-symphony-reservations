@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,43 +19,6 @@ const EVENT_LABELS: Record<string, string> = {
   cancelled: "❌ 予約がキャンセルされました",
   updated: "✏️ 予約が変更されました",
 };
-
-function getSupabaseAdminKey(): string {
-  const resolveKey = (candidate?: string): string => {
-    if (!candidate) return "";
-    if (candidate.startsWith("sb_secret_") || candidate.startsWith("eyJ")) return candidate;
-    return Deno.env.get(candidate) ?? "";
-  };
-
-  const legacyServiceRoleKey = resolveKey("SUPABASE_SERVICE_ROLE_KEY");
-  if (legacyServiceRoleKey.startsWith("eyJ")) return legacyServiceRoleKey;
-
-  const secretKeysJson = Deno.env.get("SUPABASE_SECRET_KEYS");
-  if (secretKeysJson) {
-    try {
-      const keys = JSON.parse(secretKeysJson) as Record<string, string>;
-      const secretKey = resolveKey(keys.default) || Object.values(keys).map(resolveKey).find(Boolean);
-      if (secretKey) return secretKey;
-    } catch (error) {
-      console.error("SUPABASE_SECRET_KEYS parse failed:", error);
-    }
-  }
-
-  return resolveKey("SUPABASE_SECRET_KEY") || legacyServiceRoleKey;
-}
-
-async function restSelectRecipients(url: string, key: string) {
-  const headers: Record<string, string> = { apikey: key, "Content-Type": "application/json" };
-  if (key.startsWith("eyJ")) headers.Authorization = `Bearer ${key}`;
-  const res = await fetch(
-    `${url}/rest/v1/line_allowed_users?is_active=eq.true&receive_notifications=eq.true&select=line_user_id`,
-    { headers }
-  );
-  const raw = await res.text();
-  const parsed = raw ? JSON.parse(raw) : null;
-  if (!res.ok) throw new Error(parsed?.message ?? raw ?? `HTTP ${res.status}`);
-  return parsed as Array<{ line_user_id: string }>;
-}
 
 interface NotifyBody {
   event: "created" | "confirmed" | "cancelled" | "updated";
@@ -111,13 +75,19 @@ serve(async (req) => {
       });
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseSecretKey = getSupabaseAdminKey();
-    if (!supabaseUrl || !supabaseSecretKey) {
-      throw new Error("Supabase admin credentials are not available");
-    }
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
 
-    const recipients = await restSelectRecipients(supabaseUrl, supabaseSecretKey);
+    const { data: recipients, error } = await supabase
+      .from("line_allowed_users")
+      .select("line_user_id")
+      .eq("is_active", true)
+      .eq("receive_notifications", true);
+
+    if (error) throw error;
     if (!recipients || recipients.length === 0) {
       return new Response(JSON.stringify({ sent: 0 }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
