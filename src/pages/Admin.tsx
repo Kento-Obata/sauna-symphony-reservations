@@ -187,6 +187,10 @@ const Admin = () => {
           <ShopClosureManager />
         </TabsContent>
 
+        <TabsContent value="line" className="space-y-6">
+          <LineUserManager />
+        </TabsContent>
+
         <TabsContent value="settings" className="space-y-6">
           <div className="space-y-8">
             <PriceSettingsManager />
