@@ -243,16 +243,19 @@ async function handleCommand(
 
     // Price
     let basePrice = guestCount * 3000;
-    const { data: ps } = await supabase
-      .from("price_settings")
-      .select("price_per_person")
-      .eq("guest_count", guestCount)
-      .maybeSingle();
+    const { data: ps } = await maybeSingle<any>(restRequest<any[]>(
+      supabase,
+      `price_settings?guest_count=eq.${guestCount}&select=price_per_person&limit=1`
+    ));
     if (ps?.price_per_person) basePrice = ps.price_per_person * guestCount;
 
-    const { data: inserted, error: insErr } = await supabase
-      .from("reservations")
-      .insert({
+    const { data: insertedRows, error: insErr } = await restRequest<any[]>(
+      supabase,
+      "reservations?select=*",
+      {
+        method: "POST",
+        headers: { Prefer: "return=representation" },
+        body: JSON.stringify({
         date,
         time_slot: slot,
         guest_name: name,
@@ -263,18 +266,12 @@ async function handleCommand(
         status: "confirmed",
         is_confirmed: true,
         total_price: basePrice,
-      })
-      .select()
-      .single();
+        }),
+      }
+    );
     if (insErr) return `予約追加に失敗しました: ${insErr.message}`;
-
-    await supabase.functions.invoke("line-notify-staff", {
-      body: {
-        event: "created",
-        reservation: inserted,
-        note: `LINE Botより (${user.display_name})`,
-      },
-    }).catch(() => {});
+    const inserted = insertedRows?.[0];
+    if (!inserted) return "予約追加に失敗しました: 作成結果を取得できませんでした";
 
     return `✅ 予約追加完了\n🎫 ${inserted.reservation_code}\n📅 ${date} (${TIME_SLOT_LABELS[slot]})\n👤 ${name} 様 / ${guestCount}名\n💰 ¥${basePrice.toLocaleString()}`;
   }
