@@ -35,6 +35,13 @@ function getSupabaseSecretKey(): string {
   return resolveKey("SUPABASE_SECRET_KEY") || resolveKey("SUPABASE_SERVICE_ROLE_KEY");
 }
 
+function describeSupabaseKey(key: string): string {
+  if (!key) return "missing";
+  if (key.startsWith("sb_secret_")) return "sb_secret";
+  if (key.startsWith("eyJ")) return "jwt_legacy";
+  return "unknown_format";
+}
+
 const HELP_TEXT = [
   "📖 使い方",
   "",
@@ -289,6 +296,13 @@ serve(async (req) => {
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
   const supabaseSecretKey = getSupabaseSecretKey();
+  console.log("Supabase admin key status:", {
+    has_url: !!supabaseUrl,
+    key_type: describeSupabaseKey(supabaseSecretKey),
+    has_secret_keys_json: !!Deno.env.get("SUPABASE_SECRET_KEYS"),
+    has_secret_key: !!Deno.env.get("SUPABASE_SECRET_KEY"),
+    has_legacy_service_role_key: !!Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
+  });
   if (!supabaseUrl || !supabaseSecretKey) {
     console.error("Supabase admin credentials are not available");
     return new Response("Supabase not configured", { status: 500, headers: corsHeaders });
