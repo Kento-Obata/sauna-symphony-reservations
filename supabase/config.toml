@@ -33,3 +33,9 @@ verify_jwt = false
 
 [functions.handle-email-suppression]
 verify_jwt = false
+
+[functions.line-webhook]
+verify_jwt = false
+
+[functions.line-notify-staff]
+verify_jwt = true
