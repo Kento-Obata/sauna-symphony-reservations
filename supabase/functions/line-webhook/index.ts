@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -42,20 +41,36 @@ function describeSupabaseKey(key: string): string {
   return "unknown_format";
 }
 
-function createSupabaseAdminClient(url: string, key: string) {
-  const shouldStripAuthHeader = key.startsWith("sb_secret_");
-  return createClient(url, key, {
-    auth: { autoRefreshToken: false, persistSession: false },
-    global: {
-      fetch: (input, init = {}) => {
-        if (!shouldStripAuthHeader) return fetch(input, init);
-        const headers = new Headers(init.headers ?? (input instanceof Request ? input.headers : undefined));
-        const auth = headers.get("authorization") ?? "";
-        if (auth === `Bearer ${key}`) headers.delete("authorization");
-        return fetch(input, { ...init, headers });
-      },
-    },
+type SupabaseAdminContext = { url: string; key: string };
+
+function restHeaders(key: string, extra?: Record<string, string>): HeadersInit {
+  const headers: Record<string, string> = {
+    apikey: key,
+    "Content-Type": "application/json",
+    ...extra,
+  };
+  // New sb_secret keys must only be sent as apikey. Legacy JWT service_role keys may be used as Authorization.
+  if (key.startsWith("eyJ")) headers.Authorization = `Bearer ${key}`;
+  return headers;
+}
+
+async function restRequest<T>(ctx: SupabaseAdminContext, path: string, init: RequestInit = {}) {
+  const res = await fetch(`${ctx.url}/rest/v1/${path}`, {
+    ...init,
+    headers: restHeaders(ctx.key, init.headers ? Object.fromEntries(new Headers(init.headers).entries()) : undefined),
   });
+  const raw = await res.text();
+  const parsed = raw ? JSON.parse(raw) : null;
+  if (!res.ok) {
+    const message = parsed?.message ?? raw ?? `HTTP ${res.status}`;
+    return { data: null as T | null, error: { message } };
+  }
+  return { data: parsed as T, error: null };
+}
+
+async function maybeSingle<T>(result: Promise<{ data: T[] | null; error: { message: string } | null }>) {
+  const { data, error } = await result;
+  return { data: data?.[0] ?? null, error };
 }
 
 const HELP_TEXT = [
