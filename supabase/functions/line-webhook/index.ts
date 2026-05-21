@@ -14,6 +14,22 @@ const TIME_SLOT_LABELS: Record<string, string> = {
 };
 const VALID_SLOTS = new Set(["morning", "afternoon", "evening", "night"]);
 
+function getSupabaseSecretKey(): string {
+  const legacyKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (legacyKey) return legacyKey;
+
+  const secretKeysJson = Deno.env.get("SUPABASE_SECRET_KEYS");
+  if (!secretKeysJson) return "";
+
+  try {
+    const keys = JSON.parse(secretKeysJson) as Record<string, string>;
+    return keys.default ?? Object.values(keys).find(Boolean) ?? "";
+  } catch (error) {
+    console.error("SUPABASE_SECRET_KEYS parse failed:", error);
+    return "";
+  }
+}
+
 const HELP_TEXT = [
   "📖 使い方",
   "",
@@ -266,11 +282,16 @@ serve(async (req) => {
     return new Response("Bad JSON", { status: 400, headers: corsHeaders });
   }
 
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  const supabaseSecretKey = getSupabaseSecretKey();
+  if (!supabaseUrl || !supabaseSecretKey) {
+    console.error("Supabase admin credentials are not available");
+    return new Response("Supabase not configured", { status: 500, headers: corsHeaders });
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseSecretKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
 
   const events = Array.isArray(payload.events) ? payload.events : [];
 
