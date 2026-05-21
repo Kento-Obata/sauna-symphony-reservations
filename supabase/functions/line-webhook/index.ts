@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -42,20 +41,36 @@ function describeSupabaseKey(key: string): string {
   return "unknown_format";
 }
 
-function createSupabaseAdminClient(url: string, key: string) {
-  const shouldStripAuthHeader = key.startsWith("sb_secret_");
-  return createClient(url, key, {
-    auth: { autoRefreshToken: false, persistSession: false },
-    global: {
-      fetch: (input, init = {}) => {
-        if (!shouldStripAuthHeader) return fetch(input, init);
-        const headers = new Headers(init.headers ?? (input instanceof Request ? input.headers : undefined));
-        const auth = headers.get("authorization") ?? "";
-        if (auth === `Bearer ${key}`) headers.delete("authorization");
-        return fetch(input, { ...init, headers });
-      },
-    },
+type SupabaseAdminContext = { url: string; key: string };
+
+function restHeaders(key: string, extra?: Record<string, string>): HeadersInit {
+  const headers: Record<string, string> = {
+    apikey: key,
+    "Content-Type": "application/json",
+    ...extra,
+  };
+  // New sb_secret keys must only be sent as apikey. Legacy JWT service_role keys may be used as Authorization.
+  if (key.startsWith("eyJ")) headers.Authorization = `Bearer ${key}`;
+  return headers;
+}
+
+async function restRequest<T>(ctx: SupabaseAdminContext, path: string, init: RequestInit = {}) {
+  const res = await fetch(`${ctx.url}/rest/v1/${path}`, {
+    ...init,
+    headers: restHeaders(ctx.key, init.headers ? Object.fromEntries(new Headers(init.headers).entries()) : undefined),
   });
+  const raw = await res.text();
+  const parsed = raw ? JSON.parse(raw) : null;
+  if (!res.ok) {
+    const message = parsed?.message ?? raw ?? `HTTP ${res.status}`;
+    return { data: null as T | null, error: { message } };
+  }
+  return { data: parsed as T, error: null };
+}
+
+async function maybeSingle<T>(result: Promise<{ data: T[] | null; error: { message: string } | null }>) {
+  const { data, error } = await result;
+  return { data: data?.[0] ?? null, error };
 }
 
 const HELP_TEXT = [
@@ -123,7 +138,7 @@ function parseDateKeyword(token: string): string | null {
 
 async function handleCommand(
   text: string,
-  supabase: any,
+  supabase: SupabaseAdminContext,
   user: { line_user_id: string; can_write: boolean; display_name: string }
 ): Promise<string> {
   const trimmed = text.trim();
@@ -141,12 +156,10 @@ async function handleCommand(
   // Date keyword → list reservations of that day
   const dateOnly = parseDateKeyword(trimmed);
   if (dateOnly) {
-    const { data, error } = await supabase
-      .from("reservations")
-      .select("*")
-      .eq("date", dateOnly)
-      .neq("status", "cancelled")
-      .order("time_slot");
+    const { data, error } = await restRequest<any[]>(
+      supabase,
+      `reservations?date=eq.${encodeURIComponent(dateOnly)}&status=neq.cancelled&order=time_slot.asc&select=*`
+    );
     if (error) return `エラー: ${error.message}`;
     if (!data || data.length === 0) return `📅 ${dateOnly}\n予約はありません。`;
     return [`📅 ${dateOnly} の予約 (${data.length}件)`, "", ...data.map(formatReservationLine)].join("\n");
@@ -159,11 +172,10 @@ async function handleCommand(
   if (cmd === "照会" || cmd.toLowerCase() === "show") {
     const code = parts[1];
     if (!code || !/^[A-Z0-9]{8}$/.test(code)) return "予約コードは英数字8桁で指定してください。例: 照会 ABCD1234";
-    const { data, error } = await supabase
-      .from("reservations")
-      .select("*")
-      .eq("reservation_code", code)
-      .maybeSingle();
+    const { data, error } = await maybeSingle<any>(restRequest<any[]>(
+      supabase,
+      `reservations?reservation_code=eq.${encodeURIComponent(code)}&select=*&limit=1`
+    ));
     if (error) return `エラー: ${error.message}`;
     if (!data) return "予約が見つかりませんでした。";
     const slot = TIME_SLOT_LABELS[data.time_slot] ?? data.time_slot;
@@ -185,30 +197,22 @@ async function handleCommand(
     if (!user.can_write) return "キャンセル権限がありません。";
     const code = parts[1];
     if (!code || !/^[A-Z0-9]{8}$/.test(code)) return "予約コードは英数字8桁で指定してください。例: キャンセル ABCD1234";
-    const { data: existing, error: fetchErr } = await supabase
-      .from("reservations")
-      .select("*")
-      .eq("reservation_code", code)
-      .maybeSingle();
+    const { data: existing, error: fetchErr } = await maybeSingle<any>(restRequest<any[]>(
+      supabase,
+      `reservations?reservation_code=eq.${encodeURIComponent(code)}&select=*&limit=1`
+    ));
     if (fetchErr) return `エラー: ${fetchErr.message}`;
     if (!existing) return "予約が見つかりませんでした。";
     if (existing.status === "cancelled") return "この予約はすでにキャンセル済みです。";
 
-    const { error: updErr } = await supabase
-      .from("reservations")
-      .update({ status: "cancelled", is_confirmed: true })
-      .eq("reservation_code", code);
+    const { error: updErr } = await restRequest<any[]>(
+      supabase,
+      `reservations?reservation_code=eq.${encodeURIComponent(code)}`,
+      { method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify({ status: "cancelled", is_confirmed: true }) }
+    );
     if (updErr) return `キャンセルに失敗しました: ${updErr.message}`;
 
     // notify other staff
-    await supabase.functions.invoke("line-notify-staff", {
-      body: {
-        event: "cancelled",
-        reservation: existing,
-        note: `LINE Botより (${user.display_name})`,
-      },
-    }).catch(() => {});
-
     return `❌ キャンセル完了: ${code}\n${existing.date} ${TIME_SLOT_LABELS[existing.time_slot] ?? ""}\n${existing.guest_name} 様`;
   }
 
@@ -231,26 +235,27 @@ async function handleCommand(
     }
 
     // Check availability
-    const { data: existing } = await supabase
-      .from("reservations")
-      .select("id")
-      .eq("date", date)
-      .eq("time_slot", slot)
-      .neq("status", "cancelled");
+    const { data: existing } = await restRequest<any[]>(
+      supabase,
+      `reservations?date=eq.${encodeURIComponent(date)}&time_slot=eq.${encodeURIComponent(slot)}&status=neq.cancelled&select=id`
+    );
     if (existing && existing.length > 0) return "この時間帯はすでに予約が入っています。";
 
     // Price
     let basePrice = guestCount * 3000;
-    const { data: ps } = await supabase
-      .from("price_settings")
-      .select("price_per_person")
-      .eq("guest_count", guestCount)
-      .maybeSingle();
+    const { data: ps } = await maybeSingle<any>(restRequest<any[]>(
+      supabase,
+      `price_settings?guest_count=eq.${guestCount}&select=price_per_person&limit=1`
+    ));
     if (ps?.price_per_person) basePrice = ps.price_per_person * guestCount;
 
-    const { data: inserted, error: insErr } = await supabase
-      .from("reservations")
-      .insert({
+    const { data: insertedRows, error: insErr } = await restRequest<any[]>(
+      supabase,
+      "reservations?select=*",
+      {
+        method: "POST",
+        headers: { Prefer: "return=representation" },
+        body: JSON.stringify({
         date,
         time_slot: slot,
         guest_name: name,
@@ -261,18 +266,12 @@ async function handleCommand(
         status: "confirmed",
         is_confirmed: true,
         total_price: basePrice,
-      })
-      .select()
-      .single();
+        }),
+      }
+    );
     if (insErr) return `予約追加に失敗しました: ${insErr.message}`;
-
-    await supabase.functions.invoke("line-notify-staff", {
-      body: {
-        event: "created",
-        reservation: inserted,
-        note: `LINE Botより (${user.display_name})`,
-      },
-    }).catch(() => {});
+    const inserted = insertedRows?.[0];
+    if (!inserted) return "予約追加に失敗しました: 作成結果を取得できませんでした";
 
     return `✅ 予約追加完了\n🎫 ${inserted.reservation_code}\n📅 ${date} (${TIME_SLOT_LABELS[slot]})\n👤 ${name} 様 / ${guestCount}名\n💰 ¥${basePrice.toLocaleString()}`;
   }
@@ -324,7 +323,7 @@ serve(async (req) => {
     return new Response("Supabase not configured", { status: 500, headers: corsHeaders });
   }
 
-  const supabase = createSupabaseAdminClient(supabaseUrl, supabaseSecretKey);
+  const supabase = { url: supabaseUrl, key: supabaseSecretKey };
 
   const events = Array.isArray(payload.events) ? payload.events : [];
 
@@ -343,11 +342,10 @@ serve(async (req) => {
       }
 
       // Lookup user
-      const { data: user, error: lookupErr } = await supabase
-        .from("line_allowed_users")
-        .select("line_user_id, display_name, is_active, can_write")
-        .eq("line_user_id", userId)
-        .maybeSingle();
+      const { data: user, error: lookupErr } = await maybeSingle<any>(restRequest<any[]>(
+        supabase,
+        `line_allowed_users?line_user_id=eq.${encodeURIComponent(userId)}&select=line_user_id,display_name,is_active,can_write&limit=1`
+      ));
 
       console.log("LINE webhook lookup:", {
         incoming_userId: userId,
