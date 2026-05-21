@@ -18,6 +18,7 @@ import { AvailabilityTextGenerator } from "@/components/admin/AvailabilityTextGe
 import { CustomerManagement } from "@/components/admin/CustomerManagement";
 import { DailyTimeSlotManager } from "@/components/admin/DailyTimeSlotManager";
 import { TimeSlotPatternManager } from "@/components/admin/TimeSlotPatternManager";
+import { LineUserManager } from "@/components/admin/LineUserManager";
 import { useAdminReservations } from "@/hooks/useAdminReservations";
 
 const Admin = () => {
