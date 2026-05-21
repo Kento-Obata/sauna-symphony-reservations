@@ -47,15 +47,6 @@ const handler = async (req: Request): Promise<Response> => {
       await sendEmail(reservation.email, subject, message);
     }
 
-    // LINE notification to staff (fire-and-forget)
-    try {
-      await supabaseClient.functions.invoke("line-notify-staff", {
-        body: { event: isCancel ? "cancelled" : "updated", reservation }
-      });
-    } catch (e) {
-      console.error("LINE notify error:", e);
-    }
-
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

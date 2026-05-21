@@ -132,15 +132,6 @@ serve(async (req) => {
 
     console.log("Reservation cancelled successfully");
 
-    // LINE notification to staff (fire-and-forget)
-    try {
-      await supabaseAdmin.functions.invoke("line-notify-staff", {
-        body: { event: "cancelled", reservation }
-      });
-    } catch (e) {
-      console.error("LINE notify error:", e);
-    }
-
     return new Response(
       JSON.stringify({ success: true, message: "予約をキャンセルしました" }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

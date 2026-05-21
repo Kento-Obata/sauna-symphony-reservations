@@ -129,15 +129,6 @@ serve(async (req) => {
       // Don't fail the whole operation if notification fails
     }
 
-    // LINE notification to staff (fire-and-forget)
-    try {
-      await supabaseClient.functions.invoke("line-notify-staff", {
-        body: { event: "confirmed", reservation }
-      });
-    } catch (e) {
-      console.error("LINE notify error:", e);
-    }
-
     return new Response(
       JSON.stringify({
         success: true,
