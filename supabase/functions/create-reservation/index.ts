@@ -242,6 +242,11 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }).catch(err => console.error("Notification error:", err));
 
+    // LINE notification to staff (fire-and-forget)
+    supabase.functions.invoke("line-notify-staff", {
+      body: { event: "created", reservation: newReservation }
+    }).catch(err => console.error("LINE notify error:", err));
+
     return new Response(
       JSON.stringify({
         success: true,
