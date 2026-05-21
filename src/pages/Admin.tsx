@@ -124,11 +124,12 @@ const Admin = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="reservations">予約管理</TabsTrigger>
           <TabsTrigger value="customers">顧客管理</TabsTrigger>
           <TabsTrigger value="availability">空き状況</TabsTrigger>
           <TabsTrigger value="closures">休業管理</TabsTrigger>
+          <TabsTrigger value="line">LINE連携</TabsTrigger>
           <TabsTrigger value="settings">設定</TabsTrigger>
         </TabsList>
 
