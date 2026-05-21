@@ -20,6 +20,22 @@ const EVENT_LABELS: Record<string, string> = {
   updated: "✏️ 予約が変更されました",
 };
 
+function getSupabaseSecretKey(): string {
+  const legacyKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (legacyKey) return legacyKey;
+
+  const secretKeysJson = Deno.env.get("SUPABASE_SECRET_KEYS");
+  if (!secretKeysJson) return "";
+
+  try {
+    const keys = JSON.parse(secretKeysJson) as Record<string, string>;
+    return keys.default ?? Object.values(keys).find(Boolean) ?? "";
+  } catch (error) {
+    console.error("SUPABASE_SECRET_KEYS parse failed:", error);
+    return "";
+  }
+}
+
 interface NotifyBody {
   event: "created" | "confirmed" | "cancelled" | "updated";
   reservation: {
@@ -75,11 +91,15 @@ serve(async (req) => {
       });
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { autoRefreshToken: false, persistSession: false } }
-    );
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const supabaseSecretKey = getSupabaseSecretKey();
+    if (!supabaseUrl || !supabaseSecretKey) {
+      throw new Error("Supabase admin credentials are not available");
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseSecretKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
 
     const { data: recipients, error } = await supabase
       .from("line_allowed_users")
