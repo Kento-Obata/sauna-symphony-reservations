@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+Disallow: /shift
+Disallow: /shift/
+Disallow: /shift2
+Disallow: /shift2/
+Disallow: /reservation/
+Disallow: /unsubscribe
+
+Sitemap: https://sauna-symphony-reservations.lovable.app/sitemap.xml
