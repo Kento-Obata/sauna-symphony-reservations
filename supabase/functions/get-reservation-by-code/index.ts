@@ -1,12 +1,11 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import postgres from "https://deno.land/x/postgresjs@v3.4.5/mod.js";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Constant-time comparison to mitigate timing attacks
 function safeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
   let result = 0;
@@ -16,6 +15,12 @@ function safeEqual(a: string, b: string): boolean {
   return result === 0;
 }
 
+const getDb = () => {
+  const databaseUrl = Deno.env.get('SUPABASE_DB_URL');
+  if (!databaseUrl) throw new Error('Missing SUPABASE_DB_URL');
+  return postgres(databaseUrl, { max: 1, idle_timeout: 5, connect_timeout: 10 });
+};
+
 const handler = async (req: Request): Promise<Response> => {
   console.log("Get reservation by code function called");
 
@@ -23,64 +28,48 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const sql = getDb();
+
   try {
-    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error("Missing required environment variables");
-    }
-
     const body = await req.json().catch(() => ({}));
     const { reservationCode, accessToken, phoneLastFourDigits } = body || {};
 
-    if (!reservationCode || typeof reservationCode !== "string") {
+    if (typeof reservationCode !== "string" || !/^[A-Z0-9]{8}$/.test(reservationCode)) {
       return new Response(
         JSON.stringify({ error: "予約コードが必要です" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
       );
     }
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const rows = await sql`
+      select id::text, date::text, time_slot::text, guest_name, guest_count, email, phone, water_temperature,
+             created_at, reservation_code, status, is_confirmed, confirmation_token, expires_at, total_price,
+             admin_memo, admin_memo_updated_at, admin_memo_updated_by::text, access_token
+      from public.reservations
+      where reservation_code = ${reservationCode}
+      limit 1
+    `;
+    const reservation = rows[0];
 
-    const { data: reservation, error } = await supabase
-      .from("reservations")
-      .select("*")
-      .eq("reservation_code", reservationCode)
-      .maybeSingle();
-
-    if (error) {
-      console.error("Error fetching reservation:", error);
-      throw error;
-    }
-
-    // Generic auth-required response — does not reveal whether the reservation exists
     const authRequired = () =>
       new Response(
         JSON.stringify({ error: "認証が必要です", requiresAuth: true }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
       );
 
-    if (!reservation) {
-      return authRequired();
-    }
+    if (!reservation) return authRequired();
 
-    // Verify access via signed token (preferred) or phone last 4 digits
     let authorized = false;
 
     if (accessToken && typeof accessToken === "string" && reservation.access_token) {
-      if (safeEqual(accessToken, reservation.access_token)) {
-        authorized = true;
-      }
+      if (safeEqual(accessToken, reservation.access_token)) authorized = true;
     }
 
     if (!authorized && phoneLastFourDigits && typeof phoneLastFourDigits === "string") {
       const digits = phoneLastFourDigits.replace(/\D/g, "");
       const phoneDigits = (reservation.phone || "").replace(/\D/g, "");
       const last4 = phoneDigits.slice(-4);
-      if (digits.length === 4 && last4.length === 4 && safeEqual(digits, last4)) {
-        authorized = true;
-      }
+      if (digits.length === 4 && last4.length === 4 && safeEqual(digits, last4)) authorized = true;
     }
 
     if (!authorized) {
@@ -88,8 +77,7 @@ const handler = async (req: Request): Promise<Response> => {
       return authRequired();
     }
 
-    // Strip access_token from response — it's a credential, not data
-    const { access_token: _omit, ...safeReservation } = reservation as any;
+    const { access_token: _omit, ...safeReservation } = reservation as Record<string, unknown>;
 
     return new Response(
       JSON.stringify({ reservation: safeReservation }),
@@ -101,6 +89,8 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({ error: error.message || "予約情報の取得に失敗しました" }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
     );
+  } finally {
+    await sql.end({ timeout: 1 });
   }
 };
 

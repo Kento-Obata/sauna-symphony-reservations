@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import postgres from "https://deno.land/x/postgresjs@v3.4.5/mod.js";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,154 +7,101 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-serve(async (req) => {
-  console.log("Request received:", {
-    method: req.method,
-    url: req.url,
-    headers: Object.fromEntries(req.headers.entries()),
-  });
+const getDb = () => {
+  const databaseUrl = Deno.env.get('SUPABASE_DB_URL');
+  if (!databaseUrl) throw new Error('Missing SUPABASE_DB_URL');
+  return postgres(databaseUrl, { max: 1, idle_timeout: 5, connect_timeout: 10 });
+};
 
-  // Handle CORS preflight requests
+serve(async (req) => {
   if (req.method === "OPTIONS") {
-    console.log("Handling OPTIONS request");
     return new Response("ok", { headers: corsHeaders });
   }
 
+  const sql = getDb();
+
   try {
-    console.log("Creating Supabase client...");
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    
-    console.log("Supabase URL exists:", !!supabaseUrl);
-    console.log("Service role key exists:", !!supabaseServiceKey);
-    
-    if (!supabaseUrl || !supabaseServiceKey) {
-      throw new Error("Missing Supabase credentials");
-    }
-
-    // Use service role key to bypass RLS for this operation
-    const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
-
     const { token } = await req.json();
     console.log("Received token:", token ? `${String(token).slice(0, 8)}...` : 'null');
 
-    // Validate token: 64 hex chars (gen_random_bytes(32) hex-encoded)
     if (typeof token !== 'string' || !/^[a-f0-9]{64}$/.test(token)) {
-      console.error("Invalid token format");
       return new Response(
         JSON.stringify({ success: false, error: "Invalid token" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Find the reservation
-    const { data: reservation, error: fetchError } = await supabaseClient
-      .from("reservations")
-      .select("*")
-      .eq("confirmation_token", token)
-      .maybeSingle();
+    const result = await sql.begin(async (tx) => {
+      const reservations = await tx`
+        select id::text, date::text, time_slot::text, guest_name, guest_count, email, phone, water_temperature, reservation_code, total_price, is_confirmed
+        from public.reservations
+        where confirmation_token = ${token}
+        limit 1
+      `;
 
-    console.log("Fetch error:", fetchError);
+      const reservation = reservations[0];
+      if (!reservation) throw new Error("Invalid or expired token");
 
-    if (fetchError || !reservation) {
-      console.error("Error finding reservation:", fetchError);
-      throw new Error("Invalid or expired token");
-    }
+      if (reservation.is_confirmed) {
+        return { reservation, alreadyConfirmed: true };
+      }
 
-    // Replay protection: if already confirmed, return success without re-processing
-    if (reservation.is_confirmed) {
-      console.log("Reservation already confirmed, skipping re-processing");
-      return new Response(
-        JSON.stringify({ success: true, reservation_code: reservation.reservation_code, alreadyConfirmed: true }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+      const updated = await tx`
+        update public.reservations
+        set is_confirmed = true,
+            status = 'confirmed',
+            confirmation_token = null,
+            expires_at = null
+        where id = ${reservation.id}::uuid
+        returning reservation_code
+      `;
 
-    // Update the reservation
-    const { data: updatedReservation, error: updateError } = await supabaseClient
-      .from("reservations")
-      .update({
-        is_confirmed: true,
-        status: "confirmed",
-        confirmation_token: null,
-        expires_at: null,
-      })
-      .eq("id", reservation.id)
-      .select();
+      if (updated.length === 0) throw new Error("Failed to update reservation");
+      return { reservation, alreadyConfirmed: false };
+    });
 
-    console.log("Updated reservation:", updatedReservation);
-    console.log("Update error:", updateError);
+    const { reservation, alreadyConfirmed } = result;
 
-    if (updateError || !updatedReservation || updatedReservation.length === 0) {
-      console.error("Error updating reservation:", updateError);
-      throw new Error("Failed to update reservation");
-    }
-
-    // Send confirmation notification
-    try {
-      console.log("Sending confirmation notification...");
-      const notificationPayload = {
-        date: reservation.date,
-        timeSlot: reservation.time_slot,
-        guestName: reservation.guest_name,
-        guestCount: reservation.guest_count,
-        email: reservation.email,
-        phone: reservation.phone,
-        waterTemperature: reservation.water_temperature,
-        reservationCode: reservation.reservation_code,
-        total_price: reservation.total_price,
-      };
-
-      const notificationResponse = await fetch(
-        `${supabaseUrl}/functions/v1/send-confirmation-notification`,
-        {
+    if (!alreadyConfirmed) {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL');
+      const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+      if (supabaseUrl && serviceKey) {
+        fetch(`${supabaseUrl}/functions/v1/send-confirmation-notification`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${supabaseServiceKey}`,
+            "Authorization": `Bearer ${serviceKey}`,
           },
-          body: JSON.stringify(notificationPayload),
-        }
-      );
-
-      const notificationResult = await notificationResponse.json();
-      console.log("Notification result:", notificationResult);
-
-      if (!notificationResponse.ok) {
-        console.error("Failed to send notification:", notificationResult);
-        // Don't fail the whole operation if notification fails
+          body: JSON.stringify({
+            date: reservation.date,
+            timeSlot: reservation.time_slot,
+            guestName: reservation.guest_name,
+            guestCount: reservation.guest_count,
+            email: reservation.email,
+            phone: reservation.phone,
+            waterTemperature: reservation.water_temperature,
+            reservationCode: reservation.reservation_code,
+            total_price: reservation.total_price,
+          }),
+        }).catch((notificationError) => console.error("Error sending notification:", notificationError));
       }
-    } catch (notificationError) {
-      console.error("Error sending notification:", notificationError);
-      // Don't fail the whole operation if notification fails
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        reservation_code: updatedReservation[0].reservation_code,
+        reservation_code: reservation.reservation_code,
+        alreadyConfirmed,
       }),
-      {
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json",
-        },
-      },
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (error) {
     console.error("Error in confirm-reservation function:", error);
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message,
-      }),
-      {
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json",
-        },
-        status: 400,
-      },
+      JSON.stringify({ success: false, error: error instanceof Error ? error.message : "予約確認に失敗しました" }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 },
     );
+  } finally {
+    await sql.end({ timeout: 1 });
   }
 });
