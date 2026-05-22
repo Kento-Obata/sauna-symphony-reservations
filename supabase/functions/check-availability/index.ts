@@ -9,8 +9,8 @@ const corsHeaders = {
 const validTimeSlots = new Set(['morning', 'afternoon', 'evening', 'night']);
 
 const getDb = () => {
-  const databaseUrl = Deno.env.get('SUPABASE_DB_URL');
-  if (!databaseUrl) throw new Error('Missing SUPABASE_DB_URL');
+  const databaseUrl = Deno.env.get('POSTGRES_URL');
+  if (!databaseUrl) throw new Error('Missing POSTGRES_URL');
   return postgres(databaseUrl, { max: 1, idle_timeout: 5, connect_timeout: 10 });
 };
 
