@@ -6,7 +6,14 @@
 //   JST 土曜→ UTC 金曜になり、土日判定が外れて平日テーブルが選ばれていた。
 //   ここでは "YYYY-MM-DDT00:00:00Z" として UTC 解釈し、getUTCDay() でその暦日の曜日を取る。
 
-import { isHoliday as isJpHoliday } from "npm:japanese-holidays@1.0.10";
+import jpHolidays from "npm:japanese-holidays@1.0.10";
+
+// japanese-holidays は CommonJS default export。名前付きエクスポート 'isHoliday' は無いので
+// default 経由で取り出す。バージョン差異に備えてフォールバックも用意。
+const isJpHoliday: (d: Date) => unknown =
+  (jpHolidays as any)?.isHoliday ??
+  (jpHolidays as any)?.default?.isHoliday ??
+  (() => false);
 
 export const RULE_DEFAULT_4SLOT_FROM = "2026-06-06";
 
