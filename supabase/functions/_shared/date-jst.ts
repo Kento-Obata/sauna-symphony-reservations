@@ -10,7 +10,7 @@
 //   - サーバ(edge function)側で曜日判定が必要な箇所は必ずこのファイルの関数を使う。
 //   - 直接 getUTCDay() / getDay() を呼ぶことは ESLint で禁止 (eslint.config.js)。
 
-import jpHolidays from "npm:japanese-holidays@1.0.10";
+import jpHolidays from "https://esm.sh/japanese-holidays@1.0.10";
 
 const isJpHolidayRaw: (d: Date) => unknown =
   (jpHolidays as any)?.isHoliday ??
