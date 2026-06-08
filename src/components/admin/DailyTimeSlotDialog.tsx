@@ -81,8 +81,8 @@ export const DailyTimeSlotDialog = ({
       form.reset({
         date: new Date(editingSlot.date),
         time_slot: editingSlot.time_slot,
-        start_time: editingSlot.start_time,
-        end_time: editingSlot.end_time,
+        start_time: (editingSlot.start_time ?? "").slice(0, 5),
+        end_time: (editingSlot.end_time ?? "").slice(0, 5),
         is_active: editingSlot.is_active,
       });
     } else {
