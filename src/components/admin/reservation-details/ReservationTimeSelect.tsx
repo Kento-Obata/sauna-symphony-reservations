@@ -45,17 +45,21 @@ export const ReservationTimeSelect = ({
     return slotReservations.length >= 1;
   };
 
+  const formatTime = (t: string) => (t ?? "").slice(0, 5);
+
   const getTimeSlotLabel = (slot: TimeSlot) => {
-    const dailySlot = dailyTimeSlots?.find(dts => 
+    const dailySlot = dailyTimeSlots?.find(dts =>
       dts.date === date && dts.time_slot === slot && dts.is_active
     );
-    
+
     if (dailySlot) {
-      return { start: dailySlot.start_time, end: dailySlot.end_time };
+      return { start: formatTime(dailySlot.start_time), end: formatTime(dailySlot.end_time) };
     }
-    
-    return getDefaultSlotTimesForDate(parseISO(date), slot, dailyTimeSlots);
+
+    const def = getDefaultSlotTimesForDate(parseISO(date), slot, dailyTimeSlots);
+    return { start: formatTime(def.start), end: formatTime(def.end) };
   };
+
 
   const currentTimeSlotLabel = getTimeSlotLabel(timeSlot);
 
