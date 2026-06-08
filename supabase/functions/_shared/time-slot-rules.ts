@@ -1,19 +1,12 @@
-// 唯一の真実: 時間帯ラベルを返すサーバ側共通ロジック
-// フロントエンド src/utils/timeSlotRules.ts と同じルールを再実装。
+// 時間帯ラベルを返すサーバ側共通ロジック。
 //
-// ⚠️ 過去にあったバグ:
-//   new Date("YYYY-MM-DDT00:00:00+09:00").getUTCDay() は -9h されて
-//   JST 土曜→ UTC 金曜になり、土日判定が外れて平日テーブルが選ばれていた。
-//   ここでは "YYYY-MM-DDT00:00:00Z" として UTC 解釈し、getUTCDay() でその暦日の曜日を取る。
+// 優先順位:
+//   1) daily_time_slots に明示行があれば DB の start_time/end_time を使う (唯一の真実)
+//   2) 無ければデフォルトルール (土日祝=4枠 / 平日=3枠) にフォールバック
+//
+// 曜日/祝日判定は必ず ./date-jst.ts 経由で行うこと (Date 経由のTZバグ防止)。
 
-import jpHolidays from "npm:japanese-holidays@1.0.10";
-
-// japanese-holidays は CommonJS default export。名前付きエクスポート 'isHoliday' は無いので
-// default 経由で取り出す。バージョン差異に備えてフォールバックも用意。
-const isJpHoliday: (d: Date) => unknown =
-  (jpHolidays as any)?.isHoliday ??
-  (jpHolidays as any)?.default?.isHoliday ??
-  (() => false);
+import { isJstWeekendOrHoliday } from "./date-jst.ts";
 
 export const RULE_DEFAULT_4SLOT_FROM = "2026-06-06";
 
@@ -31,20 +24,11 @@ export const WEEKEND_4SLOT_TIMES: Record<string, { start: string; end: string }>
   night: { start: "19:00", end: "21:30" },
 };
 
-const parseYmdAsUTC = (date: string): Date => new Date(date + "T00:00:00Z");
-
-export const isWeekendOrHoliday = (date: string): boolean => {
-  const d = parseYmdAsUTC(date);
-  const dow = d.getUTCDay();
-  if (dow === 0 || dow === 6) return true;
-  // japanese-holidays は Date オブジェクトの getMonth/getDate を使うため
-  // UTC 0 時の Date でも JST のその暦日として正しく扱える。
-  return !!isJpHoliday(d);
-};
+export const isWeekendOrHoliday = (date: string): boolean => isJstWeekendOrHoliday(date);
 
 export const shouldApplyDefault4Slot = (date: string): boolean => {
   if (date < RULE_DEFAULT_4SLOT_FROM) return false;
-  return isWeekendOrHoliday(date);
+  return isJstWeekendOrHoliday(date);
 };
 
 export const getDefaultSlotLabel = (timeSlot: string, date: string): string => {
