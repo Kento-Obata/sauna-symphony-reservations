@@ -58,10 +58,13 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Note: confirmation_token and admin_memo* are intentionally NOT selected.
+    // This is a customer-facing endpoint; those fields are internal/sensitive and
+    // are never consumed by the customer UI. access_token is selected only for the
+    // auth comparison below and is stripped from the response.
     const rows = await sql`
       select id::text, date::text, time_slot::text, guest_name, guest_count, email, phone, water_temperature,
-             created_at, reservation_code, status, is_confirmed, confirmation_token, expires_at, total_price,
-             admin_memo, admin_memo_updated_at, admin_memo_updated_by::text, access_token
+             created_at, reservation_code, status, is_confirmed, expires_at, total_price, access_token
       from public.reservations
       where reservation_code = ${reservationCode}
       limit 1
