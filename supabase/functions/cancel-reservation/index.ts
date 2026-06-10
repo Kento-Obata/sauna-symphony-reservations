@@ -1,10 +1,16 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import postgres from "https://deno.land/x/postgresjs@v3.4.5/mod.js";
+import { getClientIp, isRateLimited, recordAttempt } from "../_shared/rate-limit.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const ACTION = "cancel";
+const CODE_MAX = 5;   // failed attempts per reservation code
+const IP_MAX = 20;    // failed attempts per IP
+const WINDOW_MIN = 15;
 
 function safeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
@@ -54,6 +60,17 @@ serve(async (req) => {
       );
     }
 
+    const ip = getClientIp(req);
+    if (await isRateLimited(sql, [
+      { action: ACTION, identifier: reservationCode, max: CODE_MAX, windowMinutes: WINDOW_MIN },
+      { action: ACTION, identifier: ip, max: IP_MAX, windowMinutes: WINDOW_MIN },
+    ])) {
+      return new Response(
+        JSON.stringify({ error: "試行回数が多すぎます。しばらく時間をおいて再度お試しください。" }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const rows = await sql`
       select id::text, date::text, phone, status
       from public.reservations
@@ -63,6 +80,7 @@ serve(async (req) => {
     const reservation = rows[0];
 
     if (!reservation) {
+      await recordAttempt(sql, ACTION, [ip], false);
       return new Response(
         JSON.stringify({ error: "予約が見つかりませんでした" }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -72,6 +90,7 @@ serve(async (req) => {
     const phoneDigits = (reservation.phone || '').replace(/\D/g, '');
     const last4Digits = phoneDigits.slice(-4);
     if (last4Digits.length !== 4 || !safeEqual(last4Digits, phoneLastFourDigits)) {
+      await recordAttempt(sql, ACTION, [reservationCode, ip], false);
       return new Response(
         JSON.stringify({ error: "電話番号の下4桁が一致しません" }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

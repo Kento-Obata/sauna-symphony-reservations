@@ -1,10 +1,16 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import postgres from "https://deno.land/x/postgresjs@v3.4.5/mod.js";
+import { getClientIp, isRateLimited, recordAttempt } from "../_shared/rate-limit.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const ACTION = "lookup";
+const CODE_MAX = 5;   // failed attempts per reservation code
+const IP_MAX = 20;    // failed attempts per IP
+const WINDOW_MIN = 15;
 
 function safeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
@@ -41,6 +47,17 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    const ip = getClientIp(req);
+    if (await isRateLimited(sql, [
+      { action: ACTION, identifier: reservationCode, max: CODE_MAX, windowMinutes: WINDOW_MIN },
+      { action: ACTION, identifier: ip, max: IP_MAX, windowMinutes: WINDOW_MIN },
+    ])) {
+      return new Response(
+        JSON.stringify({ error: "試行回数が多すぎます。しばらく時間をおいて再度お試しください。" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 429 }
+      );
+    }
+
     const rows = await sql`
       select id::text, date::text, time_slot::text, guest_name, guest_count, email, phone, water_temperature,
              created_at, reservation_code, status, is_confirmed, confirmation_token, expires_at, total_price,
@@ -57,7 +74,10 @@ const handler = async (req: Request): Promise<Response> => {
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
       );
 
-    if (!reservation) return authRequired();
+    if (!reservation) {
+      await recordAttempt(sql, ACTION, [ip], false);
+      return authRequired();
+    }
 
     let authorized = false;
 
@@ -74,6 +94,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (!authorized) {
       console.log("Auth failed for reservation:", reservation.id);
+      await recordAttempt(sql, ACTION, [reservationCode, ip], false);
       return authRequired();
     }
 
