@@ -2,8 +2,10 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = "https://knjbxqiyngztylnzxzln.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtuamJ4cWl5bmd6dHlsbnp4emxuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzM2MjU2NjUsImV4cCI6MjA0OTIwMTY2NX0.7peEOLQF8D39ScsSeFY9Wqb0qD0cWQZ_T37BU1CwG4Y";
+// 既定は本番。ローカル検証時は .env.local に VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY
+// を置くとステージング等へ向き先を切り替えられる（本番ビルドは env 無しなので本番のまま）。
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? "https://knjbxqiyngztylnzxzln.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtuamJ4cWl5bmd6dHlsbnp4emxuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzM2MjU2NjUsImV4cCI6MjA0OTIwMTY2NX0.7peEOLQF8D39ScsSeFY9Wqb0qD0cWQZ_T37BU1CwG4Y";
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {

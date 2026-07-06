@@ -8,8 +8,10 @@ const corsHeaders = {
 };
 
 const getDb = () => {
-  const databaseUrl = Deno.env.get('POSTGRES_URL');
-  if (!databaseUrl) throw new Error('Missing POSTGRES_URL');
+  // 本番は POSTGRES_URL（プーラ）を使用。未設定環境（staging 等）では
+  // Supabase が自動提供する SUPABASE_DB_URL にフォールバックする（本番は挙動不変）。
+  const databaseUrl = Deno.env.get('POSTGRES_URL') ?? Deno.env.get('SUPABASE_DB_URL');
+  if (!databaseUrl) throw new Error('Missing POSTGRES_URL / SUPABASE_DB_URL');
   return postgres(databaseUrl, { max: 1, idle_timeout: 5, connect_timeout: 10 });
 };
 

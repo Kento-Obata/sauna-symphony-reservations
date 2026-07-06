@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { sendSMS } from "../_shared/twilio.ts";
+import { sendLineGroupMessage } from "../_shared/line.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { buildSimpleEmailHtml, sendAppEmail } from "../_shared/lovable-email.ts";
 
@@ -83,7 +84,9 @@ const handler = async (req: Request): Promise<Response> => {
       .eq("reservation_code", reservation.reservationCode)
       .maybeSingle();
     const tokenQuery = tokenRow?.access_token ? `?t=${tokenRow.access_token}` : "";
-    const reservationDetailUrl = `https://www.u-sauna-private.com/reservation/${reservation.reservationCode}${tokenQuery}`;
+    // 既定は本番フロント。staging/ローカル検証時は APP_BASE_URL で上書き可（本番は未設定なので不変）。
+    const BASE_URL = Deno.env.get('APP_BASE_URL') ?? "https://www.u-sauna-private.com";
+    const reservationDetailUrl = `${BASE_URL}/reservation/${reservation.reservationCode}${tokenQuery}`;
     
     const messageContent = `
 ご予約いただきありがとうございます！
@@ -186,13 +189,22 @@ ${reservationDetailUrl}
     // オーナーへのSMS通知を送信
     try {
       console.log("Attempting to send notification SMS to owner:", OWNER_PHONE_NUMBER);
-      
+
       await sendSMS(OWNER_PHONE_NUMBER, ownerMessageContent);
-      
+
       console.log("Owner notification SMS sent successfully");
       notifications.push("owner_sms");
     } catch (error) {
       console.error("Owner notification SMS sending error:", error);
+    }
+
+    // LINEグループへの通知を送信
+    try {
+      await sendLineGroupMessage(ownerMessageContent.trim());
+      console.log("LINE group notification sent successfully");
+      notifications.push("line_group");
+    } catch (error) {
+      console.error("LINE group notification error:", error);
     }
 
     return new Response(

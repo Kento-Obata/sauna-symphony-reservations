@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -8,8 +8,15 @@ export default function ReservationConfirm() {
   const { token } = useParams();
   const navigate = useNavigate();
   const [isConfirming, setIsConfirming] = useState(true);
+  // 確定は1回だけ。StrictMode(dev)の二重実行や再マウントで confirm-reservation を
+  // 2回呼ぶと、1回目でトークンが無効化され2回目が「無効」になり、成功と失敗の
+  // 両メッセージが出てしまうのを防ぐ。
+  const hasConfirmed = useRef(false);
 
   useEffect(() => {
+    if (hasConfirmed.current) return;
+    hasConfirmed.current = true;
+
     const confirmReservation = async () => {
       if (!token) {
         console.error("No token provided");

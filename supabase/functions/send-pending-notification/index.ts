@@ -54,7 +54,8 @@ const handler = async (req: Request): Promise<Response> => {
     const reservation: ReservationNotification = await req.json();
     const notifications = [];
 
-    const BASE_URL = "https://www.u-sauna-private.com";
+    // 既定は本番フロント。staging/ローカル検証時は APP_BASE_URL で上書き可（本番は未設定なので不変）。
+    const BASE_URL = Deno.env.get('APP_BASE_URL') ?? "https://www.u-sauna-private.com";
     const CONFIRMATION_URL = `${BASE_URL}/reservation/confirm/${reservation.confirmationToken}`;
 
     // Make sure we're using the total_price from the database, not calculating it again

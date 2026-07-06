@@ -49,7 +49,8 @@ serve(async (req) => {
 
     for (const reservation of pendingReservations) {
       try {
-        const BASE_URL = "https://www.u-sauna-private.com";
+        // 既定は本番フロント。staging/ローカル検証時は APP_BASE_URL で上書き可（本番は未設定なので不変）。
+        const BASE_URL = Deno.env.get('APP_BASE_URL') ?? "https://www.u-sauna-private.com";
         const CONFIRMATION_URL = `${BASE_URL}/reservation/confirm/${reservation.confirmation_token}`;
 
         const expiresAt = new Date(reservation.expires_at);

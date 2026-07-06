@@ -1,7 +1,14 @@
-import { sendLovableEmail } from "npm:@lovable.dev/email-js@0.0.4";
+// メール送信は Resend API を直接叩く（Lovable 依存を排除）。
+//
+// 必要な環境変数:
+//   - RESEND_API_KEY : Resend の API キー（本番・staging それぞれに設定）
+//   - EMAIL_FROM     : 差出人（任意。未設定なら下記デフォルト）。Resend で検証済みの
+//                      ドメイン(u-sync.jp)のアドレスであること。
+//
+// 呼び出し側 (sendAppEmail / buildSimpleEmailHtml) のインターフェースは従来どおりなので、
+// send-pending / send-confirmation / send-reservation-reminders / _shared/email.ts は無改修。
 
-const SENDER_DOMAIN = "notify.u-sync.jp";
-const FROM_ADDRESS = "体験型サウナU <noreply@notify.u-sync.jp>";
+const FROM_ADDRESS = Deno.env.get("EMAIL_FROM") ?? "体験型サウナU <noreply@u-sync.jp>";
 
 interface SendAppEmailParams {
   to: string;
@@ -19,14 +26,6 @@ const escapeHtml = (value: string) =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
-
-const generateToken = () => {
-  const bytes = new Uint8Array(32);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes)
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
-};
 
 export const buildSimpleEmailHtml = (heading: string, body: string) => {
   const paragraphs = body
@@ -51,26 +50,36 @@ export const sendAppEmail = async ({
   idempotencyKey,
   label,
 }: SendAppEmailParams) => {
-  const apiKey = Deno.env.get("LOVABLE_API_KEY");
-
+  const apiKey = Deno.env.get("RESEND_API_KEY");
   if (!apiKey) {
-    throw new Error("Missing LOVABLE_API_KEY");
+    throw new Error("Missing RESEND_API_KEY");
   }
 
-  return await sendLovableEmail(
-    {
-      to,
+  // Resend の tag は [A-Za-z0-9_-] のみ許容されるためサニタイズ。
+  const safeLabel = (label || "app").replace(/[^A-Za-z0-9_-]/g, "-").slice(0, 256);
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      // 同一 idempotencyKey の再送は Resend 側で重複排除される。
+      "Idempotency-Key": idempotencyKey,
+    },
+    body: JSON.stringify({
       from: FROM_ADDRESS,
-      sender_domain: SENDER_DOMAIN,
+      to,
       subject,
       html,
       text,
-      purpose: "transactional",
-      idempotency_key: idempotencyKey,
-      unsubscribe_token: generateToken(),
-      label,
-      message_id: crypto.randomUUID(),
-    },
-    { apiKey, idempotencyKey }
-  );
+      tags: [{ name: "label", value: safeLabel }],
+    }),
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Resend API error (${response.status}): ${body}`);
+  }
+
+  return await response.json();
 };
