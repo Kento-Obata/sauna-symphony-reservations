@@ -3,9 +3,8 @@ import { format, addDays, startOfWeek } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Reservation, TimeSlot } from "@/types/reservation";
 import { isShopClosed } from "./dateUtils";
-import { TIME_SLOTS, ALL_TIME_SLOT_DEFAULTS } from "@/components/TimeSlotSelect";
 import type { ShopClosure } from "@/types/reservation";
-import { shouldApplyDefault4Slot, getDefaultSlotTimesForDate } from "./timeSlotRules";
+import { getApplicableSlotsForDate, getDefaultSlotTimesForDate } from "./timeSlotRules";
 
 interface DailyTimeSlotRow {
   date: string;
@@ -39,24 +38,11 @@ export const isTimeSlotOccupied = (
   return slotReservations.length > 0;
 };
 
-// その日に表示すべき時間枠
-//  - 明示的に night 行が active なら 4 枠
-//  - そうでなくても 6/6 以降の土日祝 かつ 明示行が一切無い日は 4 枠（デフォルトルール）
-//  - それ以外は 3 枠
-const getApplicableSlotsForDate = (
-  date: Date,
-  dailyTimeSlots?: DailyTimeSlotRow[]
-): TimeSlot[] => {
-  const dateString = format(date, "yyyy-MM-dd");
-  const base: TimeSlot[] = ["morning", "afternoon", "evening"];
-  const hasExplicitNight = !!dailyTimeSlots?.some(
-    (dts) => dts.date === dateString && dts.time_slot === "night" && dts.is_active
-  );
-  if (hasExplicitNight) return [...base, "night"];
-  if (shouldApplyDefault4Slot(date, dailyTimeSlots)) return [...base, "night"];
-  return base;
-};
-
+// その日に表示すべき時間枠は timeSlotRules.getApplicableSlotsForDate に集約。
+//  - 土日祝(6/6〜): 4 枠
+//  - 平日(8/1〜): 午後・夕方・夜（午前は既定おやすみ）
+//  - それ以外(従来): 午前・午後・夕方
+//  - いずれも明示的な active 行がある枠は追加で開放
 export const getAvailableTimeSlotsForDate = (
   date: Date,
   reservations: Reservation[],

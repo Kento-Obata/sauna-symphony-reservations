@@ -9,7 +9,11 @@ import {
 import { TimeSlot } from "@/types/reservation";
 import { isBefore, addHours, setHours, setMinutes, format } from "date-fns";
 import { useDailyTimeSlots } from "@/hooks/useDailyTimeSlots";
-import { shouldApplyDefault4Slot, getDefaultSlotTimesForDate } from "@/utils/timeSlotRules";
+import {
+  getApplicableSlotsForDate,
+  getDefaultSlotTimesForDate,
+  SLOT_LABELS,
+} from "@/utils/timeSlotRules";
 
 export const TIME_SLOTS = {
   morning: { start: '10:00', end: '12:30' },
@@ -78,21 +82,16 @@ export const TimeSlotSelect = ({
     return getDefaultSlotTimesForDate(selectedDate, slot, dailyTimeSlots);
   };
 
-  // Build the list of slots to render. Always include the 3 default slots so
-  // the existing UI is unchanged. Append `night` only when the selected date
-  // has an active night row in daily_time_slots.
-  const dateStr = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null;
-  const hasExplicitNight = !!(dateStr && dailyTimeSlots?.some(
-    (dts) => dts.date === dateStr && dts.time_slot === 'night' && dts.is_active
-  ));
-  const hasNight = hasExplicitNight || (selectedDate ? shouldApplyDefault4Slot(selectedDate, dailyTimeSlots) : false);
-
-  const slotOptions: { value: TimeSlot; label: string }[] = [
-    { value: 'morning', label: '午前' },
-    { value: 'afternoon', label: '午後' },
-    { value: 'evening', label: '夕方' },
-  ];
-  if (hasNight) slotOptions.push({ value: 'night', label: '夜' });
+  // 表示する枠は timeSlotRules.getApplicableSlotsForDate に集約したルールで決定する。
+  //  - 土日祝(6/6〜): 4 枠 / 平日(8/1〜): 午後・夕方・夜（午前は既定おやすみ） / 従来: 午前・午後・夕方
+  //  - 明示的に active な行がある枠は追加で開放（例: 平日の午前を特定日だけ開放）
+  //  - 日付未選択時は従来どおり午前・午後・夕方を表示（いずれも disabled）
+  const applicableSlots: TimeSlot[] = selectedDate
+    ? getApplicableSlotsForDate(selectedDate, dailyTimeSlots)
+    : ['morning', 'afternoon', 'evening'];
+  const slotOptions: { value: TimeSlot; label: string }[] = applicableSlots.map(
+    (value) => ({ value, label: SLOT_LABELS[value] })
+  );
 
   return (
     <div className="space-y-2">

@@ -11,7 +11,6 @@ import {
 import { ja } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Ban } from "lucide-react";
-import { TIME_SLOTS } from "@/components/TimeSlotSelect";
 import { Reservation, TimeSlot } from "@/types/reservation";
 import { AdminReservationDialog } from "./AdminReservationDialog";
 import { AdminReservationDetailsDialog } from "./AdminReservationDetailsDialog";
@@ -22,7 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { getDefaultSlotTimesForDate, shouldApplyDefault4Slot, WEEKEND_4SLOT_TIMES } from "@/utils/timeSlotRules";
+import { getDefaultSlotTimesForDate, isNightSlotDefault, WEEKEND_4SLOT_TIMES } from "@/utils/timeSlotRules";
 
 interface AdminCalendarProps {
   reservations?: Reservation[];
@@ -84,9 +83,9 @@ export const AdminCalendar = ({
       .filter((s) => s.time_slot === "night" && s.is_active)
       .map((s) => s.date)
   );
-  // ルール：6/6以降の土日祝で、明示行が無い日は自動で night 枠あり扱い
+  // ルール：night が既定で開く日（6/6〜の土日祝 / 8/1〜の平日）は night 枠あり扱い
   days.forEach((d) => {
-    if (shouldApplyDefault4Slot(d, weekDailySlots ?? [])) {
+    if (isNightSlotDefault(d, weekDailySlots ?? [])) {
       nightActiveDates.add(format(d, "yyyy-MM-dd"));
     }
   });
@@ -251,8 +250,13 @@ export const AdminCalendar = ({
         ))}
 
         {(() => {
+          // 行ヘッダの開始時刻は going-forward の正準スケジュール(WEEKEND_4SLOT_TIMES)を表示する。
+          // 週内で日ごとに枠時間が異なりうるが行ヘッダは1つのため代表として統一時刻を用いる
+          // （各予約の実時刻は日付単位の getDefaultSlotTimesForDate / 明示行が真実）。
           const slotsToRender: [TimeSlot, { start: string }][] = [
-            ...(Object.entries(TIME_SLOTS) as [TimeSlot, { start: string }][]),
+            ["morning", { start: WEEKEND_4SLOT_TIMES.morning.start }],
+            ["afternoon", { start: WEEKEND_4SLOT_TIMES.afternoon.start }],
+            ["evening", { start: WEEKEND_4SLOT_TIMES.evening.start }],
           ];
           if (showNightRow) {
             slotsToRender.push(["night", { start: WEEKEND_4SLOT_TIMES.night.start }]);

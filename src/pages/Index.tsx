@@ -79,6 +79,43 @@ const Index = () => {
         </div>
       </div>
 
+      <section className="max-w-4xl mx-auto w-full px-4 pt-2 pb-4">
+        <div className="glass-card p-6 border border-sauna-stone/20">
+          <div className="text-center mb-3">
+            <span className="text-xs tracking-[0.3em] font-mplus font-extralight text-black/60">お知らせ</span>
+          </div>
+          <p className="text-center text-base font-mplus font-light text-black mb-1">
+            平日の営業時間 変更のご案内
+          </p>
+          <p className="text-center text-sm font-mplus font-extralight text-black/70 mb-5">
+            2026年8月1日（土）より、平日の営業枠を土日・祝日と同じ時間帯に統一いたします。
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-lg border border-sauna-stone/20 p-4 bg-sauna-base/40">
+              <div className="text-sm font-mplus font-medium text-black mb-2">平日</div>
+              <ul className="text-sm font-mplus font-extralight text-black/80 space-y-1">
+                <li className="flex justify-between"><span>午後</span><span>13:00 - 15:30</span></li>
+                <li className="flex justify-between"><span>夕方</span><span>16:00 - 18:30</span></li>
+                <li className="flex justify-between"><span>夜</span><span>19:00 - 21:30</span></li>
+                <li className="text-black/50 pt-1">午前（10:00 - 12:30）は当面おやすみ</li>
+              </ul>
+            </div>
+            <div className="rounded-lg border border-sauna-stone/20 p-4 bg-sauna-base/40">
+              <div className="text-sm font-mplus font-medium text-black mb-2">土日・祝日</div>
+              <ul className="text-sm font-mplus font-extralight text-black/80 space-y-1">
+                <li className="flex justify-between"><span>午前</span><span>10:00 - 12:30</span></li>
+                <li className="flex justify-between"><span>午後</span><span>13:00 - 15:30</span></li>
+                <li className="flex justify-between"><span>夕方</span><span>16:00 - 18:30</span></li>
+                <li className="flex justify-between"><span>夜</span><span>19:00 - 21:30</span></li>
+              </ul>
+            </div>
+          </div>
+          <p className="text-center text-xs font-mplus font-extralight text-black/50 mt-4">
+            ※ 各回のあいだに清掃・入替のためのお時間をいただきます。
+          </p>
+        </div>
+      </section>
+
       <div className="relative z-10 text-center">
         <ReservationForm />
       </div>

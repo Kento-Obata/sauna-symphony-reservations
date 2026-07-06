@@ -17,6 +17,12 @@ dist-ssr
 .env.*
 !.env.example
 
+# Supabase CLI local temp
+supabase/.temp
+
+# Deno lockfile (edge functions use URL imports; not pinned in-repo)
+deno.lock
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

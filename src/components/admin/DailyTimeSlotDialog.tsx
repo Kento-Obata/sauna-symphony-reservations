@@ -37,6 +37,7 @@ import {
   useCreateDailyTimeSlot,
   useUpdateDailyTimeSlot,
 } from "@/hooks/useDailyTimeSlots";
+import { getDefaultSlotTimesForDate } from "@/utils/timeSlotRules";
 import { Database } from "@/integrations/supabase/types";
 
 type DailyTimeSlot = Database["public"]["Tables"]["daily_time_slots"]["Row"];
@@ -122,15 +123,9 @@ export const DailyTimeSlotDialog = ({
   };
 
   const handleTimeSlotChange = (timeSlot: TimeSlot) => {
-    // Set default times based on time slot
-    const defaults: Record<TimeSlot, { start: string; end: string }> = {
-      morning: { start: "10:00", end: "12:30" },
-      afternoon: { start: "13:30", end: "16:00" },
-      evening: { start: "17:00", end: "19:30" },
-      night: { start: "20:00", end: "22:30" },
-    };
-
-    const defaultTimes = defaults[timeSlot];
+    // 選択中の日付の既定時刻でプレフィル（統一4枠/従来を集約ルールから取得）。
+    const selectedDate = form.getValues("date") ?? new Date();
+    const defaultTimes = getDefaultSlotTimesForDate(selectedDate, timeSlot);
     form.setValue("start_time", defaultTimes.start);
     form.setValue("end_time", defaultTimes.end);
   };

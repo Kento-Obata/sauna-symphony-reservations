@@ -9,7 +9,11 @@
 import { isJstWeekendOrHoliday } from "./date-jst.ts";
 
 export const RULE_DEFAULT_4SLOT_FROM = "2026-06-06";
+// 平日も土日と同じ4枠時間へ統一する開始日（午前おやすみはフロント側の表示制御。
+// ラベルは時間帯の start-end のみを返すため、ここでは時間表を統一するだけでよい）。
+export const RULE_WEEKDAY_4SLOT_FROM = "2026-08-01";
 
+// 平日 8/1 より前の従来スケジュール。
 export const WEEKDAY_TIMES: Record<string, { start: string; end: string }> = {
   morning: { start: "10:00", end: "12:30" },
   afternoon: { start: "13:30", end: "16:00" },
@@ -17,6 +21,7 @@ export const WEEKDAY_TIMES: Record<string, { start: string; end: string }> = {
   night: { start: "20:00", end: "22:30" },
 };
 
+// 統一4枠（土日祝6/6〜 / 平日8/1〜）。
 export const WEEKEND_4SLOT_TIMES: Record<string, { start: string; end: string }> = {
   morning: { start: "10:00", end: "12:30" },
   afternoon: { start: "13:00", end: "15:30" },
@@ -31,8 +36,15 @@ export const shouldApplyDefault4Slot = (date: string): boolean => {
   return isJstWeekendOrHoliday(date);
 };
 
+/** 平日4枠ルール（8/1以降の平日 = 土日祝以外）が適用される日か。 */
+export const isWeekday4Slot = (date: string): boolean => {
+  if (date < RULE_WEEKDAY_4SLOT_FROM) return false;
+  return !isJstWeekendOrHoliday(date);
+};
+
 export const getDefaultSlotLabel = (timeSlot: string, date: string): string => {
-  const table = shouldApplyDefault4Slot(date) ? WEEKEND_4SLOT_TIMES : WEEKDAY_TIMES;
+  const use4Slot = shouldApplyDefault4Slot(date) || isWeekday4Slot(date);
+  const table = use4Slot ? WEEKEND_4SLOT_TIMES : WEEKDAY_TIMES;
   const t = table[timeSlot] ?? WEEKDAY_TIMES[timeSlot];
   return t ? `${t.start}-${t.end}` : timeSlot;
 };
