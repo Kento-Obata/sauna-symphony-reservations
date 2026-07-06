@@ -21,7 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { getDefaultSlotTimesForDate, isNightSlotDefault, WEEKEND_4SLOT_TIMES } from "@/utils/timeSlotRules";
+import { getApplicableSlotsForDate, getDefaultSlotTimesForDate, isNightSlotDefault, WEEKEND_4SLOT_TIMES } from "@/utils/timeSlotRules";
 
 interface AdminCalendarProps {
   reservations?: Reservation[];
@@ -267,20 +267,21 @@ export const AdminCalendar = ({
                 {time.start}
               </div>
               {days.map((day) => {
-                const dateStr = format(day, "yyyy-MM-dd");
-                const isNightDisabledForDay = slot === "night" && !nightActiveDates.has(dateStr);
                 const slotReservations = getReservationsForDateAndSlot(day, slot);
                 const isBlocked = slotReservations.some((r) => r.guest_name === "休枠");
-                if (isNightDisabledForDay) {
-                  return (
-                    <div
-                      key={`${day}-${slot}`}
-                      className="col-span-1 p-2 border rounded relative bg-gray-50 dark:bg-gray-800/40"
-                    />
-                  );
-                }
+                // その日にこの枠が既定で開いていない（平日8/1以降の午前 / 夜の非稼働日）かつ
+                // 予約なし → 顧客にはおやすみ。管理者は上書き予約できるようクリックは有効のまま、
+                // 表示だけ「おやすみ」で区別する（明示的に開けた日・予約のある日は通常表示）。
+                const isClosedForCustomers =
+                  !getApplicableSlotsForDate(day, weekDailySlots ?? []).includes(slot) &&
+                  slotReservations.length === 0;
                 return (
-                  <div key={`${day}-${slot}`} className="col-span-1 p-2 border rounded relative">
+                  <div
+                    key={`${day}-${slot}`}
+                    className={`col-span-1 p-2 border rounded relative ${
+                      isClosedForCustomers ? "bg-gray-50 dark:bg-gray-800/40" : ""
+                    }`}
+                  >
                     <button
                       onClick={() => handleCellClick(day, slot)}
                       className={`w-full h-full ${
@@ -291,9 +292,13 @@ export const AdminCalendar = ({
                           : ""
                       }`}
                     >
-                      {getStatusDisplay(day, slotReservations)}
+                      {isClosedForCustomers ? (
+                        <span className="text-[10px] text-gray-400">おやすみ</span>
+                      ) : (
+                        getStatusDisplay(day, slotReservations)
+                      )}
                     </button>
-                    {!isDateClosed(day) && !isBlocked && slotReservations.length === 0 && (
+                    {!isDateClosed(day) && !isBlocked && !isClosedForCustomers && slotReservations.length === 0 && (
                       <button
                         onClick={(e) => handleBlockClick(e, day, slot)}
                         className="absolute top-0 right-0 p-1 text-gray-500 hover:text-gray-700"
