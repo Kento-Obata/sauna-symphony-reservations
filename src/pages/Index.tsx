@@ -1,5 +1,6 @@
 import { Header } from "@/components/Header";
 import ReservationForm from "@/components/ReservationForm";
+import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { fetchPriceSettings } from "@/utils/priceCalculations";
 import { PriceSetting } from "@/types/price";
@@ -63,14 +64,12 @@ const Index = () => {
           <div className="glass-card p-2 space-y-2 w-full hover-lift text-center">
             <div className="text-lg font-mplus font-extralight tracking-[0.2em] text-black">体験型サウナU</div>
             <div className="flex flex-col items-center gap-1 mt-2">
-              <a
-                href="https://reserva.be/usauna"
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                to="/events"
                 className="text-sm font-mplus font-extralight text-black/80 hover:text-black underline underline-offset-4 decoration-black/30 hover:decoration-black transition-colors"
               >
                 パブリックサウナイベントのご予約はこちらから →
-              </a>
+              </Link>
               <span className="text-sm font-mplus font-extralight text-black/80">
                 通常貸切予約は↓
               </span>

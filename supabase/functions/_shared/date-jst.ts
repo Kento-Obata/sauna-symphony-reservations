@@ -10,7 +10,7 @@
 //   - サーバ(edge function)側で曜日判定が必要な箇所は必ずこのファイルの関数を使う。
 //   - 直接 getUTCDay() / getDay() を呼ぶことは ESLint で禁止 (eslint.config.js)。
 
-import jpHolidays from "https://esm.sh/japanese-holidays@1.0.10";
+import * as jpHolidays from "https://esm.sh/japanese-holidays@1.0.10";
 
 const isJpHolidayRaw: (d: Date) => unknown =
   (jpHolidays as any)?.isHoliday ??
@@ -53,3 +53,11 @@ export const isJstHoliday = (ymd: string): boolean => {
 
 export const isJstWeekendOrHoliday = (ymd: string): boolean =>
   isJstWeekend(ymd) || isJstHoliday(ymd);
+
+/**
+ * 現在時刻の JST 暦日を "YYYY-MM-DD" で返す。
+ * `new Date().toISOString().split('T')[0]` は UTC 基準のため JST と最大9時間ズレる
+ * （UTC 15:00〜24:00 の間、JST は既に翌日）。当日判定には必ずこちらを使う。
+ */
+export const getJstTodayYmd = (now: Date = new Date()): string =>
+  new Date(now.getTime() + 9 * 3600 * 1000).toISOString().slice(0, 10);

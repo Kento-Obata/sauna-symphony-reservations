@@ -149,6 +149,154 @@ export type Database = {
         }
         Relationships: []
       }
+      event_reservations: {
+        Row: {
+          access_token: string
+          cancelled_at: string | null
+          created_at: string
+          email: string
+          guest_count: number
+          guest_name: string
+          id: string
+          payment_method: string | null
+          payment_status: string
+          phone: string
+          reservation_code: string
+          slot_id: string
+          status: string
+          total_price: number
+          updated_at: string
+        }
+        Insert: {
+          access_token: string
+          cancelled_at?: string | null
+          created_at?: string
+          email: string
+          guest_count: number
+          guest_name: string
+          id?: string
+          payment_method?: string | null
+          payment_status?: string
+          phone: string
+          reservation_code: string
+          slot_id: string
+          status?: string
+          total_price?: number
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string
+          cancelled_at?: string | null
+          created_at?: string
+          email?: string
+          guest_count?: number
+          guest_name?: string
+          id?: string
+          payment_method?: string | null
+          payment_status?: string
+          phone?: string
+          reservation_code?: string
+          slot_id?: string
+          status?: string
+          total_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_reservations_slot_id_fkey"
+            columns: ["slot_id"]
+            isOneToOne: false
+            referencedRelation: "event_slots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_slots: {
+        Row: {
+          capacity: number
+          created_at: string
+          date: string
+          end_time: string
+          event_id: string
+          id: string
+          is_active: boolean
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          capacity: number
+          created_at?: string
+          date: string
+          end_time: string
+          event_id: string
+          id?: string
+          is_active?: boolean
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          capacity?: number
+          created_at?: string
+          date?: string
+          end_time?: string
+          event_id?: string
+          id?: string
+          is_active?: boolean
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_slots_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          max_guests_per_reservation: number
+          price_note: string | null
+          price_per_person: number
+          slug: string
+          status: string
+          title: string
+          updated_at: string
+          venue: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          max_guests_per_reservation?: number
+          price_note?: string | null
+          price_per_person?: number
+          slug: string
+          status?: string
+          title: string
+          updated_at?: string
+          venue?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          max_guests_per_reservation?: number
+          price_note?: string | null
+          price_per_person?: number
+          slug?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          venue?: string | null
+        }
+        Relationships: []
+      }
       options: {
         Row: {
           created_at: string

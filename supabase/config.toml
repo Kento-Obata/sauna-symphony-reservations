@@ -33,3 +33,15 @@ verify_jwt = false
 
 [functions.handle-email-suppression]
 verify_jwt = false
+
+[functions.get-event]
+verify_jwt = false
+
+[functions.create-event-reservation]
+verify_jwt = false
+
+[functions.cancel-event-reservation]
+verify_jwt = false
+
+[functions.get-event-reservation]
+verify_jwt = false

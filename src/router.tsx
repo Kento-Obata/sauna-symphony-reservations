@@ -15,6 +15,10 @@ import { ShiftGuard } from "./components/shift/ShiftGuard";
 import Shift2 from "./pages/Shift2";
 import Shift2Dashboard from "./pages/Shift2Dashboard";
 import Unsubscribe from "./pages/Unsubscribe";
+import EventList from "./pages/EventList";
+import EventPage from "./pages/EventPage";
+import EventReservationComplete from "./pages/EventReservationComplete";
+import EventReservationDetail from "./pages/EventReservationDetail";
 
 export const router = createBrowserRouter([
   {
@@ -84,5 +88,23 @@ export const router = createBrowserRouter([
   {
     path: "/unsubscribe",
     element: <Unsubscribe />,
+  },
+  {
+    path: "/events",
+    element: <EventList />,
+  },
+  {
+    // 静的セグメントが :slug より優先される。complete / reservation は
+    // events.slug の予約語（DB CHECK 制約で使用不可）
+    path: "/events/complete",
+    element: <EventReservationComplete />,
+  },
+  {
+    path: "/events/reservation/:code",
+    element: <EventReservationDetail />,
+  },
+  {
+    path: "/events/:slug",
+    element: <EventPage />,
   },
 ]);

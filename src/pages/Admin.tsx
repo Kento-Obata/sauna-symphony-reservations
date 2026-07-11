@@ -18,6 +18,7 @@ import { AvailabilityTextGenerator } from "@/components/admin/AvailabilityTextGe
 import { CustomerManagement } from "@/components/admin/CustomerManagement";
 import { DailyTimeSlotManager } from "@/components/admin/DailyTimeSlotManager";
 import { TimeSlotPatternManager } from "@/components/admin/TimeSlotPatternManager";
+import { EventManager } from "@/components/admin/EventManager";
 import { useAdminReservations } from "@/hooks/useAdminReservations";
 
 const Admin = () => {
@@ -123,9 +124,10 @@ const Admin = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="reservations">予約管理</TabsTrigger>
           <TabsTrigger value="customers">顧客管理</TabsTrigger>
+          <TabsTrigger value="events">イベント</TabsTrigger>
           <TabsTrigger value="availability">空き状況</TabsTrigger>
           <TabsTrigger value="closures">休業管理</TabsTrigger>
           <TabsTrigger value="settings">設定</TabsTrigger>
@@ -175,6 +177,10 @@ const Admin = () => {
             initialUserKey={selectedUserKey}
             onUserKeyChange={setSelectedUserKey}
           />
+        </TabsContent>
+
+        <TabsContent value="events" className="space-y-6">
+          <EventManager />
         </TabsContent>
 
         <TabsContent value="availability" className="space-y-6">
