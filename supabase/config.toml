@@ -45,3 +45,13 @@ verify_jwt = false
 
 [functions.get-event-reservation]
 verify_jwt = false
+
+[functions.square-webhook]
+verify_jwt = false
+
+[functions.expire-event-holds]
+verify_jwt = false
+
+# verify_jwt だけでは anon key も通るため、関数内で profiles.role='admin' を追加検証している
+[functions.admin-cancel-event-reservation]
+verify_jwt = true

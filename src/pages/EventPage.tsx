@@ -48,7 +48,11 @@ const EventPage = () => {
                 <p>
                   料金:{" "}
                   {data.event.price_per_person > 0
-                    ? `お一人様 ¥${data.event.price_per_person.toLocaleString()}${data.event.price_note ? `（${data.event.price_note}）` : "（当日現地払い）"}`
+                    ? `お一人様 ¥${data.event.price_per_person.toLocaleString()}${
+                      data.event.payment_type === "prepaid"
+                        ? "（事前決済）"
+                        : data.event.price_note ? `（${data.event.price_note}）` : "（当日現地払い）"
+                    }`
                     : data.event.price_note || "無料"}
                 </p>
                 <p>1回のご予約につき{data.event.max_guests_per_reservation}名まで</p>

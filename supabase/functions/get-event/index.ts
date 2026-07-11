@@ -42,7 +42,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const eventRows = await sql`
       select id::text, slug, title, description, venue,
-             price_per_person, price_note, max_guests_per_reservation
+             price_per_person, price_note, max_guests_per_reservation, payment_type
       from public.events
       where slug = ${slug}
         and status = 'published'
@@ -66,6 +66,7 @@ const handler = async (req: Request): Promise<Response> => {
         select slot_id, sum(guest_count)::int as taken
         from public.event_reservations
         where status = 'confirmed'
+           or (status = 'pending_payment' and expires_at > now())
         group by slot_id
       ) r on r.slot_id = s.id
       where s.event_id = ${event.id}::uuid

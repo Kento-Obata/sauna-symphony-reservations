@@ -1,14 +1,21 @@
 // イベント予約の自己キャンセル（確定メール内リンクの access_token で認証）。
 //
-// 物理削除はしない。status='cancelled' に更新すると残席集計（confirmed の合計）から
-// 自動的に外れ、席が解放される。
+// 物理削除はしない。status='cancelled' に更新すると残席集計（confirmed + 期限内
+// pending_payment の合計）から自動的に外れ、席が解放される。
+//
+// 支払い済み（Square 事前決済）の場合は返金成功後にのみキャンセルへ更新する。
+// 返金 API が失敗した場合、予約は confirmed のまま残り 500 を返す（電話案内）。
+// 決済待ち（pending_payment）は日付によらずキャンセル可（金銭の授受が無いため）。
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import postgres from "https://deno.land/x/postgresjs@v3.4.5/mod.js";
-import { formatJstDateLabel, formatTimeRange } from "../_shared/event-format.ts";
 import { getJstTodayYmd } from "../_shared/date-jst.ts";
 import { getClientIp, isRateLimited, recordAttempt } from "../_shared/rate-limit.ts";
-import { buildSimpleEmailHtml, sendAppEmail } from "../_shared/lovable-email.ts";
+import { sendAppEmail } from "../_shared/lovable-email.ts";
+import {
+  buildEventCancellationEmail,
+  cancelEventReservationRow,
+} from "../_shared/event-payment.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -76,6 +83,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     const rows = await sql`
       select r.id::text, r.status, r.access_token, r.guest_name, r.guest_count, r.email,
+             r.payment_status, r.payment_method, r.square_payment_id, r.square_payment_link_id,
+             r.total_price, r.reservation_code,
              s.date::text, s.start_time::text, s.end_time::text,
              e.title as event_title
       from public.event_reservations r
@@ -108,46 +117,62 @@ const handler = async (req: Request): Promise<Response> => {
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
       );
     }
-
-    const today = getJstTodayYmd();
-    if (reservation.date === today) {
+    if (reservation.status === 'expired') {
       return new Response(
-        JSON.stringify({ error: "当日のキャンセルはできません。直接お電話にてご連絡ください。" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-      );
-    }
-    if (reservation.date < today) {
-      return new Response(
-        JSON.stringify({ error: "開催日を過ぎた予約はキャンセルできません" }),
+        JSON.stringify({ error: "この予約は無効になっています" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
       );
     }
 
-    await sql`
-      update public.event_reservations
-      set status = 'cancelled',
-          cancelled_at = now()
-      where id = ${reservation.id}::uuid
-    `;
+    // 決済待ちは金銭の授受が無いため日付によらずキャンセル可。確定済みは前日まで。
+    if (reservation.status === 'confirmed') {
+      const today = getJstTodayYmd();
+      if (reservation.date === today) {
+        return new Response(
+          JSON.stringify({ error: "当日のキャンセルはできません。直接お電話にてご連絡ください。" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+        );
+      }
+      if (reservation.date < today) {
+        return new Response(
+          JSON.stringify({ error: "開催日を過ぎた予約はキャンセルできません" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+        );
+      }
+    }
+
+    let refunded = false;
+    try {
+      ({ refunded } = await cancelEventReservationRow(
+        sql,
+        reservation,
+        "お客様都合によるキャンセル",
+      ));
+    } catch (error) {
+      console.error("Refund error:", error);
+      return new Response(
+        JSON.stringify({ error: "返金処理に失敗しました。お手数ですがお電話にてご連絡ください。" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      );
+    }
 
     // キャンセル確認メール。失敗してもキャンセル自体は成立させる。
     try {
-      const dateLabel = formatJstDateLabel(reservation.date);
-      const timeLabel = formatTimeRange(reservation.start_time, reservation.end_time);
-      const text = `${reservation.guest_name} 様
-
-「${reservation.event_title}」のご予約をキャンセルしました。
-
-予約コード: ${reservationCode}
-日時: ${dateLabel} ${timeLabel}
-人数: ${reservation.guest_count}名
-
-またのご利用をお待ちしております。`;
+      const mail = buildEventCancellationEmail({
+        guestName: reservation.guest_name,
+        guestCount: reservation.guest_count,
+        eventTitle: reservation.event_title,
+        date: reservation.date,
+        startTime: reservation.start_time,
+        endTime: reservation.end_time,
+        reservationCode,
+        refunded,
+      });
       await sendAppEmail({
         to: reservation.email,
-        subject: `【${reservation.event_title}】ご予約キャンセルのお知らせ`,
-        html: buildSimpleEmailHtml("ご予約をキャンセルしました", text),
-        text,
+        subject: mail.subject,
+        html: mail.html,
+        text: mail.text,
         idempotencyKey: `event-reservation-cancelled-${reservationCode}`,
         label: "event-reservation-cancelled",
       });
@@ -156,7 +181,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, message: "予約をキャンセルしました" }),
+      JSON.stringify({ success: true, refunded, message: "予約をキャンセルしました" }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   } catch (error) {

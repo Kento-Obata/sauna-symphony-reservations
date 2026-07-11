@@ -1,11 +1,16 @@
-// パブリックイベント予約の作成（即時確定）。
+// パブリックイベント予約の作成。
 //
 // 既存 create-reservation（貸切）との違い:
-//   - 共有予約: 枠の定員から confirmed の人数合計を引いた残席の範囲で受け付ける
+//   - 共有予約: 枠の定員から占有人数（confirmed + 期限内 pending_payment）を引いた
+//     残席の範囲で受け付ける
 //   - 定員の直列化: SELECT ... FOR UPDATE OF s で枠行をロックし、同一枠への
 //     同時予約をトランザクションで直列化する（既存のロック無しチェックは踏襲しない）
-//   - 即時確定: pending / メール確認ステップなし。確定メールを送って完了
 //   - email 必須（キャンセルリンクの配送先）
+//
+// 支払いフローはイベントの payment_type で分岐:
+//   - onsite（または合計0円）: 即時確定。確定メール + LINE 通知
+//   - prepaid: status='pending_payment' で20分席を確保し、Square の決済リンクを
+//     作成して checkoutUrl を返す。確定・通知は square-webhook 側で行う
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import postgres from "https://deno.land/x/postgresjs@v3.4.5/mod.js";
@@ -18,8 +23,13 @@ import {
 import { formatJstDateLabel, formatTimeRange } from "../_shared/event-format.ts";
 import { getJstTodayYmd } from "../_shared/date-jst.ts";
 import { getClientIp, isRateLimited, recordAttempt } from "../_shared/rate-limit.ts";
-import { buildSimpleEmailHtml, sendAppEmail } from "../_shared/lovable-email.ts";
+import { sendAppEmail } from "../_shared/lovable-email.ts";
 import { sendLineGroupMessage } from "../_shared/line.ts";
+import { createPaymentLink, deletePaymentLink } from "../_shared/square.ts";
+import {
+  buildEventConfirmationEmail,
+  EventReservationNoticeRow,
+} from "../_shared/event-payment.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -61,45 +71,6 @@ const errorWithStatus = (message: string, name: string) => {
   const error = new Error(message);
   error.name = name;
   return error;
-};
-
-const buildConfirmationEmail = (params: {
-  guestName: string;
-  guestCount: number;
-  eventTitle: string;
-  venue: string | null;
-  dateLabel: string;
-  timeLabel: string;
-  totalPrice: number;
-  priceNote: string | null;
-  reservationCode: string;
-  detailUrl: string;
-}) => {
-  const priceLine = params.totalPrice > 0
-    ? `料金: ${params.totalPrice.toLocaleString()}円（${params.priceNote || "当日現地払い"}）`
-    : `料金: ${params.priceNote || "無料"}`;
-
-  const text = `${params.guestName} 様
-
-「${params.eventTitle}」のご予約が確定しました。
-
-予約コード: ${params.reservationCode}
-日時: ${params.dateLabel} ${params.timeLabel}${params.venue ? `\n会場: ${params.venue}` : ""}
-人数: ${params.guestCount}名
-${priceLine}
-
-ご予約内容の確認・キャンセルは下記リンクからお手続きいただけます。
-${params.detailUrl}
-
-※当日のキャンセルはリンクからは行えません。直接お電話にてご連絡ください。
-
-当日お会いできることを楽しみにしております。`;
-
-  return {
-    subject: `【${params.eventTitle}】ご予約確定のお知らせ`,
-    text,
-    html: buildSimpleEmailHtml("ご予約が確定しました", text),
-  };
 };
 
 const handler = async (req: Request): Promise<Response> => {
@@ -151,7 +122,7 @@ const handler = async (req: Request): Promise<Response> => {
                s.capacity, s.is_active,
                e.title as event_title, e.slug as event_slug, e.venue as event_venue,
                e.status as event_status, e.price_per_person, e.price_note,
-               e.max_guests_per_reservation
+               e.max_guests_per_reservation, e.payment_type
         from public.event_slots s
         join public.events e on e.id = s.event_id
         where s.id = ${slotId}::uuid
@@ -172,11 +143,13 @@ const handler = async (req: Request): Promise<Response> => {
         );
       }
 
+      // 占有人数 = confirmed + 期限内の pending_payment（支払い手続き中も席を確保）
       const sumRows = await tx`
         select coalesce(sum(guest_count), 0)::int as taken
         from public.event_reservations
         where slot_id = ${slotId}::uuid
-          and status = 'confirmed'
+          and (status = 'confirmed'
+               or (status = 'pending_payment' and expires_at > now()))
       `;
       const taken = sumRows[0]?.taken ?? 0;
 
@@ -191,6 +164,9 @@ const handler = async (req: Request): Promise<Response> => {
       }
 
       const totalPrice = slot.price_per_person * guestCount;
+      // 0円の prepaid イベントは Square がリンクを作れないため即時確定にフォールバック。
+      // prepaid は expires_at（20分）まで席を確保し、期限内の支払い完了で確定する。
+      const isPrepaid = slot.payment_type === 'prepaid' && totalPrice > 0;
       const accessToken = randomHex(32);
 
       let newReservation:
@@ -211,19 +187,21 @@ const handler = async (req: Request): Promise<Response> => {
               access_token,
               total_price,
               payment_status,
-              payment_method
+              payment_method,
+              expires_at
             ) values (
               ${slotId}::uuid,
               ${guestName},
               ${guestCount},
               ${email},
               ${phone},
-              'confirmed',
+              ${isPrepaid ? 'pending_payment' : 'confirmed'},
               ${reservationCode},
               ${accessToken},
               ${totalPrice},
               'unpaid',
-              'onsite'
+              ${isPrepaid ? 'square_online' : 'onsite'},
+              ${isPrepaid ? tx`now() + interval '20 minutes'` : null}
             )
             returning id::text, reservation_code, access_token
           `;
@@ -237,32 +215,97 @@ const handler = async (req: Request): Promise<Response> => {
 
       if (!newReservation) throw new Error("予約コードが生成されませんでした");
 
-      return { newReservation, slot, totalPrice };
+      return { newReservation, slot, totalPrice, isPrepaid };
     });
 
-    const { newReservation, slot, totalPrice } = result;
-    console.log("Event reservation created:", newReservation.reservation_code);
+    const { newReservation, slot, totalPrice, isPrepaid } = result;
+    console.log("Event reservation created:", newReservation.reservation_code, isPrepaid ? "(prepaid)" : "(onsite)");
 
     const baseUrl = Deno.env.get('APP_BASE_URL') ?? "https://www.u-sauna-private.com";
-    const detailUrl = `${baseUrl}/events/reservation/${newReservation.reservation_code}?t=${newReservation.access_token}`;
     const dateLabel = formatJstDateLabel(slot.date);
     const timeLabel = formatTimeRange(slot.start_time, slot.end_time);
+
+    if (isPrepaid) {
+      // 決済リンク作成はトランザクション外（外部 API 呼び出しをロック中に行わない）。
+      // 失敗したら予約を expired にして席を即解放する。
+      const redirectUrl =
+        `${baseUrl}/events/reservation/${newReservation.reservation_code}?t=${newReservation.access_token}&from=checkout`;
+      let link: { id: string; url: string; orderId: string } | null = null;
+      try {
+        link = await createPaymentLink({
+          idempotencyKey: `link-${newReservation.reservation_code}`,
+          itemName: `${slot.event_title} ${dateLabel} ${timeLabel}（${guestCount}名）`,
+          quantity: 1,
+          unitAmount: totalPrice,
+          referenceId: newReservation.reservation_code,
+          metadata: { reservation_id: newReservation.id },
+          redirectUrl,
+        });
+        await sql`
+          update public.event_reservations
+          set square_payment_link_id = ${link.id},
+              square_order_id = ${link.orderId}
+          where id = ${newReservation.id}::uuid
+        `;
+      } catch (error) {
+        console.error("Payment link setup error:", error);
+        await sql`
+          update public.event_reservations
+          set status = 'expired'
+          where id = ${newReservation.id}::uuid
+            and status = 'pending_payment'
+        `;
+        if (link) {
+          try {
+            await deletePaymentLink(link.id);
+          } catch (deleteError) {
+            console.error("deletePaymentLink error:", deleteError);
+          }
+        }
+        return new Response(
+          JSON.stringify({ error: "決済ページの作成に失敗しました。時間をおいて再度お試しください。" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+        );
+      }
+
+      // 確定メール・LINE 通知は支払い完了（square-webhook）側で送る
+      return new Response(
+        JSON.stringify({
+          success: true,
+          checkout: true,
+          checkoutUrl: link.url,
+          reservationCode: newReservation.reservation_code,
+          accessToken: newReservation.access_token,
+          totalPrice,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
+    }
+
+    // ---- onsite（即時確定）: 従来どおり確定メール + LINE 通知 ----
+    const detailUrl = `${baseUrl}/events/reservation/${newReservation.reservation_code}?t=${newReservation.access_token}`;
 
     // メール送信の失敗で予約を失敗扱いにしない。complete 画面に予約コードと
     // 詳細 URL を必ず表示するため、メール不達でも顧客側で救済できる。
     try {
-      const mail = buildConfirmationEmail({
-        guestName,
-        guestCount,
-        eventTitle: slot.event_title,
-        venue: slot.event_venue,
-        dateLabel,
-        timeLabel,
-        totalPrice,
-        priceNote: slot.price_note,
-        reservationCode: newReservation.reservation_code,
-        detailUrl,
-      });
+      const noticeRow: EventReservationNoticeRow = {
+        id: newReservation.id,
+        status: 'confirmed',
+        payment_status: 'unpaid',
+        guest_name: guestName,
+        guest_count: guestCount,
+        email,
+        reservation_code: newReservation.reservation_code,
+        access_token: newReservation.access_token,
+        total_price: totalPrice,
+        date: slot.date,
+        start_time: slot.start_time,
+        end_time: slot.end_time,
+        event_title: slot.event_title,
+        event_venue: slot.event_venue,
+        price_note: slot.price_note,
+      };
+      const mail = buildEventConfirmationEmail({ reservation: noticeRow, detailUrl, paid: false });
       await sendAppEmail({
         to: email,
         subject: mail.subject,

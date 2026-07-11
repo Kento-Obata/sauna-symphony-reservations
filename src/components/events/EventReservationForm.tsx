@@ -60,6 +60,7 @@ export const EventReservationForm = ({ event, form }: EventReservationFormProps)
   const priceLabel = totalPrice > 0
     ? `¥${totalPrice.toLocaleString()}`
     : event.price_note || "無料";
+  const isPrepaid = event.payment_type === "prepaid" && totalPrice > 0;
 
   return (
     <>
@@ -131,14 +132,16 @@ export const EventReservationForm = ({ event, form }: EventReservationFormProps)
             {totalPrice > 0 && (
               <p className="text-xs text-black/50 mt-1 font-extralight">
                 お一人様 ¥{event.price_per_person.toLocaleString()} × {guestCount}名
-                {event.price_note ? `・${event.price_note}` : "・当日現地払い"}
+                {isPrepaid
+                  ? "・事前決済（オンライン）"
+                  : event.price_note ? `・${event.price_note}` : "・当日現地払い"}
               </p>
             )}
           </div>
         )}
 
         <Button type="submit" className="w-full" disabled={isSubmitting}>
-          予約する
+          {isPrepaid ? "決済へ進む" : "予約する"}
         </Button>
       </form>
 
@@ -157,7 +160,9 @@ export const EventReservationForm = ({ event, form }: EventReservationFormProps)
                 <div>人数: {guestCount}名</div>
                 <div>料金: {priceLabel}</div>
                 <div className="pt-2 text-xs">
-                  この内容で予約を確定します。確認メールが {email} に送信されます。
+                  {isPrepaid
+                    ? `このあと決済ページ（Square）へ移動します。お席は20分間確保され、時間内にお支払いが完了しない場合は予約が無効になります。お支払い完了後、確認メールが ${email} に送信されます。`
+                    : `この内容で予約を確定します。確認メールが ${email} に送信されます。`}
                 </div>
               </div>
             </AlertDialogDescription>
@@ -171,7 +176,7 @@ export const EventReservationForm = ({ event, form }: EventReservationFormProps)
               }}
               disabled={isSubmitting}
             >
-              {isSubmitting ? "送信中..." : "予約を確定する"}
+              {isSubmitting ? "送信中..." : isPrepaid ? "決済へ進む" : "予約を確定する"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -95,6 +95,13 @@ export const useEventReservationForm = (
       if (data?.error) throw new Error(data.error);
       if (!data?.reservationCode) throw new Error("予約コードが生成されませんでした。");
 
+      if (data.checkoutUrl) {
+        // 事前決済: Square のホスト型決済ページへ全画面遷移する。
+        // isSubmitting は true のまま（戻るまでボタンを閉じておく）
+        window.location.assign(data.checkoutUrl);
+        return;
+      }
+
       navigate("/events/complete", {
         state: {
           reservationCode: data.reservationCode,

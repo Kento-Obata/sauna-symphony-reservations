@@ -155,6 +155,7 @@ export type Database = {
           cancelled_at: string | null
           created_at: string
           email: string
+          expires_at: string | null
           guest_count: number
           guest_name: string
           id: string
@@ -163,6 +164,9 @@ export type Database = {
           phone: string
           reservation_code: string
           slot_id: string
+          square_order_id: string | null
+          square_payment_id: string | null
+          square_payment_link_id: string | null
           status: string
           total_price: number
           updated_at: string
@@ -172,6 +176,7 @@ export type Database = {
           cancelled_at?: string | null
           created_at?: string
           email: string
+          expires_at?: string | null
           guest_count: number
           guest_name: string
           id?: string
@@ -180,6 +185,9 @@ export type Database = {
           phone: string
           reservation_code: string
           slot_id: string
+          square_order_id?: string | null
+          square_payment_id?: string | null
+          square_payment_link_id?: string | null
           status?: string
           total_price?: number
           updated_at?: string
@@ -189,6 +197,7 @@ export type Database = {
           cancelled_at?: string | null
           created_at?: string
           email?: string
+          expires_at?: string | null
           guest_count?: number
           guest_name?: string
           id?: string
@@ -197,6 +206,9 @@ export type Database = {
           phone?: string
           reservation_code?: string
           slot_id?: string
+          square_order_id?: string | null
+          square_payment_id?: string | null
+          square_payment_link_id?: string | null
           status?: string
           total_price?: number
           updated_at?: string
@@ -261,6 +273,7 @@ export type Database = {
           description: string | null
           id: string
           max_guests_per_reservation: number
+          payment_type: string
           price_note: string | null
           price_per_person: number
           slug: string
@@ -274,6 +287,7 @@ export type Database = {
           description?: string | null
           id?: string
           max_guests_per_reservation?: number
+          payment_type?: string
           price_note?: string | null
           price_per_person?: number
           slug: string
@@ -287,6 +301,7 @@ export type Database = {
           description?: string | null
           id?: string
           max_guests_per_reservation?: number
+          payment_type?: string
           price_note?: string | null
           price_per_person?: number
           slug?: string

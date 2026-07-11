@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Database } from "@/integrations/supabase/types";
+import { extractFunctionErrorMessage } from "@/hooks/useEvent";
 
 type EventRow = Database["public"]["Tables"]["events"]["Row"];
 type EventInsert = Database["public"]["Tables"]["events"]["Insert"];
@@ -19,6 +20,9 @@ export interface AdminEventReservation {
   status: string;
   reservation_code: string;
   total_price: number;
+  payment_status: string;
+  payment_method: string | null;
+  expires_at: string | null;
   created_at: string;
   cancelled_at: string | null;
 }
@@ -40,6 +44,9 @@ const mutationErrorMessage = (error: unknown, fallback: string): string => {
   if (code === "23505") return "同じ値が既に存在します（slug または同一日時の枠の重複）";
   if (code === "23503") return "予約が存在するため削除できません";
   if (code === "23514") return "入力値が制約に違反しています（slug の形式や定員の範囲を確認してください）";
+  // edge function 経由の mutation が投げた日本語メッセージはそのまま表示する
+  // （PostgrestError は Error インスタンスではないためここには入らない）
+  if (error instanceof Error && error.message) return error.message;
   return fallback;
 };
 
@@ -51,7 +58,7 @@ export const useAdminEvents = () => {
       const { data, error } = await supabase
         .from("events")
         .select(
-          "*, event_slots(*, event_reservations(id, guest_name, guest_count, email, phone, status, reservation_code, total_price, created_at, cancelled_at))",
+          "*, event_slots(*, event_reservations(id, guest_name, guest_count, email, phone, status, reservation_code, total_price, payment_status, payment_method, expires_at, created_at, cancelled_at))",
         )
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -69,10 +76,16 @@ export const useAdminEvents = () => {
   });
 };
 
-/** 枠の予約済み人数（confirmed のみ） */
+/** 枠の占有人数（confirmed + 期限内の決済待ち）。公開側の残席計算と同じ定義。 */
 export const reservedCount = (slot: AdminEventSlot): number =>
   slot.event_reservations
-    .filter((reservation) => reservation.status === "confirmed")
+    .filter(
+      (reservation) =>
+        reservation.status === "confirmed" ||
+        (reservation.status === "pending_payment" &&
+          !!reservation.expires_at &&
+          new Date(reservation.expires_at).getTime() > Date.now()),
+    )
     .reduce((sum, reservation) => sum + reservation.guest_count, 0);
 
 const useEventMutation = <TVariables,>(
@@ -145,12 +158,20 @@ export const useDeleteEventSlot = () =>
     if (error) throw error;
   }, "枠を削除しました", "枠の削除に失敗しました");
 
-/** 管理者による予約キャンセル（席は confirmed 集計から自動的に解放される） */
+/**
+ * 管理者による予約キャンセル。
+ * 直接の DB UPDATE ではなく edge function を経由する（支払い済みの場合の
+ * Square 返金・決済待ちの場合の決済リンク削除・顧客メールを一括で行うため）。
+ */
 export const useCancelEventReservationAdmin = () =>
   useEventMutation(async (id: string) => {
-    const { error } = await supabase
-      .from("event_reservations")
-      .update({ status: "cancelled", cancelled_at: new Date().toISOString() })
-      .eq("id", id);
-    if (error) throw error;
+    const { data, error } = await supabase.functions.invoke("admin-cancel-event-reservation", {
+      body: { reservationId: id },
+    });
+    if (error) {
+      const message = await extractFunctionErrorMessage(error);
+      throw new Error(message || "予約のキャンセルに失敗しました");
+    }
+    if (data?.error) throw new Error(data.error);
+    return data;
   }, "予約をキャンセルしました", "予約のキャンセルに失敗しました");

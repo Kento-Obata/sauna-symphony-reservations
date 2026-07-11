@@ -59,6 +59,7 @@ interface EventFormValues {
   price_note: string;
   max_guests_per_reservation: number;
   status: string;
+  payment_type: string;
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -82,6 +83,7 @@ const emptyFormValues: EventFormValues = {
   price_note: "",
   max_guests_per_reservation: 4,
   status: "draft",
+  payment_type: "onsite",
 };
 
 /** イベント管理タブ本体: イベント一覧 + 作成/編集ダイアログ + 選択イベントの枠・予約管理 */
@@ -117,6 +119,7 @@ export const EventManager = () => {
       price_note: event.price_note ?? "",
       max_guests_per_reservation: event.max_guests_per_reservation,
       status: event.status,
+      payment_type: event.payment_type,
     });
     setDialogOpen(true);
   };
@@ -131,6 +134,10 @@ export const EventManager = () => {
       toast.error(eventSlugErrorMessage);
       return;
     }
+    if (values.payment_type === "prepaid" && (Number(values.price_per_person) || 0) <= 0) {
+      toast.error("事前決済にする場合は料金（お一人様）を1円以上に設定してください");
+      return;
+    }
     const payload = {
       title: values.title.trim(),
       slug,
@@ -140,6 +147,7 @@ export const EventManager = () => {
       price_note: values.price_note.trim() || null,
       max_guests_per_reservation: Number(values.max_guests_per_reservation) || 4,
       status: values.status,
+      payment_type: values.payment_type,
     };
     if (editingEvent) {
       await updateEvent.mutateAsync({ id: editingEvent.id, updates: payload });
@@ -322,6 +330,25 @@ export const EventManager = () => {
                 placeholder="当日現地払い（現金のみ）"
                 {...form.register("price_note")}
               />
+            </div>
+            <div className="space-y-2">
+              <Label>支払い方法</Label>
+              <Select
+                value={form.watch("payment_type")}
+                onValueChange={(value) => form.setValue("payment_type", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="onsite">現地払い</SelectItem>
+                  <SelectItem value="prepaid">事前決済（Square）</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                事前決済では予約時に Square の決済ページで支払いが完了した時点で予約が確定します。
+                変更は新規予約にのみ適用されます。
+              </p>
             </div>
             <div className="space-y-2">
               <Label>状態</Label>

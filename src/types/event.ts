@@ -10,6 +10,7 @@ export interface PublicEvent {
   price_per_person: number;
   price_note: string | null;
   max_guests_per_reservation: number;
+  payment_type: "onsite" | "prepaid";
 }
 
 export interface PublicEventSlot {
@@ -21,17 +22,19 @@ export interface PublicEventSlot {
   remaining: number;   // サーバ側で greatest(capacity - 予約済, 0) に丸め済み
 }
 
-// get-event-reservation edge function のレスポンス形（access_token は含まれない）
+// get-event-reservation edge function のレスポンス形（access_token・square_* は含まれない）
 export interface EventReservationDetails {
   id: string;
   guest_name: string;
   guest_count: number;
   email: string;
   phone: string;
-  status: "confirmed" | "cancelled";
+  status: "confirmed" | "cancelled" | "pending_payment" | "expired";
   reservation_code: string;
   total_price: number;
-  payment_status: string;
+  payment_status: "unpaid" | "paid" | "refunded";
+  payment_method: string | null;
+  expires_at: string | null;
   created_at: string;
   cancelled_at: string | null;
   date: string;
@@ -41,4 +44,5 @@ export interface EventReservationDetails {
   event_slug: string;
   event_venue: string | null;
   price_note: string | null;
+  payment_type: "onsite" | "prepaid";
 }

@@ -59,6 +59,7 @@ export const EventReservationList = ({ event }: EventReservationListProps) => {
                 <TableHead>連絡先</TableHead>
                 <TableHead>コード</TableHead>
                 <TableHead className="text-right">料金</TableHead>
+                <TableHead>支払い</TableHead>
                 <TableHead>状態</TableHead>
                 <TableHead className="text-right">操作</TableHead>
               </TableRow>
@@ -67,7 +68,11 @@ export const EventReservationList = ({ event }: EventReservationListProps) => {
               {rows.map(({ slot, reservation }) => (
                 <TableRow
                   key={reservation.id}
-                  className={reservation.status === "cancelled" ? "opacity-50" : ""}
+                  className={
+                    reservation.status === "cancelled" || reservation.status === "expired"
+                      ? "opacity-50"
+                      : ""
+                  }
                 >
                   <TableCell className="whitespace-nowrap">
                     {formatEventDateLabel(slot.date)}{" "}
@@ -88,14 +93,32 @@ export const EventReservationList = ({ event }: EventReservationListProps) => {
                       : "-"}
                   </TableCell>
                   <TableCell>
+                    {reservation.payment_status === "paid" ? (
+                      <Badge className="bg-emerald-600 hover:bg-emerald-600">支払済</Badge>
+                    ) : reservation.payment_status === "refunded" ? (
+                      <Badge variant="outline">返金済</Badge>
+                    ) : reservation.payment_method === "square_online" ? (
+                      <Badge variant="secondary">未決済</Badge>
+                    ) : (
+                      <Badge variant="secondary">現地払い</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
                     {reservation.status === "confirmed" ? (
                       <Badge>確定</Badge>
+                    ) : reservation.status === "pending_payment" ? (
+                      <Badge variant="secondary" className="bg-amber-100 text-amber-800 hover:bg-amber-100">
+                        決済待ち
+                      </Badge>
+                    ) : reservation.status === "expired" ? (
+                      <Badge variant="outline">期限切れ</Badge>
                     ) : (
                       <Badge variant="secondary">キャンセル</Badge>
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    {reservation.status === "confirmed" && (
+                    {(reservation.status === "confirmed" ||
+                      reservation.status === "pending_payment") && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -122,7 +145,9 @@ export const EventReservationList = ({ event }: EventReservationListProps) => {
             <AlertDialogDescription>
               {cancelTarget?.guest_name} 様（{cancelTarget?.guest_count}名・
               {cancelTarget?.reservation_code}）の予約をキャンセルします。
-              席は自動的に解放されます。お客様への連絡は別途行ってください。
+              席は自動的に解放され、お客様へキャンセルメールが送信されます。
+              {cancelTarget?.payment_status === "paid" &&
+                "支払い済みのため、Square で全額が自動返金されます（決済手数料は戻りません）。"}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

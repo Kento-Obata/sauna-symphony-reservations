@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -18,25 +18,44 @@ import { EventReservationDetails } from "@/types/event";
 import { extractFunctionErrorMessage } from "@/hooks/useEvent";
 import { formatEventDateLabel, formatEventTimeRange } from "@/utils/eventFormat";
 
+// 決済ページから戻った直後(from=checkout)のポーリング設定。
+// Webhook は通常数秒で届く。verifyPayment: true で Square への直接照会も併用する
+const POLL_INTERVAL_MS = 3000;
+const POLL_TIMEOUT_MS = 60000;
+
 /**
  * イベント予約詳細 + 自己キャンセル（/events/reservation/:code?t=<access_token>）。
- * 確定メール内のリンクからアクセスされる。トークンなしでは照会できない。
+ * 確定メール内のリンク、および Square 決済完了後のリダイレクトで開かれる。
  */
 export default function EventReservationDetail() {
   const { code } = useParams<{ code: string }>();
   const [searchParams] = useSearchParams();
   const accessToken = searchParams.get("t") || "";
+  const fromCheckout = searchParams.get("from") === "checkout";
   const queryClient = useQueryClient();
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const pollStartedAt = useRef<number>(Date.now());
 
   const { data: reservation, isLoading, error } = useQuery<EventReservationDetails>({
     queryKey: ["event-reservation", code],
     enabled: !!code && !!accessToken,
     retry: false,
+    refetchInterval: (query) => {
+      // 決済から戻った直後だけ、支払い確認が取れるまでポーリングする
+      if (!fromCheckout) return false;
+      if (query.state.data && query.state.data.status !== "pending_payment") return false;
+      if (Date.now() - pollStartedAt.current > POLL_TIMEOUT_MS) return false;
+      return POLL_INTERVAL_MS;
+    },
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke("get-event-reservation", {
-        body: { reservationCode: code, accessToken },
+        body: {
+          reservationCode: code,
+          accessToken,
+          // Webhook 不達時のバックストップ(サーバが Square へ直接照会して確定する)
+          verifyPayment: fromCheckout,
+        },
       });
       if (error) {
         const message = await extractFunctionErrorMessage(error);
@@ -55,8 +74,14 @@ export default function EventReservationDetail() {
       .slice(0, 10);
   };
 
-  const canCancel =
-    reservation?.status === "confirmed" && reservation.date > todayYmd();
+  // 確定済みは前日まで。決済待ちは金銭の授受が無いためいつでもキャンセル可
+  const canCancel = reservation != null &&
+    ((reservation.status === "confirmed" && reservation.date > todayYmd()) ||
+      reservation.status === "pending_payment");
+
+  const isPolling = fromCheckout &&
+    reservation?.status === "pending_payment" &&
+    Date.now() - pollStartedAt.current <= POLL_TIMEOUT_MS;
 
   const handleCancel = async () => {
     try {
@@ -69,7 +94,11 @@ export default function EventReservationDetail() {
         throw new Error(message || "キャンセルに失敗しました");
       }
       if (data?.error) throw new Error(data.error);
-      toast.success("予約をキャンセルしました");
+      toast.success(
+        data?.refunded
+          ? "予約をキャンセルしました。返金手続きを行いました。"
+          : "予約をキャンセルしました",
+      );
       queryClient.invalidateQueries({ queryKey: ["event-reservation", code] });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "もう一度お試しください";
@@ -81,6 +110,17 @@ export default function EventReservationDetail() {
   };
 
   const missingToken = !accessToken;
+  const isPaid = reservation?.payment_status === "paid";
+
+  const priceLabel = () => {
+    if (!reservation) return "";
+    if (reservation.total_price <= 0) return reservation.price_note || "無料";
+    const amount = `¥${reservation.total_price.toLocaleString()}`;
+    if (reservation.payment_status === "refunded") return `${amount}（返金済み）`;
+    if (isPaid) return `${amount}（支払済・事前決済）`;
+    if (reservation.status === "pending_payment") return `${amount}（お支払い手続き中）`;
+    return `${amount}（${reservation.price_note || "当日現地払い"}）`;
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sauna-wood to-sauna-stone/10 py-12">
@@ -105,11 +145,53 @@ export default function EventReservationDetail() {
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="text-center space-y-2">
+            <div className="text-center space-y-3">
               <h1 className="text-2xl font-bold text-gradient">ご予約内容</h1>
               {reservation.status === "cancelled" && (
                 <p className="inline-block bg-red-50 text-red-600 text-sm px-4 py-1 rounded-full">
-                  キャンセル済み
+                  キャンセル済み{reservation.payment_status === "refunded" && "（返金済み）"}
+                </p>
+              )}
+              {reservation.status === "pending_payment" && (
+                <div className="space-y-2">
+                  <p className="inline-block bg-amber-50 text-amber-700 text-sm px-4 py-1 rounded-full">
+                    お支払い手続き中
+                  </p>
+                  {isPolling ? (
+                    <p className="text-xs text-sauna-stone animate-pulse">
+                      お支払いの確認を行っています。このままお待ちください...
+                    </p>
+                  ) : fromCheckout ? (
+                    <p className="text-xs text-sauna-stone">
+                      お支払いの確認に時間がかかっています。ページを再読み込みしてご確認ください。
+                    </p>
+                  ) : (
+                    <p className="text-xs text-sauna-stone">
+                      お支払いが完了すると予約が確定します（お席の確保は20分間です）。
+                    </p>
+                  )}
+                </div>
+              )}
+              {reservation.status === "expired" && (
+                <div className="space-y-2">
+                  <p className="inline-block bg-gray-100 text-gray-500 text-sm px-4 py-1 rounded-full">
+                    無効
+                  </p>
+                  <p className="text-xs text-sauna-stone">
+                    お支払いが確認できなかったため、この予約は無効になりました。
+                    お手数ですが、空き状況をご確認のうえあらためてご予約ください。
+                  </p>
+                  <Link
+                    to={`/events/${reservation.event_slug}`}
+                    className="inline-block underline text-sm"
+                  >
+                    イベントページへ →
+                  </Link>
+                </div>
+              )}
+              {reservation.status === "confirmed" && isPaid && (
+                <p className="inline-block bg-emerald-50 text-emerald-700 text-sm px-4 py-1 rounded-full">
+                  支払済（事前決済）
                 </p>
               )}
             </div>
@@ -146,24 +228,27 @@ export default function EventReservationDetail() {
               </div>
               <div className="flex justify-between border-b border-sauna-stone/10 pb-2">
                 <span className="text-sauna-stone">料金</span>
-                <span className="font-medium">
-                  {reservation.total_price > 0
-                    ? `¥${reservation.total_price.toLocaleString()}（${reservation.price_note || "当日現地払い"}）`
-                    : reservation.price_note || "無料"}
-                </span>
+                <span className="font-medium">{priceLabel()}</span>
               </div>
             </div>
 
-            {reservation.status === "confirmed" && (
+            {(reservation.status === "confirmed" || reservation.status === "pending_payment") && (
               <div className="text-center space-y-3 pt-2">
                 {canCancel ? (
-                  <Button
-                    variant="destructive"
-                    onClick={() => setShowCancelDialog(true)}
-                    className="w-full sm:w-auto"
-                  >
-                    予約をキャンセル
-                  </Button>
+                  <>
+                    <Button
+                      variant="destructive"
+                      onClick={() => setShowCancelDialog(true)}
+                      className="w-full sm:w-auto"
+                    >
+                      予約をキャンセル
+                    </Button>
+                    {isPaid && (
+                      <p className="text-xs text-sauna-stone">
+                        キャンセルの場合、お支払いいただいた料金は全額返金されます。
+                      </p>
+                    )}
+                  </>
                 ) : (
                   <p className="text-xs text-sauna-stone">
                     当日以降のキャンセルはお電話にてご連絡ください。
@@ -186,7 +271,9 @@ export default function EventReservationDetail() {
           <AlertDialogHeader>
             <AlertDialogTitle>予約をキャンセルしますか?</AlertDialogTitle>
             <AlertDialogDescription>
-              この操作は取り消せません。再度ご参加いただく場合は、あらためてご予約ください。
+              {isPaid
+                ? "お支払いいただいた料金は全額返金いたします（カード会社により反映まで数日かかる場合があります）。この操作は取り消せません。"
+                : "この操作は取り消せません。再度ご参加いただく場合は、あらためてご予約ください。"}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
