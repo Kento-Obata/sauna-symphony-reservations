@@ -460,8 +460,13 @@ export type Database = {
           guest_name: string
           id: string
           is_confirmed: boolean | null
+          payment_method: string
+          payment_status: string
           phone: string
           reservation_code: string | null
+          square_order_id: string | null
+          square_payment_id: string | null
+          square_payment_link_id: string | null
           status: string
           time_slot: Database["public"]["Enums"]["time_slot"]
           total_price: number
@@ -481,8 +486,13 @@ export type Database = {
           guest_name: string
           id?: string
           is_confirmed?: boolean | null
+          payment_method?: string
+          payment_status?: string
           phone: string
           reservation_code?: string | null
+          square_order_id?: string | null
+          square_payment_id?: string | null
+          square_payment_link_id?: string | null
           status?: string
           time_slot: Database["public"]["Enums"]["time_slot"]
           total_price?: number
@@ -502,8 +512,13 @@ export type Database = {
           guest_name?: string
           id?: string
           is_confirmed?: boolean | null
+          payment_method?: string
+          payment_status?: string
           phone?: string
           reservation_code?: string | null
+          square_order_id?: string | null
+          square_payment_id?: string | null
+          square_payment_link_id?: string | null
           status?: string
           time_slot?: Database["public"]["Enums"]["time_slot"]
           total_price?: number

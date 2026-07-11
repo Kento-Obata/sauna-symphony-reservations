@@ -20,6 +20,7 @@ import { toast } from "sonner";
 interface ReservationActionsProps {
   status: string;
   date: string;
+  paymentStatus?: string;
   setShowEditDialog: (show: boolean) => void;
   cancelReservation: UseMutationResult<void, Error, string, unknown>;
 }
@@ -27,17 +28,22 @@ interface ReservationActionsProps {
 export const ReservationActions = ({
   status,
   date,
+  paymentStatus,
   setShowEditDialog,
   cancelReservation,
 }: ReservationActionsProps) => {
   const [phoneInput, setPhoneInput] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  if (status === 'cancelled') return null;
+  if (status === 'cancelled' || status === 'expired') return null;
+
+  const isPendingPayment = status === 'pending_payment';
+  const isPaid = paymentStatus === 'paid';
 
   // Check if reservation date is today
+  // (決済待ちは金銭の授受が無いため当日でもキャンセル可能)
   const today = new Date().toISOString().split('T')[0];
-  const isSameDay = date === today;
+  const isSameDay = date === today && !isPendingPayment;
 
   const handleCancel = () => {
     if (phoneInput.length !== 4) {
@@ -51,14 +57,16 @@ export const ReservationActions = ({
 
   return (
     <div className="flex justify-end gap-4 mt-6">
-      <Button
-        variant="outline"
-        className="flex items-center gap-2"
-        onClick={() => setShowEditDialog(true)}
-      >
-        <Pencil className="h-4 w-4" />
-        予約を変更
-      </Button>
+      {!isPendingPayment && (
+        <Button
+          variant="outline"
+          className="flex items-center gap-2"
+          onClick={() => setShowEditDialog(true)}
+        >
+          <Pencil className="h-4 w-4" />
+          予約を変更
+        </Button>
+      )}
 
       {isSameDay ? (
         <p className="text-sm text-muted-foreground">
@@ -80,6 +88,12 @@ export const ReservationActions = ({
               <AlertDialogTitle>予約をキャンセルしますか？</AlertDialogTitle>
               <AlertDialogDescription>
                 この操作は取り消すことができません。
+                {isPaid && (
+                  <>
+                    <br />
+                    お支払いいただいた料金は全額返金いたします(カード会社により反映まで数日かかる場合があります)。
+                  </>
+                )}
                 <br />
                 ご本人確認のため、予約時の電話番号の下4桁を入力してください。
               </AlertDialogDescription>

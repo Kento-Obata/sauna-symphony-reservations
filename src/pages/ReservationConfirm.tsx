@@ -37,7 +37,18 @@ export default function ReservationConfirm() {
 
         if (error) {
           console.error("Edge function error:", error);
-          toast.error("予約の確定に失敗しました。リンクが無効か、有効期限が切れている可能性があります。");
+          // 非2xx(枠競合の409等)はサーバのメッセージを取り出して表示する
+          let serverMessage: string | null = null;
+          const context = (error as { context?: Response })?.context;
+          if (context && typeof context.json === "function") {
+            try {
+              const body = await context.clone().json();
+              if (typeof body?.error === "string") serverMessage = body.error;
+            } catch {
+              // JSON でないレスポンスは無視
+            }
+          }
+          toast.error(serverMessage || "予約の確定に失敗しました。リンクが無効か、有効期限が切れている可能性があります。");
           navigate("/");
           return;
         }

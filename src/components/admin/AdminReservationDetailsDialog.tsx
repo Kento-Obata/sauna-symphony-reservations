@@ -245,6 +245,16 @@ export const AdminReservationDetailsDialog = ({
 
   const handleSave = async () => {
     try {
+      // 支払い済み予約の金額変更は Square 決済額と乖離する(差額の自動調整はしない)
+      if (
+        (reservation as { payment_status?: string }).payment_status === "paid" &&
+        totalPrice !== reservation.total_price
+      ) {
+        toast.warning(
+          "事前決済済みの予約です。金額の変更は自動では返金/追加請求されません。差額は Square ダッシュボード等で手動対応してください。",
+        );
+      }
+
       console.log("Updating reservation with data:", {
         guest_name: guestName,
         guest_count: parseInt(guestCount),
@@ -356,22 +366,46 @@ export const AdminReservationDetailsDialog = ({
 
   const handleCancel = async () => {
     try {
-      const { error } = await supabase
-        .from("reservations")
-        .update({ 
-          status: "cancelled",
-          is_confirmed: true // キャンセル時には is_confirmed を true に設定
-        })
-        .eq("id", reservation.id);
+      // 支払い済み(Square事前決済)は返金を伴うため admin-cancel-reservation 経由。
+      // 未払いは従来どおり直接 UPDATE
+      if ((reservation as { payment_status?: string }).payment_status === "paid") {
+        const { data, error } = await supabase.functions.invoke("admin-cancel-reservation", {
+          body: { reservationId: reservation.id },
+        });
+        if (error) {
+          const context = (error as { context?: Response })?.context;
+          let message: string | null = null;
+          if (context && typeof context.json === "function") {
+            try {
+              const body = await context.clone().json();
+              if (typeof body?.error === "string") message = body.error;
+            } catch { /* ignore */ }
+          }
+          throw new Error(message || "キャンセルに失敗しました");
+        }
+        if (data?.error) throw new Error(data.error);
+        toast.success(
+          data?.refunded ? "予約をキャンセルし、全額返金しました" : "予約をキャンセルしました",
+        );
+      } else {
+        const { error } = await supabase
+          .from("reservations")
+          .update({
+            status: "cancelled",
+            is_confirmed: true // キャンセル時には is_confirmed を true に設定
+          })
+          .eq("id", reservation.id);
 
-      if (error) throw error;
+        if (error) throw error;
+        toast.success("予約をキャンセルしました");
+      }
 
-      toast.success("予約をキャンセルしました");
       await queryClient.invalidateQueries({ queryKey: ["reservations"] });
+      await queryClient.invalidateQueries({ queryKey: ["admin-reservations"] });
       onOpenChange(false);
     } catch (error) {
       console.error("Error cancelling reservation:", error);
-      toast.error("予約のキャン��ルに失敗しました");
+      toast.error(error instanceof Error && error.message ? error.message : "予約のキャンセルに失敗しました");
     }
   };
 

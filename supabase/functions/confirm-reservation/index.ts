@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import postgres from "https://deno.land/x/postgresjs@v3.4.5/mod.js";
+import { acquireSlotLock } from "../_shared/reservation-payment.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -33,7 +34,7 @@ serve(async (req) => {
       );
     }
 
-    const result = await sql.begin(async (tx) => {
+    const result = await sql.begin(async (tx: typeof sql) => {
       const reservations = await tx`
         select id::text, date::text, time_slot::text, guest_name, guest_count, email, phone, water_temperature, reservation_code, total_price, is_confirmed
         from public.reservations
@@ -46,6 +47,27 @@ serve(async (req) => {
 
       if (reservation.is_confirmed) {
         return { reservation, alreadyConfirmed: true };
+      }
+
+      // 確定前に枠の競合を再確認する(従来はチェック無しで、複数の仮予約が
+      // 全て確定できてしまう二重予約ギャップがあった)。
+      // 事前決済のホールド(期限内 pending_payment)も先約としてブロックする
+      await acquireSlotLock(tx, reservation.date, reservation.time_slot);
+      const conflicts = await tx`
+        select id from public.reservations
+        where date = ${reservation.date}::date
+          and time_slot = ${reservation.time_slot}::public.time_slot
+          and id <> ${reservation.id}::uuid
+          and (status = 'confirmed'
+               or (status = 'pending_payment' and expires_at > now()))
+        limit 1
+      `;
+      if (conflicts.length > 0) {
+        const conflictError = new Error(
+          "他のご予約が確定したため、この予約を確定できませんでした。恐れ入りますが、空き状況をご確認のうえ再度ご予約ください。",
+        );
+        conflictError.name = 'ConflictError';
+        throw conflictError;
       }
 
       const updated = await tx`
@@ -99,9 +121,10 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error("Error in confirm-reservation function:", error);
+    const status = error instanceof Error && error.name === 'ConflictError' ? 409 : 400;
     return new Response(
       JSON.stringify({ success: false, error: error instanceof Error ? error.message : "予約確認に失敗しました" }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 },
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status },
     );
   } finally {
     await sql.end({ timeout: 1 });

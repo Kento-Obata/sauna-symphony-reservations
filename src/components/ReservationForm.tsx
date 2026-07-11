@@ -14,6 +14,8 @@ import { toast } from "sonner";
 import { getTotalPrice, formatPrice } from "@/utils/priceCalculations";
 import { CreditCard, Wallet } from "lucide-react";
 import { ReservationOptions } from "./reservation/ReservationOptions";
+import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
+import { Label } from "./ui/label";
 
 const ReservationForm = () => {
   const {
@@ -31,6 +33,8 @@ const ReservationForm = () => {
     setPeople,
     temperature,
     setTemperature,
+    paymentMethod,
+    setPaymentMethod,
     selectedOptions,
     setSelectedOptions,
     showConfirmDialog,
@@ -193,12 +197,39 @@ const ReservationForm = () => {
             <p className="text-2xl font-bold text-stone-600">
               {totalPrice !== null ? formatPrice(totalPrice) : "---"}
             </p>
-            <div className="flex items-center justify-center gap-2 mt-2">
-              <p className="text-sm text-muted-foreground flex items-center">
-                <span className="mr-1">お支払い方法：</span>
-                <CreditCard className="h-4 w-4 mr-1" /> カードまたは 
-                <Wallet className="h-4 w-4 mx-1" /> 現金
-              </p>
+            <div className="mt-4 max-w-md mx-auto text-left">
+              <p className="text-sm font-medium text-sauna-stone mb-2 text-center">お支払い方法</p>
+              <RadioGroup
+                value={paymentMethod}
+                onValueChange={(value) => setPaymentMethod(value as "onsite" | "square_online")}
+                className="gap-2"
+              >
+                <div className="flex items-start space-x-3 rounded-lg border border-sauna-stone/20 p-3">
+                  <RadioGroupItem value="onsite" id="payment-onsite" className="mt-1" />
+                  <Label htmlFor="payment-onsite" className="cursor-pointer font-normal">
+                    <span className="flex items-center text-sm font-medium">
+                      現地払い
+                      <CreditCard className="h-4 w-4 ml-2 mr-1" />
+                      <Wallet className="h-4 w-4" />
+                    </span>
+                    <span className="block text-xs text-muted-foreground mt-1">
+                      当日、現地でカードまたは現金でお支払い。仮予約後、メール/SMSのリンクで予約を確定します(2時間有効)
+                    </span>
+                  </Label>
+                </div>
+                <div className="flex items-start space-x-3 rounded-lg border border-sauna-stone/20 p-3">
+                  <RadioGroupItem value="square_online" id="payment-online" className="mt-1" />
+                  <Label htmlFor="payment-online" className="cursor-pointer font-normal">
+                    <span className="flex items-center text-sm font-medium">
+                      オンライン事前決済
+                      <CreditCard className="h-4 w-4 ml-2" />
+                    </span>
+                    <span className="block text-xs text-muted-foreground mt-1">
+                      クレジットカードで今すぐお支払い。決済完了と同時に予約が確定します(メール確認は不要)
+                    </span>
+                  </Label>
+                </div>
+              </RadioGroup>
             </div>
           </div>
           <Button type="submit" className="w-full md:w-auto hover-lift bg-sauna-button hover:bg-sauna-button/90">
@@ -223,6 +254,7 @@ const ReservationForm = () => {
           onEdit={() => setShowConfirmDialog(false)}
           isSubmitting={isSubmitting}
           reservationCode={reservationCode}
+          paymentMethod={paymentMethod}
         />
       )}
     </div>

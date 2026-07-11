@@ -56,9 +56,40 @@ const Admin = () => {
 
   const handleStatusChange = async (id: string, status: string, isConfirmed = true) => {
     try {
+      // 支払い済み(Square事前決済)の予約は返金を伴うため、直接UPDATEではなく
+      // admin-cancel-reservation(返金 + 顧客通知)を経由する
+      const target = reservations?.find((r) => r.id === id);
+      if (target?.payment_status === "paid") {
+        if (status !== "cancelled") {
+          toast.error("事前決済済みの予約はキャンセル(自動返金)のみ操作できます");
+          return;
+        }
+        const { data, error } = await supabase.functions.invoke("admin-cancel-reservation", {
+          body: { reservationId: id },
+        });
+        if (error) {
+          const context = (error as { context?: Response })?.context;
+          let message: string | null = null;
+          if (context && typeof context.json === "function") {
+            try {
+              const body = await context.clone().json();
+              if (typeof body?.error === "string") message = body.error;
+            } catch { /* ignore */ }
+          }
+          throw new Error(message || "キャンセルに失敗しました");
+        }
+        if (data?.error) throw new Error(data.error);
+        toast.success(
+          data?.refunded
+            ? "予約をキャンセルし、全額返金しました"
+            : "予約をキャンセルしました",
+        );
+        return;
+      }
+
       const { error } = await supabase
         .from("reservations")
-        .update({ 
+        .update({
           status,
           is_confirmed: isConfirmed
         })
@@ -68,7 +99,7 @@ const Admin = () => {
       toast.success("予約状態を更新しました");
     } catch (error) {
       console.error("Error updating reservation:", error);
-      toast.error("予約状態の更新に失敗しました");
+      toast.error(error instanceof Error && error.message ? error.message : "予約状態の更新に失敗しました");
     }
   };
 

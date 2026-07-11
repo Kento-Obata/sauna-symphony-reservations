@@ -34,6 +34,8 @@ export const AdminUpcomingReservations = ({
         return <Badge variant="default">確定</Badge>;
       case "pending":
         return <Badge variant="secondary">保留中</Badge>;
+      case "pending_payment":
+        return <Badge variant="secondary" className="bg-amber-100 text-amber-800 hover:bg-amber-100">決済待ち</Badge>;
       case "cancelled":
         return <Badge variant="destructive">キャンセル</Badge>;
       default:
@@ -91,7 +93,12 @@ export const AdminUpcomingReservations = ({
                       <div className="text-sm font-medium">
                         ¥{reservation.total_price.toLocaleString()}
                       </div>
-                      {getStatusBadge(reservation.status)}
+                      <div className="flex gap-1 justify-end">
+                        {reservation.payment_status === "paid" && (
+                          <Badge className="bg-emerald-600 hover:bg-emerald-600">支払済</Badge>
+                        )}
+                        {getStatusBadge(reservation.status)}
+                      </div>
                     </div>
                   </div>
                   <div className="flex justify-between items-center">
@@ -105,6 +112,9 @@ export const AdminUpcomingReservations = ({
                       <SelectContent>
                         <SelectItem value="confirmed">確定</SelectItem>
                         <SelectItem value="pending">保留中</SelectItem>
+                        {reservation.status === "pending_payment" && (
+                          <SelectItem value="pending_payment">決済待ち</SelectItem>
+                        )}
                         <SelectItem value="cancelled">キャンセル</SelectItem>
                       </SelectContent>
                     </Select>

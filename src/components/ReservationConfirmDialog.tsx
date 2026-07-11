@@ -35,6 +35,7 @@ interface ReservationConfirmDialogProps {
   reservation: ReservationFormData;
   isSubmitting: boolean;
   reservationCode?: string;
+  paymentMethod?: "onsite" | "square_online";
 }
 
 export const ReservationConfirmDialog = ({
@@ -45,7 +46,9 @@ export const ReservationConfirmDialog = ({
   reservation,
   isSubmitting,
   reservationCode,
+  paymentMethod = "onsite",
 }: ReservationConfirmDialogProps) => {
+  const isPrepaid = paymentMethod === "square_online";
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const surcharge = getSurcharge(reservation.water_temperature.toString());
   const { data: dailyTimeSlots } = useDailyTimeSlots();
@@ -202,9 +205,15 @@ export const ReservationConfirmDialog = ({
               </p>
             )}
             <p className="mt-2">受付時間: 予約時間の10分前からご案内いたします。</p>
-            <p className="mt-2 text-yellow-600 font-bold">
-              ※ 本予約用のSMSとメールが送信されます。
-            </p>
+            {isPrepaid ? (
+              <p className="mt-2 text-yellow-600 font-bold">
+                ※ このあと決済ページ（Square）へ移動します。お席は20分間確保され、お支払い完了と同時に予約が確定します。
+              </p>
+            ) : (
+              <p className="mt-2 text-yellow-600 font-bold">
+                ※ 本予約用のSMSとメールが送信されます。
+              </p>
+            )}
           </div>
 
           <div className="flex justify-center gap-4">
@@ -224,6 +233,8 @@ export const ReservationConfirmDialog = ({
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   予約中...
                 </>
+              ) : isPrepaid ? (
+                "決済へ進む"
               ) : (
                 "仮予約へ進む"
               )}

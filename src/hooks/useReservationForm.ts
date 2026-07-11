@@ -19,6 +19,8 @@ export const useReservationForm = () => {
   const [people, setPeople] = useState("");
   // 水温を常に15°Cに固定
   const [temperature, setTemperature] = useState("15");
+  // 'onsite'(現地払い・従来フロー) / 'square_online'(事前決済: 支払い完了で確定)
+  const [paymentMethod, setPaymentMethod] = useState<"onsite" | "square_online">("onsite");
   const [selectedOptions, setSelectedOptions] = useState<ReservationOption[]>([]);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -113,6 +115,7 @@ export const useReservationForm = () => {
           email: email || null,
           phone: phone,
           waterTemperature: 15, // 水温を常に15°Cに固定
+          paymentMethod,
           selectedOptions: selectedOptions
         }
       });
@@ -133,8 +136,15 @@ export const useReservationForm = () => {
 
       setReservationCode(data.reservationCode);
 
+      if (data.checkout && data.checkoutUrl) {
+        // 事前決済: Square のホスト型決済ページへ全画面遷移する。
+        // isSubmitting は true のまま(戻るまでボタンを閉じておく)
+        window.location.assign(data.checkoutUrl);
+        return;
+      }
+
       // Navigate to temporary reservation page
-      navigate('/reservation/pending', { 
+      navigate('/reservation/pending', {
         state: { reservationCode: data.reservationCode, accessToken: data.accessToken },
         replace: true
       });
@@ -163,6 +173,8 @@ export const useReservationForm = () => {
     setPeople,
     temperature,
     setTemperature,
+    paymentMethod,
+    setPaymentMethod,
     selectedOptions,
     setSelectedOptions,
     showConfirmDialog,

@@ -97,9 +97,9 @@ export const AdminCalendar = ({
   const getReservationsForDateAndSlot = (date: Date, timeSlot: string) => {
     return reservations.filter(
       (r) => 
-        r.date === format(date, "yyyy-MM-dd") && 
+        r.date === format(date, "yyyy-MM-dd") &&
         r.time_slot === timeSlot &&
-        (r.status === "confirmed" || r.status === "pending")
+        (r.status === "confirmed" || r.status === "pending" || r.status === "pending_payment")
     );
   };
 

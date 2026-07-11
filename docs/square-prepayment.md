@@ -1,3 +1,30 @@
+# Square 事前決済(イベント予約・貸切予約)
+
+## 貸切予約の事前決済(お客様が選択)
+
+貸切予約はフォームで支払い方法を選択できる:
+- **現地払い**(既定): 従来どおり 仮予約 → メール/SMS リンクで確定(2時間) → 当日支払い
+- **オンライン事前決済**: `pending_payment` で枠を20分ホールド → Square 決済ページ →
+  支払い完了(Webhook)で確定。メール確認は不要。確定通知は既存の
+  send-confirmation-notification(email任意 + SMS + オーナーSMS + LINE)
+
+要点:
+- 冪等キーは `resv-` プレフィックス(`resv-link-` / `resv-cancel-` / `resv-late-refund-`)。
+  イベント側と予約コード形式が同じため名前空間分離が必須
+- **`cleanup_expired_reservations()` は `payment_method='square_online'` の行を DELETE しない**
+  (20260713 マイグレーションで置換済み)。事前決済行を削除すると Square 注文と照合できず
+  遅延入金の自動返金が不可能になるため。事前決済の期限切れは `expire-event-holds` が
+  `expired` へ遷移させ、行は監査用に保全される
+- 枠の排他は `pg_advisory_xact_lock`(date+time_slot)で直列化。confirm-reservation にも
+  競合チェックを追加済み(従来の二重予約ギャップを解消)
+- キャンセル: お客様は前日まで(決済待ちはいつでも)。支払い済みは自動全額返金。
+  管理画面のキャンセルは支払い済みの場合 `admin-cancel-reservation` を経由する。
+  **新しい管理画面コードを追加する際、reservations への直接 UPDATE で
+  キャンセルすると返金がスキップされるので注意**
+- 管理者が支払い済み予約の金額を変更しても差額は自動調整されない(警告トースト表示・手動対応)
+
+---
+
 # イベント予約の Square 事前決済
 
 イベント(`events.payment_type = 'prepaid'`)の予約は、Square のホスト型決済ページで

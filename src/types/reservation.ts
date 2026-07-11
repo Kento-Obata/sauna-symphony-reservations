@@ -16,6 +16,9 @@ export interface Reservation {
   confirmation_token: string | null;
   expires_at: string | null;
   total_price: number;
+  // Square 事前決済(未設定の旧データ・キャッシュを考慮して optional)
+  payment_method?: string;
+  payment_status?: string;
   admin_memo?: string | null;
   admin_memo_updated_at?: string | null;
   admin_memo_updated_by?: string | null;

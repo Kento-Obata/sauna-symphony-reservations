@@ -55,3 +55,7 @@ verify_jwt = false
 # verify_jwt だけでは anon key も通るため、関数内で profiles.role='admin' を追加検証している
 [functions.admin-cancel-event-reservation]
 verify_jwt = true
+
+# 同上(貸切予約の管理者キャンセル・返金)
+[functions.admin-cancel-reservation]
+verify_jwt = true

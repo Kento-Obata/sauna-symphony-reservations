@@ -1,6 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import postgres from "https://deno.land/x/postgresjs@v3.4.5/mod.js";
 import { getClientIp, isRateLimited, recordAttempt } from "../_shared/rate-limit.ts";
+import { cancelReservationRow } from "../_shared/reservation-payment.ts";
+import { sendLineGroupMessage } from "../_shared/line.ts";
+import { getJstTodayYmd } from "../_shared/date-jst.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -22,8 +25,10 @@ function safeEqual(a: string, b: string): boolean {
 }
 
 const getDb = () => {
-  const databaseUrl = Deno.env.get('POSTGRES_URL');
-  if (!databaseUrl) throw new Error('Missing POSTGRES_URL');
+  // 本番は POSTGRES_URL（プーラ）を使用。未設定環境（staging 等）では
+  // Supabase が自動提供する SUPABASE_DB_URL にフォールバックする（本番は挙動不変）。
+  const databaseUrl = Deno.env.get('POSTGRES_URL') ?? Deno.env.get('SUPABASE_DB_URL');
+  if (!databaseUrl) throw new Error('Missing POSTGRES_URL / SUPABASE_DB_URL');
   return postgres(databaseUrl, { max: 1, idle_timeout: 5, connect_timeout: 10 });
 };
 
@@ -72,7 +77,9 @@ serve(async (req) => {
     }
 
     const rows = await sql`
-      select id::text, date::text, phone, status
+      select id::text, date::text, phone, status, guest_name,
+             payment_method, payment_status, square_payment_id, square_payment_link_id,
+             total_price, reservation_code
       from public.reservations
       where reservation_code = ${reservationCode}
       limit 1
@@ -97,30 +104,68 @@ serve(async (req) => {
       );
     }
 
-    const todayStr = new Date().toISOString().split('T')[0];
-    if (reservation.date === todayStr) {
-      return new Response(
-        JSON.stringify({ error: "当日のキャンセルはできません。直接お電話にてご連絡ください。" }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     if (reservation.status === 'cancelled') {
       return new Response(
         JSON.stringify({ error: "この予約は既にキャンセル済みです" }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    if (reservation.status === 'expired') {
+      return new Response(
+        JSON.stringify({ error: "この予約は無効になっています" }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    await sql`
-      update public.reservations
-      set status = 'cancelled',
-          is_confirmed = true
-      where id = ${reservation.id}::uuid
-    `;
+    // 当日ブロックは確定済み予約のみ。決済待ち(pending_payment)は金銭の授受が
+    // 無いため日付によらずキャンセル可
+    if (reservation.status !== 'pending_payment') {
+      // JST 基準の当日判定(旧実装の UTC 基準は最大9時間ズレるため置換)
+      const todayStr = getJstTodayYmd();
+      if (reservation.date === todayStr) {
+        return new Response(
+          JSON.stringify({ error: "当日のキャンセルはできません。直接お電話にてご連絡ください。" }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    // 支払い済み(Square)は返金成功後にのみキャンセルされる。返金失敗時は
+    // confirmed のまま 500 を返す(リトライ可能・冪等キー resv-cancel-<code>)
+    let refunded = false;
+    try {
+      ({ refunded } = await cancelReservationRow(
+        sql,
+        reservation,
+        "お客様都合によるキャンセル",
+      ));
+    } catch (error) {
+      console.error("Refund error:", error);
+      return new Response(
+        JSON.stringify({ error: "返金処理に失敗しました。お手数ですがお電話にてご連絡ください。" }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (refunded) {
+      // 金銭移動の可視化のためオーナーへ LINE 通知(失敗してもキャンセルは成立)
+      try {
+        await sendLineGroupMessage(
+          `【返金キャンセル】貸切予約\n${reservation.guest_name} 様（${reservationCode}・${reservation.date}）のキャンセルに伴い、¥${Number(reservation.total_price).toLocaleString()} を自動返金しました。`,
+        );
+      } catch (error) {
+        console.error("LINE notification error:", error);
+      }
+    }
 
     return new Response(
-      JSON.stringify({ success: true, message: "予約をキャンセルしました" }),
+      JSON.stringify({
+        success: true,
+        refunded,
+        message: refunded
+          ? "予約をキャンセルしました。全額返金の手続きを行いました。"
+          : "予約をキャンセルしました",
+      }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {

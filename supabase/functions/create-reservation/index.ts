@@ -1,6 +1,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import postgres from "https://deno.land/x/postgresjs@v3.4.5/mod.js";
 import { normalizeOptions, validateReservationInput } from "../_shared/reservation-validation.ts";
+import { createPaymentLink, deletePaymentLink } from "../_shared/square.ts";
+import { acquireSlotLock, TIME_SLOT_LABELS } from "../_shared/reservation-payment.ts";
+import { formatJstDateLabel } from "../_shared/event-format.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,6 +18,8 @@ interface CreateReservationRequest {
   email?: string;
   phone: string;
   waterTemperature: number;
+  // 'onsite'(既定・従来フロー) / 'square_online'(事前決済: 支払い完了で確定)
+  paymentMethod?: string;
   selectedOptions?: Array<{
     option_id: string;
     quantity: number;
@@ -65,17 +70,33 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log("Creating reservation for:", { date, timeSlot, guestName, guestCount });
+    const paymentMethod = body.paymentMethod ?? 'onsite';
+    if (paymentMethod !== 'onsite' && paymentMethod !== 'square_online') {
+      return new Response(
+        JSON.stringify({ error: "支払い方法の指定が正しくありません" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+      );
+    }
+    const isPrepaid = paymentMethod === 'square_online';
+
+    console.log("Creating reservation for:", { date, timeSlot, guestName, guestCount, paymentMethod });
 
     const phoneStr = String(phone || '');
 
-    const result = await sql.begin(async (tx) => {
+    const result = await sql.begin(async (tx: typeof sql) => {
+      // 枠単位の advisory lock で同一枠への並行作成・確定を直列化
+      // (ロック順序は常に advisory → 行ロック)
+      await acquireSlotLock(tx, date, timeSlot);
+
+      // 貸切のブロック対象: 確定済み + 決済手続き中(期限内)のホールド。
+      // 従来どおり plain pending(メール確認待ち)はブロックしない
       const existingReservations = await tx`
         select id
         from public.reservations
         where date = ${date}::date
           and time_slot = ${timeSlot}::public.time_slot
-          and status = 'confirmed'
+          and (status = 'confirmed'
+               or (status = 'pending_payment' and expires_at > now()))
         limit 1
       `;
 
@@ -106,7 +127,7 @@ const handler = async (req: Request): Promise<Response> => {
         `;
 
         for (const selectedOption of selectedOptions) {
-          const optionData = optionsData.find((option) => option.id === selectedOption.option_id);
+          const optionData = optionsData.find((option: OptionRow) => option.id === selectedOption.option_id);
           if (!optionData) continue;
 
           const effectiveQuantity = optionData.pricing_type === 'per_guest'
@@ -129,7 +150,21 @@ const handler = async (req: Request): Promise<Response> => {
       const confirmationToken = randomHex(32);
       const accessToken = randomHex(32);
 
-      let newReservation: any | null = null;
+      interface InsertedReservation {
+        id: string;
+        date: string;
+        time_slot: string;
+        guest_name: string;
+        guest_count: number;
+        email: string | null;
+        phone: string;
+        water_temperature: number;
+        reservation_code: string;
+        confirmation_token: string | null;
+        access_token: string;
+        total_price: number;
+      }
+      let newReservation: InsertedReservation | null = null;
       for (let attempt = 0; attempt < 10; attempt++) {
         const codeRows = await tx`select public.generate_reservation_code() as code`;
         const reservationCode = codeRows[0]?.code;
@@ -149,7 +184,8 @@ const handler = async (req: Request): Promise<Response> => {
               reservation_code,
               confirmation_token,
               access_token,
-              expires_at
+              expires_at,
+              payment_method
             ) values (
               ${date}::date,
               ${timeSlot}::public.time_slot,
@@ -158,13 +194,14 @@ const handler = async (req: Request): Promise<Response> => {
               ${email ? email.trim() : null},
               ${phoneStr.trim()},
               ${waterTemperature},
-              'pending',
+              ${isPrepaid ? 'pending_payment' : 'pending'},
               false,
               ${totalPrice},
               ${reservationCode},
               ${confirmationToken},
               ${accessToken},
-              now() + interval '2 hours'
+              ${isPrepaid ? tx`now() + interval '20 minutes'` : tx`now() + interval '2 hours'`},
+              ${paymentMethod}
             )
             returning id::text, date::text, time_slot::text, guest_name, guest_count, email, phone, water_temperature, reservation_code, confirmation_token, access_token, total_price
           `;
@@ -177,6 +214,19 @@ const handler = async (req: Request): Promise<Response> => {
       }
 
       if (!newReservation) throw new Error("予約コードまたは確認トークンが生成されませんでした");
+
+      // 事前決済はメール確認リンクを使わないため、確認トークンを確実に無効化する。
+      // トリガー set_reservation_code_and_expiration は BEFORE INSERT で
+      // NULL のトークンを再生成するため、INSERT 後に同一トランザクション内で NULL 化する
+      // (トリガーは UPDATE では発火しない: 本番定義で確認済み)
+      if (isPrepaid) {
+        await tx`
+          update public.reservations
+          set confirmation_token = null
+          where id = ${newReservation.id}::uuid
+        `;
+        newReservation.confirmation_token = null;
+      }
 
       if (reservationOptionsData.length > 0) {
         for (const option of reservationOptionsData) {
@@ -194,7 +244,67 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     const { newReservation, totalPrice } = result;
-    console.log("Reservation created:", newReservation.reservation_code);
+    console.log("Reservation created:", newReservation.reservation_code, isPrepaid ? "(prepaid)" : "(onsite)");
+
+    if (isPrepaid) {
+      // 決済リンク作成はトランザクション外(外部 API をロック中に呼ばない)。
+      // 失敗したら予約を expired にして枠のホールドを即解放する
+      const baseUrl = Deno.env.get('APP_BASE_URL') ?? "https://www.u-sauna-private.com";
+      const redirectUrl =
+        `${baseUrl}/reservation/${newReservation.reservation_code}?t=${newReservation.access_token}&from=checkout`;
+      const slotLabel = TIME_SLOT_LABELS[newReservation.time_slot] ?? newReservation.time_slot;
+      let link: { id: string; url: string; orderId: string } | null = null;
+      try {
+        link = await createPaymentLink({
+          // 冪等キーはイベント側(link-)と衝突しないよう resv- プレフィックス
+          idempotencyKey: `resv-link-${newReservation.reservation_code}`,
+          itemName: `貸切サウナ ${formatJstDateLabel(newReservation.date)} ${slotLabel}（${newReservation.guest_count}名）`,
+          quantity: 1,
+          unitAmount: totalPrice,
+          referenceId: newReservation.reservation_code,
+          metadata: { kind: 'reservation', reservation_id: newReservation.id },
+          redirectUrl,
+        });
+        await sql`
+          update public.reservations
+          set square_payment_link_id = ${link.id},
+              square_order_id = ${link.orderId}
+          where id = ${newReservation.id}::uuid
+        `;
+      } catch (error) {
+        console.error("Payment link setup error:", error);
+        await sql`
+          update public.reservations
+          set status = 'expired'
+          where id = ${newReservation.id}::uuid
+            and status = 'pending_payment'
+        `;
+        if (link) {
+          try {
+            await deletePaymentLink(link.id);
+          } catch (deleteError) {
+            console.error("deletePaymentLink error:", deleteError);
+          }
+        }
+        return new Response(
+          JSON.stringify({ error: "決済ページの作成に失敗しました。時間をおいて再度お試しください。" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+        );
+      }
+
+      // 仮予約通知は送らない。確定通知は支払い完了(square-webhook)側で送る
+      return new Response(
+        JSON.stringify({
+          success: true,
+          checkout: true,
+          checkoutUrl: link.url,
+          reservationCode: newReservation.reservation_code,
+          accessToken: newReservation.access_token,
+          totalPrice,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
+    }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -234,13 +344,14 @@ const handler = async (req: Request): Promise<Response> => {
         status: 200
       }
     );
-  } catch (error: any) {
+  } catch (error) {
     console.error("Function error:", error);
+    const err = error instanceof Error ? error : new Error("予約の作成に失敗しました");
     return new Response(
-      JSON.stringify({ error: error?.message || "予約の作成に失敗しました" }),
+      JSON.stringify({ error: err.message || "予約の作成に失敗しました" }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: error?.name === 'UnavailableError' ? 409 : 500
+        status: err.name === 'UnavailableError' ? 409 : 500
       }
     );
   } finally {

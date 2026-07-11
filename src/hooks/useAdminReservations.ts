@@ -14,7 +14,7 @@ export const useAdminReservations = () => {
         .from("reservations")
         .select("*")
         .gte('date', today)
-        .in('status', ['confirmed', 'pending'])
+        .in('status', ['confirmed', 'pending', 'pending_payment'])
         .order('date', { ascending: true });
 
       if (error) throw error;

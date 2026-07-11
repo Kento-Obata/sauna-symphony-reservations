@@ -77,19 +77,30 @@ export const AdminSearchResults = ({
                   <TableCell>{reservation.phone}</TableCell>
                   <TableCell>{reservation.guest_count}名</TableCell>
                   <TableCell>
-                    <Select
-                      value={reservation.status}
-                      onValueChange={(value) => onStatusChange(reservation.id, value)}
-                    >
-                      <SelectTrigger className="w-24">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="confirmed">確定</SelectItem>
-                        <SelectItem value="pending">保留中</SelectItem>
-                        <SelectItem value="cancelled">キャンセル</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="flex items-center gap-1">
+                      <Select
+                        value={reservation.status}
+                        onValueChange={(value) => onStatusChange(reservation.id, value)}
+                      >
+                        <SelectTrigger className="w-28">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="confirmed">確定</SelectItem>
+                          <SelectItem value="pending">保留中</SelectItem>
+                          {reservation.status === "pending_payment" && (
+                            <SelectItem value="pending_payment">決済待ち</SelectItem>
+                          )}
+                          <SelectItem value="cancelled">キャンセル</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {reservation.payment_status === "paid" && (
+                        <Badge className="bg-emerald-600 hover:bg-emerald-600 whitespace-nowrap">支払済</Badge>
+                      )}
+                      {reservation.payment_status === "refunded" && (
+                        <Badge variant="outline" className="whitespace-nowrap">返金済</Badge>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>¥{reservation.total_price.toLocaleString()}</TableCell>
                   <TableCell>

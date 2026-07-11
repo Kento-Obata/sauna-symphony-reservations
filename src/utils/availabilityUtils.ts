@@ -25,7 +25,7 @@ export const getReservationsForDateAndSlot = (
     (r) =>
       r.date === dateString &&
       r.time_slot === timeSlot &&
-      (r.status === "confirmed" || r.status === "pending")
+      (r.status === "confirmed" || r.status === "pending" || r.status === "pending_payment")
   );
 };
 

@@ -135,10 +135,16 @@ export const refundPayment = async (params: {
   reason?: string;
 }): Promise<{ refundId: string; status: string }> => {
   const config = getSquareConfig();
+  // postgres.js は numeric/bigint 列を文字列で返すため、境界で必ず整数化する
+  // (legacy reservations.total_price が numeric。文字列のままだと Square が 400 を返す)
+  const amount = Math.round(Number(params.amount));
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error(`Invalid refund amount: ${params.amount}`);
+  }
   const data = await squareFetch(config, "POST", "/v2/refunds", {
     idempotency_key: params.idempotencyKey,
     payment_id: params.paymentId,
-    amount_money: { amount: params.amount, currency: "JPY" },
+    amount_money: { amount, currency: "JPY" },
     reason: params.reason,
   });
   const refund = data.refund as { id?: string; status?: string } | undefined;

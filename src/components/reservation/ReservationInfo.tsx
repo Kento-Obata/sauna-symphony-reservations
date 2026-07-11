@@ -105,13 +105,24 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
     switch (status) {
       case "pending":
         return "仮予約";
+      case "pending_payment":
+        return "お支払い手続き中";
       case "confirmed":
         return "予約確定";
       case "cancelled":
         return "キャンセル済み";
+      case "expired":
+        return "無効(お支払い期限切れ)";
       default:
         return status;
     }
+  };
+
+  const getPaymentDisplay = () => {
+    if (reservation.payment_status === "refunded") return "返金済み";
+    if (reservation.payment_status === "paid") return "支払済(オンライン事前決済)";
+    if (reservation.status === "pending_payment") return "お支払い手続き中";
+    return "当日現地払い";
   };
 
 
@@ -220,8 +231,17 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
         )}
       </div>
 
+      <div className="text-sauna-stone">お支払い:</div>
+      <div>{getPaymentDisplay()}</div>
+
       <div className="text-sauna-stone">ステータス:</div>
-      <div className={reservation.status === 'cancelled' ? 'text-red-500' : reservation.status === 'pending' ? 'text-yellow-500' : 'text-green-500'}>
+      <div className={
+        reservation.status === 'cancelled' || reservation.status === 'expired'
+          ? 'text-red-500'
+          : reservation.status === 'pending' || reservation.status === 'pending_payment'
+            ? 'text-yellow-500'
+            : 'text-green-500'
+      }>
         {getStatusDisplay(reservation.status)}
       </div>
     </div>

@@ -149,8 +149,8 @@ export default function ReservationPending() {
           )}
 
           <div className="space-y-4 text-sauna-stone">
-            <p>メールまたはSMSに送信された確認リンクから、20分以内に予約を確定してください。</p>
-            <p>20分を過ぎると予約は自動的にキャンセルされます。</p>
+            <p>メールまたはSMSに送信された確認リンクから、2時間以内に予約を確定してください。</p>
+            <p>2時間を過ぎると予約は自動的にキャンセルされます。</p>
           </div>
 
           <div className="pt-6">

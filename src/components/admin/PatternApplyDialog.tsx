@@ -76,7 +76,7 @@ export const PatternApplyDialog = ({ open, onOpenChange }: Props) => {
           .select("date")
           .gte("date", from)
           .lte("date", to)
-          .in("status", ["confirmed", "pending"]),
+          .in("status", ["confirmed", "pending", "pending_payment"]),
         supabase
           .from("daily_time_slots")
           .select("date")
@@ -147,7 +147,7 @@ export const PatternApplyDialog = ({ open, onOpenChange }: Props) => {
         .select("date")
         .gte("date", startDate)
         .lte("date", endDate)
-        .in("status", ["confirmed", "pending"]);
+        .in("status", ["confirmed", "pending", "pending_payment"]);
       if (!error && data) {
         setReservedDates(new Set(data.map((r) => r.date)));
       }

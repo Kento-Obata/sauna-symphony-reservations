@@ -24,11 +24,16 @@ const handler = async (req: Request): Promise<Response> => {
   const sql = getDb();
 
   try {
+    // 期限内の決済待ち(pending_payment)も枠を占有する。公開側フロントの既存
+    // フィルタ(confirmed/pending)がそのまま機能するよう 'pending' として返す
+    // (公開UIには「押さえられている」ことだけが必要で、区別は不要)
     const availability = await sql`
-      select date::text, time_slot::text, status
+      select date::text, time_slot::text,
+             case when status = 'pending_payment' then 'pending' else status end as status
       from public.reservations
       where date >= current_date
-        and status in ('confirmed', 'pending')
+        and (status in ('confirmed', 'pending')
+             or (status = 'pending_payment' and expires_at > now()))
       order by date asc
     `;
 

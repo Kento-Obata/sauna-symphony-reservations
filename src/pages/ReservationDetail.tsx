@@ -7,17 +7,24 @@ import { Input } from "@/components/ui/input";
 import { Home, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { AdminReservationDetailsDialog } from "@/components/admin/AdminReservationDetailsDialog";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ReservationInfo } from "@/components/reservation/ReservationInfo";
 import { ReservationActions } from "@/components/reservation/ReservationActions";
+
+// Square 決済から戻った直後(from=checkout)のポーリング設定。
+// Webhook は通常数秒で届く。verifyPayment: true でサーバ経由の Square 照会も併用
+const POLL_INTERVAL_MS = 3000;
+const POLL_TIMEOUT_MS = 60000;
 
 export const ReservationDetail = () => {
   const { code: reservationCode } = useParams();
   const [searchParams] = useSearchParams();
   const tokenFromUrl = searchParams.get("t") || undefined;
+  const fromCheckout = searchParams.get("from") === "checkout";
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const pollStartedAt = useRef<number>(Date.now());
 
   // Auth state: URL token grants automatic access; phone-verification stores
   // the resulting reservation directly in `phoneVerifiedReservation`.
@@ -51,7 +58,9 @@ export const ReservationDetail = () => {
       if (!accessToken) return { requiresAuth: true } as any;
 
       const { data, error } = await supabase.functions.invoke('get-reservation-by-code', {
-        body: { reservationCode, accessToken }
+        // 決済から戻った直後は verifyPayment を付け、Webhook 不達時も
+        // サーバが Square に注文状態を照会して確定できるようにする(バックストップ)
+        body: { reservationCode, accessToken, verifyPayment: fromCheckout }
       });
 
       if (error) return { requiresAuth: true } as any;
@@ -60,6 +69,14 @@ export const ReservationDetail = () => {
     },
     retry: false,
     enabled: !!reservationCode && !!accessToken,
+    refetchInterval: (query) => {
+      // 決済ページから戻った直後だけ、支払い確認が取れるまでポーリングする
+      if (!fromCheckout) return false;
+      const current = query.state.data as { status?: string } | undefined;
+      if (current && current.status !== "pending_payment") return false;
+      if (Date.now() - pollStartedAt.current > POLL_TIMEOUT_MS) return false;
+      return POLL_INTERVAL_MS;
+    },
   });
 
   // Effective reservation: phone-verified takes precedence, then query result.
@@ -234,15 +251,28 @@ export const ReservationDetail = () => {
         </h1>
         
         <div className="space-y-4">
+          {reservation.status === "pending_payment" && fromCheckout && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800 text-center">
+              {Date.now() - pollStartedAt.current <= POLL_TIMEOUT_MS ? (
+                <p className="animate-pulse">お支払いの確認を行っています。このままお待ちください...</p>
+              ) : (
+                <p>お支払いの確認に時間がかかっています。ページを再読み込みしてご確認ください。</p>
+              )}
+            </div>
+          )}
           <ReservationInfo reservation={reservation} />
           <div className="bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground space-y-1">
             <p className="font-medium text-foreground">キャンセルポリシー</p>
             <p>・前日までのキャンセルは無料です。</p>
             <p>・当日のキャンセルはお電話かDMにてご連絡ください。</p>
+            {reservation.payment_status === "paid" && (
+              <p>・事前決済分は、キャンセル時に全額返金いたします(反映まで数日かかる場合があります)。</p>
+            )}
           </div>
-          <ReservationActions 
+          <ReservationActions
             status={reservation.status}
             date={reservation.date}
+            paymentStatus={reservation.payment_status}
             setShowEditDialog={setShowEditDialog}
             cancelReservation={cancelReservation}
           />

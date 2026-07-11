@@ -1,6 +1,11 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import postgres from "https://deno.land/x/postgresjs@v3.4.5/mod.js";
 import { getClientIp, isRateLimited, recordAttempt } from "../_shared/rate-limit.ts";
+import { retrieveOrder } from "../_shared/square.ts";
+import {
+  confirmReservationPaymentByOrderId,
+  notifyReservationConfirmed,
+} from "../_shared/reservation-payment.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -40,7 +45,7 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const { reservationCode, accessToken, phoneLastFourDigits } = body || {};
+    const { reservationCode, accessToken, phoneLastFourDigits, verifyPayment } = body || {};
 
     if (typeof reservationCode !== "string" || !/^[A-Z0-9]{8}$/.test(reservationCode)) {
       return new Response(
@@ -64,14 +69,16 @@ const handler = async (req: Request): Promise<Response> => {
     // This is a customer-facing endpoint; those fields are internal/sensitive and
     // are never consumed by the customer UI. access_token is selected only for the
     // auth comparison below and is stripped from the response.
-    const rows = await sql`
+    const selectReservation = () => sql`
       select id::text, date::text, time_slot::text, guest_name, guest_count, email, phone, water_temperature,
-             created_at, reservation_code, status, is_confirmed, expires_at, total_price, access_token
+             created_at, reservation_code, status, is_confirmed, expires_at, total_price, access_token,
+             payment_method, payment_status, square_order_id
       from public.reservations
       where reservation_code = ${reservationCode}
       limit 1
     `;
-    const reservation = rows[0];
+    let rows = await selectReservation();
+    let reservation = rows[0];
 
     const authRequired = () =>
       new Response(
@@ -103,16 +110,55 @@ const handler = async (req: Request): Promise<Response> => {
       return authRequired();
     }
 
-    const { access_token: _omit, ...safeReservation } = reservation as Record<string, unknown>;
+    // バックストップ: 決済完了を Square に直接確認(webhook 不達時の自己修復)。
+    // 決済ページから戻った直後のポーリング(verifyPayment=true)でのみ実行する
+    if (
+      verifyPayment === true &&
+      reservation.status === 'pending_payment' &&
+      reservation.square_order_id
+    ) {
+      try {
+        const order = await retrieveOrder(reservation.square_order_id);
+        const paymentId = order.tenders[0]?.payment_id ?? order.tenders[0]?.id;
+        if (order.state === 'COMPLETED' && paymentId) {
+          const result = await confirmReservationPaymentByOrderId(
+            sql,
+            reservation.square_order_id,
+            paymentId,
+          );
+          if (result.outcome === 'confirmed') {
+            console.log("Reservation payment confirmed via backstop:", reservation.reservation_code);
+            try {
+              await notifyReservationConfirmed(result.reservation);
+            } catch (error) {
+              console.error("Confirmation notification error:", error);
+            }
+          }
+          // needs_refund は webhook 側に任せる(返金はここでは行わない)
+          rows = await selectReservation();
+          reservation = rows[0];
+        }
+      } catch (error) {
+        console.error("verifyPayment backstop error:", error);
+      }
+    }
+
+    const {
+      access_token: _omit,
+      square_order_id: _omitOrder,
+      ...safeReservation
+    } = reservation as Record<string, unknown>;
 
     return new Response(
       JSON.stringify({ reservation: safeReservation }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
-  } catch (error: any) {
+  } catch (error) {
     console.error("Function error:", error);
     return new Response(
-      JSON.stringify({ error: error.message || "予約情報の取得に失敗しました" }),
+      JSON.stringify({
+        error: error instanceof Error && error.message ? error.message : "予約情報の取得に失敗しました",
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
     );
   } finally {
