@@ -122,7 +122,18 @@ export const useReservationForm = () => {
 
       if (error) {
         console.error("Error creating reservation:", error);
-        throw error;
+        // 非2xx(満席409等)はサーバのエラーメッセージを取り出して表示する
+        let serverMessage: string | null = null;
+        const context = (error as { context?: Response })?.context;
+        if (context && typeof context.json === "function") {
+          try {
+            const body = await context.clone().json();
+            if (typeof body?.error === "string") serverMessage = body.error;
+          } catch {
+            // JSON でないレスポンスは無視
+          }
+        }
+        throw serverMessage ? new Error(serverMessage) : error;
       }
 
       if (data?.error) {
@@ -151,9 +162,10 @@ export const useReservationForm = () => {
 
       toast.success("仮予約を受け付けました。メールまたはSMSの確認リンクから予約を確定してください。");
       queryClient.invalidateQueries({ queryKey: ["reservations"] });
-    } catch (error: any) {
+    } catch (error) {
       console.error("予約の登録に失敗しました:", error);
-      toast.error(`予約の登録に失敗しました: ${error.message || 'もう一度お試しください'}`);
+      const message = error instanceof Error && error.message ? error.message : "もう一度お試しください";
+      toast.error(`予約の登録に失敗しました: ${message}`);
       setIsSubmitting(false);
     }
   };
