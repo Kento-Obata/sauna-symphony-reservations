@@ -1,8 +1,8 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import postgres from "https://deno.land/x/postgresjs@v3.4.5/mod.js";
-import { format, addDays } from "https://esm.sh/date-fns@3.3.1";
 import { sendAppEmail, buildSimpleEmailHtml } from "../_shared/lovable-email.ts";
+import { getJstTodayYmd } from "../_shared/date-jst.ts";
 
 const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
 const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
@@ -128,9 +128,8 @@ const handler = async (req: Request): Promise<Response> => {
   const sql = getDb();
 
   try {
-    // 明日の日付を取得
-    const tomorrow = addDays(new Date(), 1);
-    const tomorrowStr = format(tomorrow, "yyyy-MM-dd");
+    // 明日(JST)の日付を取得。UTC 基準だと JST 00:00〜09:00 の cron 実行で 1 日ズレる
+    const tomorrowStr = getJstTodayYmd(new Date(Date.now() + 24 * 3600 * 1000));
 
     console.log(`明日の予約を確認します: ${tomorrowStr}`);
 

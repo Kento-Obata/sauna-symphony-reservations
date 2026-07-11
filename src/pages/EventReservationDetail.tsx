@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { EventReservationDetails } from "@/types/event";
 import { extractFunctionErrorMessage } from "@/hooks/useEvent";
 import { formatEventDateLabel, formatEventTimeRange } from "@/utils/eventFormat";
+import { getJstTodayYmd } from "@/utils/jstDate";
 
 // 決済ページから戻った直後(from=checkout)のポーリング設定。
 // Webhook は通常数秒で届く。verifyPayment: true で Square への直接照会も併用する
@@ -66,17 +67,9 @@ export default function EventReservationDetail() {
     },
   });
 
-  const todayYmd = () => {
-    const now = new Date();
-    // 端末ローカルではなく JST 基準の暦日で判定する
-    return new Date(now.getTime() + (now.getTimezoneOffset() + 9 * 60) * 60 * 1000)
-      .toISOString()
-      .slice(0, 10);
-  };
-
   // 確定済みは前日まで。決済待ちは金銭の授受が無いためいつでもキャンセル可
   const canCancel = reservation != null &&
-    ((reservation.status === "confirmed" && reservation.date > todayYmd()) ||
+    ((reservation.status === "confirmed" && reservation.date > getJstTodayYmd()) ||
       reservation.status === "pending_payment");
 
   const isPolling = fromCheckout &&

@@ -1,11 +1,20 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import postgres from "https://deno.land/x/postgresjs@v3.4.5/mod.js";
 import { buildSimpleEmailHtml, sendAppEmail } from "../_shared/lovable-email.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+// DB アクセスは直接 Postgres(POSTGRES_URL)を使う。本番では自動注入の
+// SUPABASE_SERVICE_ROLE_KEY(legacy キー)が PostgREST に拒否され、
+// supabase-js 経由の枠ラベル取得が失敗し常にデフォルト時間になっていた(2026-07-11 修正)。
+const getDb = () => {
+  const databaseUrl = Deno.env.get('POSTGRES_URL') ?? Deno.env.get('SUPABASE_DB_URL');
+  if (!databaseUrl) throw new Error('Missing POSTGRES_URL / SUPABASE_DB_URL');
+  return postgres(databaseUrl, { max: 1, idle_timeout: 5, connect_timeout: 10 });
 };
 
 interface ReservationNotification {
@@ -22,10 +31,7 @@ interface ReservationNotification {
   total_price: number;
 }
 
-import { getTimeSlotLabel as getSharedTimeSlotLabel } from "../_shared/time-slot-rules.ts";
-
-const getTimeSlotLabel = (timeSlot: string, date: string, supabase: any) =>
-  getSharedTimeSlotLabel(supabase, timeSlot, date);
+import { getTimeSlotLabelViaSql } from "../_shared/time-slot-rules.ts";
 
 const formatPhoneNumber = (phone: string): string => {
   const digits = phone.replace(/\D/g, '');
@@ -39,18 +45,17 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const sql = getDb();
+
   try {
     const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID');
     const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN');
     const TWILIO_PHONE_NUMBER = Deno.env.get('TWILIO_PHONE_NUMBER');
-    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
       throw new Error("Missing required environment variables");
     }
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const reservation: ReservationNotification = await req.json();
     const notifications = [];
 
@@ -66,7 +71,7 @@ const handler = async (req: Request): Promise<Response> => {
     const totalPrice = reservation.total_price || 0;
     
     // Get dynamic time slot label
-    const timeSlotLabel = await getTimeSlotLabel(reservation.timeSlot, reservation.date, supabase);
+    const timeSlotLabel = await getTimeSlotLabelViaSql(sql, reservation.timeSlot, reservation.date);
 
     const messageContent = `【Sauna U】 仮予約ありがとうございます。
 最終確認のため、下記リンクより予約確定手続きをお願いいたします。
@@ -140,9 +145,11 @@ URL：${CONFIRMATION_URL}
   } catch (error) {
     console.error("Function error:", error);
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ success: false, error: error instanceof Error ? error.message : "failed" }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
     );
+  } finally {
+    await sql.end({ timeout: 1 });
   }
 };
 

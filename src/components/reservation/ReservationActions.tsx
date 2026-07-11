@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { UseMutationResult } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { getJstTodayYmd } from "@/utils/jstDate";
 
 interface ReservationActionsProps {
   status: string;
@@ -40,9 +41,9 @@ export const ReservationActions = ({
   const isPendingPayment = status === 'pending_payment';
   const isPaid = paymentStatus === 'paid';
 
-  // Check if reservation date is today
+  // Check if reservation date is today (JST基準。UTC だと 00:00〜09:00 に前日扱いになる)
   // (決済待ちは金銭の授受が無いため当日でもキャンセル可能)
-  const today = new Date().toISOString().split('T')[0];
+  const today = getJstTodayYmd();
   const isSameDay = date === today && !isPendingPayment;
 
   const handleCancel = () => {

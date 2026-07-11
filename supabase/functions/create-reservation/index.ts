@@ -4,11 +4,20 @@ import { normalizeOptions, validateReservationInput } from "../_shared/reservati
 import { createPaymentLink, deletePaymentLink } from "../_shared/square.ts";
 import { acquireSlotLock, TIME_SLOT_LABELS } from "../_shared/reservation-payment.ts";
 import { formatJstDateLabel } from "../_shared/event-format.ts";
+import { getClientIp, isRateLimited, recordAttempt } from "../_shared/rate-limit.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// 認証なし公開エンドポイントなので、SMS(仮予約通知)の乱用を防ぐレート制限を掛ける。
+// create-event-reservation と同じ方針(全リクエストを succeeded=false で記録し、
+// rate-limit ヘルパの sliding window で数える)。
+const RL_ACTION = "reservation-create";
+const RL_IP_MAX = 10;      // per IP / hour
+const RL_PHONE_MAX = 5;    // per 電話番号 / hour
+const RL_WINDOW_MIN = 60;
 
 interface CreateReservationRequest {
   date: string;
@@ -82,6 +91,21 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Creating reservation for:", { date, timeSlot, guestName, guestCount, paymentMethod });
 
     const phoneStr = String(phone || '');
+
+    // スロットリング: 作成頻度の制限なので全リクエストを succeeded=false で記録する
+    // (rate-limit ヘルパは succeeded=false のみ数える)。番号は数字のみに正規化。
+    const ip = getClientIp(req);
+    const phoneKey = phoneStr.replace(/\D/g, '') || 'unknown';
+    await recordAttempt(sql, RL_ACTION, [ip, phoneKey], false);
+    if (await isRateLimited(sql, [
+      { action: RL_ACTION, identifier: ip, max: RL_IP_MAX, windowMinutes: RL_WINDOW_MIN },
+      { action: RL_ACTION, identifier: phoneKey, max: RL_PHONE_MAX, windowMinutes: RL_WINDOW_MIN },
+    ])) {
+      return new Response(
+        JSON.stringify({ error: "リクエストが多すぎます。しばらく時間をおいて再度お試しください。" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 429 }
+      );
+    }
 
     const result = await sql.begin(async (tx: typeof sql) => {
       // 枠単位の advisory lock で同一枠への並行作成・確定を直列化

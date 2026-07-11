@@ -8,7 +8,9 @@
 //
 // ルール:
 //   - サーバ(edge function)側で曜日判定が必要な箇所は必ずこのファイルの関数を使う。
-//   - 直接 getUTCDay() / getDay() を呼ぶことは ESLint で禁止 (eslint.config.js)。
+//   - フロントの「今日(JST)」は src/utils/jstDate.ts:getJstTodayYmd を使う。
+//     `X.toISOString().split('T')[0]`(UTC基準の日付抽出)は eslint で禁止
+//     (eslint.config.js の no-restricted-syntax)。
 
 import * as jpHolidays from "https://esm.sh/japanese-holidays@1.0.10";
 

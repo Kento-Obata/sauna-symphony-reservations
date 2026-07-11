@@ -36,22 +36,6 @@ export const ReservationDetail = () => {
   const [phoneSubmitting, setPhoneSubmitting] = useState(false);
   const [phoneError, setPhoneError] = useState<string | null>(null);
 
-  if (!reservationCode) {
-    return (
-      <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-bold text-red-500">
-          予約コードが見つかりません
-        </h1>
-        <p className="mt-2 text-gray-600">
-          URLをご確認の上、もう一度お試しください。
-        </p>
-        <Button className="mt-4" onClick={() => navigate('/')}>
-          トップページへ戻る
-        </Button>
-      </div>
-    );
-  }
-
   const { data: queryReservation, isLoading: queryLoading, error } = useQuery({
     queryKey: ["reservation", reservationCode, accessToken],
     queryFn: async () => {
@@ -112,6 +96,23 @@ export const ReservationDetail = () => {
       toast.error(error.message || "予約のキャンセルに失敗しました");
     },
   });
+
+  // 早期 return は全ての Hook 呼び出しの後に置く(rules-of-hooks)
+  if (!reservationCode) {
+    return (
+      <div className="container mx-auto p-4">
+        <h1 className="text-2xl font-bold text-red-500">
+          予約コードが見つかりません
+        </h1>
+        <p className="mt-2 text-gray-600">
+          URLをご確認の上、もう一度お試しください。
+        </p>
+        <Button className="mt-4" onClick={() => navigate('/')}>
+          トップページへ戻る
+        </Button>
+      </div>
+    );
+  }
 
   const handlePhoneVerify = async (e: React.FormEvent) => {
     e.preventDefault();
