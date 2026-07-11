@@ -1,50 +1,52 @@
+// 仮予約の確認期限(2時間)が30分以内に迫った予約へ SMS リマインドを送る(10分毎の cron)。
+//
+// DB アクセスは直接 Postgres(POSTGRES_URL)を使う。本番では自動注入の
+// SUPABASE_SERVICE_ROLE_KEY(legacy キー)が PostgREST に拒否され、
+// supabase-js 経由のクエリが全て失敗していたため置き換えた(2026-07-11)。
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.47.2";
+import postgres from "https://deno.land/x/postgresjs@v3.4.5/mod.js";
 import { corsHeaders } from "../_shared/cors.ts";
 import { sendSMS } from "../_shared/twilio.ts";
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+const getDb = () => {
+  // 本番は POSTGRES_URL（プーラ）を使用。未設定環境（staging 等）では
+  // Supabase が自動提供する SUPABASE_DB_URL にフォールバックする（本番は挙動不変）。
+  const databaseUrl = Deno.env.get('POSTGRES_URL') ?? Deno.env.get('SUPABASE_DB_URL');
+  if (!databaseUrl) throw new Error('Missing POSTGRES_URL / SUPABASE_DB_URL');
+  return postgres(databaseUrl, { max: 1, idle_timeout: 5, connect_timeout: 10 });
+};
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const sql = getDb();
+
   try {
     console.log("Running send-pending-reminder edge function");
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    // 期限まで30分以内の仮予約(メール確認待ち)を取得
+    const pendingReservations = await sql`
+      select id::text, reservation_code, confirmation_token, phone, expires_at
+      from public.reservations
+      where status = 'pending'
+        and is_confirmed = false
+        and expires_at > now()
+        and expires_at < now() + interval '30 minutes'
+    `;
 
-    // Find pending reservations that are approaching expiration (within 30 minutes)
-    const now = new Date();
-    const thirtyMinutesFromNow = new Date(now.getTime() + 30 * 60 * 1000);
+    console.log(`Found ${pendingReservations.length} pending reservations approaching expiration`);
 
-    const { data: pendingReservations, error } = await supabase
-      .from("reservations")
-      .select("*")
-      .eq("status", "pending")
-      .eq("is_confirmed", false)
-      .gt("expires_at", now.toISOString())
-      .lt("expires_at", thirtyMinutesFromNow.toISOString());
-
-    if (error) {
-      console.error("Error fetching pending reservations:", error);
-      return new Response(JSON.stringify({ error: error.message }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    console.log(`Found ${pendingReservations?.length || 0} pending reservations approaching expiration`);
-
-    if (!pendingReservations || pendingReservations.length === 0) {
+    if (pendingReservations.length === 0) {
       return new Response(JSON.stringify({ message: "No pending reminders to send" }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    const now = new Date();
     const notifications = [];
 
     for (const reservation of pendingReservations) {
@@ -79,9 +81,11 @@ serve(async (req) => {
     );
   } catch (err) {
     console.error("Unexpected error:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: err instanceof Error ? err.message : "failed" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  } finally {
+    await sql.end({ timeout: 1 });
   }
 });

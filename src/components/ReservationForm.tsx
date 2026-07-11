@@ -205,6 +205,18 @@ const ReservationForm = () => {
                 className="gap-2"
               >
                 <div className="flex items-start space-x-3 rounded-lg border border-sauna-stone/20 p-3">
+                  <RadioGroupItem value="square_online" id="payment-online" className="mt-1" />
+                  <Label htmlFor="payment-online" className="cursor-pointer font-normal">
+                    <span className="flex items-center text-sm font-medium">
+                      オンライン事前決済(おすすめ)
+                      <CreditCard className="h-4 w-4 ml-2" />
+                    </span>
+                    <span className="block text-xs text-muted-foreground mt-1">
+                      クレジットカードで今すぐお支払い。決済完了と同時に予約が確定します(メール確認は不要)
+                    </span>
+                  </Label>
+                </div>
+                <div className="flex items-start space-x-3 rounded-lg border border-sauna-stone/20 p-3">
                   <RadioGroupItem value="onsite" id="payment-onsite" className="mt-1" />
                   <Label htmlFor="payment-onsite" className="cursor-pointer font-normal">
                     <span className="flex items-center text-sm font-medium">
@@ -214,18 +226,6 @@ const ReservationForm = () => {
                     </span>
                     <span className="block text-xs text-muted-foreground mt-1">
                       当日、現地でカードまたは現金でお支払い。仮予約後、メール/SMSのリンクで予約を確定します(2時間有効)
-                    </span>
-                  </Label>
-                </div>
-                <div className="flex items-start space-x-3 rounded-lg border border-sauna-stone/20 p-3">
-                  <RadioGroupItem value="square_online" id="payment-online" className="mt-1" />
-                  <Label htmlFor="payment-online" className="cursor-pointer font-normal">
-                    <span className="flex items-center text-sm font-medium">
-                      オンライン事前決済
-                      <CreditCard className="h-4 w-4 ml-2" />
-                    </span>
-                    <span className="block text-xs text-muted-foreground mt-1">
-                      クレジットカードで今すぐお支払い。決済完了と同時に予約が確定します(メール確認は不要)
                     </span>
                   </Label>
                 </div>

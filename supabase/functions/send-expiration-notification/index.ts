@@ -1,61 +1,67 @@
+// 確認期限(2時間)を過ぎた仮予約に期限切れ通知(メール+SMS)を送り、
+// status を expired に遷移させる(スケジュール実行)。
+//
+// DB アクセスは直接 Postgres(POSTGRES_URL)を使う。本番では自動注入の
+// SUPABASE_SERVICE_ROLE_KEY(legacy キー)が PostgREST に拒否され、
+// supabase-js 経由のクエリが全て失敗していたため置き換えた(2026-07-11)。
+// 注: 対象は現地払いの仮予約(status='pending')のみ。事前決済の pending_payment は
+// expire-event-holds が処理する。
 
-// supabase/functions/send-expiration-notification/index.ts
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.47.2";
+import postgres from "https://deno.land/x/postgresjs@v3.4.5/mod.js";
 import { corsHeaders } from "../_shared/cors.ts";
 import { sendEmail } from "../_shared/email.ts";
 import { sendSMS } from "../_shared/twilio.ts";
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+const getDb = () => {
+  // 本番は POSTGRES_URL（プーラ）を使用。未設定環境（staging 等）では
+  // Supabase が自動提供する SUPABASE_DB_URL にフォールバックする（本番は挙動不変）。
+  const databaseUrl = Deno.env.get('POSTGRES_URL') ?? Deno.env.get('SUPABASE_DB_URL');
+  if (!databaseUrl) throw new Error('Missing POSTGRES_URL / SUPABASE_DB_URL');
+  return postgres(databaseUrl, { max: 1, idle_timeout: 5, connect_timeout: 10 });
+};
+
+// Twilio は E.164 形式(+81...)のみ受け付ける
+const formatPhoneNumber = (phone: string): string => {
+  const digits = phone.replace(/\D/g, '');
+  return digits.startsWith('0') ? '+81' + digits.slice(1) : digits;
+};
 
 serve(async (_req) => {
-  // CORS headers
   if (_req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
-  
+
+  const sql = getDb();
+
   try {
     console.log("Running send-expiration-notification edge function");
-    
-    // Create a Supabase client with the service role key
-    const supabase = createClient(
-      SUPABASE_URL,
-      SUPABASE_SERVICE_ROLE_KEY
-    );
-    
-    // Find all reservations that have expired (past their expires_at time)
-    const { data: expiredReservations, error } = await supabase
-      .from("reservations")
-      .select("*")
-      .eq("status", "pending")
-      .eq("is_confirmed", false) // 重要：is_confirmedがfalseの予約のみを対象に
-      .lt("expires_at", new Date().toISOString());
 
-    if (error) {
-      console.error("Error fetching expired reservations:", error);
-      return new Response(JSON.stringify({ error: error.message }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
-    }
+    // 期限切れへ遷移させてから通知する(先に UPDATE することで、通知失敗時の
+    // 再実行で同じ予約に重複送信されるのを防ぐ)
+    const expiredReservations = await sql`
+      update public.reservations
+      set status = 'expired'
+      where status = 'pending'
+        and is_confirmed = false
+        and expires_at < now()
+      returning id::text, reservation_code, email, phone
+    `;
 
-    console.log(`Found ${expiredReservations?.length || 0} expired reservations`);
+    console.log(`Found ${expiredReservations.length} expired reservations`);
 
-    if (!expiredReservations || expiredReservations.length === 0) {
+    if (expiredReservations.length === 0) {
       return new Response(JSON.stringify({ message: "No expired reservations found" }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
 
-    // Process each expired reservation
     const notifications = [];
 
     for (const reservation of expiredReservations) {
       console.log(`Processing expired reservation: ${reservation.id}`);
-      
-      // Send notification to the user
+
       try {
         const subject = "予約期限切れのお知らせ";
         const message = `
@@ -65,17 +71,15 @@ serve(async (_req) => {
 再度ご予約いただく場合は、弊社ウェブサイトからお手続きください。
         `;
 
-        // Send email notification if email exists
         if (reservation.email) {
           console.log(`Sending expiration email to: ${reservation.email}`);
           await sendEmail(reservation.email, subject, message);
           notifications.push(`Email sent to ${reservation.email}`);
         }
 
-        // Send SMS notification
         if (reservation.phone) {
           console.log(`Sending expiration SMS to: ${reservation.phone}`);
-          await sendSMS(reservation.phone, message);
+          await sendSMS(formatPhoneNumber(reservation.phone), message);
           notifications.push(`SMS sent to ${reservation.phone}`);
         }
       } catch (notificationError) {
@@ -83,34 +87,20 @@ serve(async (_req) => {
       }
     }
 
-    // Update the expired reservations to expired status
-    const { error: updateError } = await supabase
-      .from("reservations")
-      .update({ status: "expired" })
-      .eq("status", "pending")
-      .eq("is_confirmed", false) // 重要：is_confirmedがfalseの予約のみを更新
-      .lt("expires_at", new Date().toISOString());
-
-    if (updateError) {
-      console.error("Error updating expired reservations:", updateError);
-      return new Response(JSON.stringify({ error: updateError.message }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
-    }
-
-    return new Response(JSON.stringify({ 
-      message: "Expired reservations processed successfully", 
-      notifications 
+    return new Response(JSON.stringify({
+      message: "Expired reservations processed successfully",
+      notifications
     }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" }
     });
   } catch (err) {
     console.error("Unexpected error:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" }
-    });
+    return new Response(
+      JSON.stringify({ error: err instanceof Error ? err.message : "failed" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  } finally {
+    await sql.end({ timeout: 1 });
   }
 });

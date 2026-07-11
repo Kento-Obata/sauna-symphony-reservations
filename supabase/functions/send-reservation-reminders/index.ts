@@ -1,16 +1,23 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import postgres from "https://deno.land/x/postgresjs@v3.4.5/mod.js";
 import { format, addDays } from "https://esm.sh/date-fns@3.3.1";
 import { sendAppEmail, buildSimpleEmailHtml } from "../_shared/lovable-email.ts";
 
 const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
 const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
 const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER");
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-import { getTimeSlotLabel } from "../_shared/time-slot-rules.ts";
+import { getTimeSlotLabelViaSql } from "../_shared/time-slot-rules.ts";
+
+// DB アクセスは直接 Postgres(POSTGRES_URL)を使う。本番では自動注入の
+// SUPABASE_SERVICE_ROLE_KEY(legacy キー)が PostgREST に拒否され、
+// supabase-js 経由のクエリが失敗していたため置き換えた(2026-07-11)。
+const getDb = () => {
+  const databaseUrl = Deno.env.get('POSTGRES_URL') ?? Deno.env.get('SUPABASE_DB_URL');
+  if (!databaseUrl) throw new Error('Missing POSTGRES_URL / SUPABASE_DB_URL');
+  return postgres(databaseUrl, { max: 1, idle_timeout: 5, connect_timeout: 10 });
+};
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -29,7 +36,15 @@ const formatPhoneNumber = (phone: string): string => {
   return digits;
 };
 
-const sendEmail = async (to: string, reservation: any, timeSlotLabel: string) => {
+interface ReminderReservation {
+  reservation_code: string;
+  guest_name: string;
+  guest_count: number;
+  water_temperature: number;
+  date: string;
+}
+
+const sendEmail = async (to: string, reservation: ReminderReservation, timeSlotLabel: string) => {
   try {
     const subject = "【明日】サウナUのご予約リマインダー";
     const heading = "明日のご予約のお知らせ";
@@ -64,8 +79,11 @@ Google Maps: https://maps.google.com/maps?q=8Q5GHG7V%2BJ5
   }
 };
 
-const sendSMS = async (phone: string, reservation: any, timeSlotLabel: string) => {
+const sendSMS = async (phone: string, reservation: ReminderReservation, timeSlotLabel: string) => {
   try {
+    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
+      throw new Error("Missing Twilio credentials");
+    }
     const formattedPhone = formatPhoneNumber(phone);
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
     const formData = new URLSearchParams();
@@ -107,38 +125,34 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  try {
-    // Supabaseクライアントの初期化
-    const supabase = createClient(
-      SUPABASE_URL!,
-      SUPABASE_SERVICE_ROLE_KEY!
-    );
+  const sql = getDb();
 
+  try {
     // 明日の日付を取得
     const tomorrow = addDays(new Date(), 1);
     const tomorrowStr = format(tomorrow, "yyyy-MM-dd");
 
     console.log(`明日の予約を確認します: ${tomorrowStr}`);
 
-    // 明日の予約を取得 - キャンセルされた予約を除外
-    const { data: reservations, error } = await supabase
-      .from("reservations")
-      .select("*")
-      .eq("date", tomorrowStr)
-      .neq("status", "cancelled"); // キャンセル済みの予約を除外
+    // 明日の予約を取得。リマインド対象は確定済みのみ
+    // (旧実装の neq('status','cancelled') は pending / 決済待ち / expired も
+    //  含んでしまっていたため、confirmed に絞る)
+    const reservations = await sql`
+      select id::text, reservation_code, guest_name, guest_count, water_temperature,
+             email, phone, status, date::text, time_slot::text
+      from public.reservations
+      where date = ${tomorrowStr}::date
+        and status = 'confirmed'
+    `;
 
-    if (error) {
-      throw error;
-    }
-
-    console.log(`明日の有効な予約数: ${reservations?.length || 0}`);
+    console.log(`明日の有効な予約数: ${reservations.length}`);
 
     // 各予約に対して通知を送信
-    for (const reservation of reservations || []) {
+    for (const reservation of reservations) {
       console.log(`予約を処理中: ${reservation.guest_name} (ステータス: ${reservation.status})`);
 
       // 動的時間帯を取得
-      const timeSlotLabel = await getTimeSlotLabel(supabase, reservation.time_slot, reservation.date);
+      const timeSlotLabel = await getTimeSlotLabelViaSql(sql, reservation.time_slot, reservation.date);
 
       // メールがある場合は送信
       if (reservation.email) {
@@ -152,7 +166,7 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({
         success: true,
-        message: `${reservations?.length || 0}件の予約通知を送信しました`,
+        message: `${reservations.length}件の予約通知を送信しました`,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -164,13 +178,15 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message,
+        error: error instanceof Error ? error.message : "failed",
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,
       }
     );
+  } finally {
+    await sql.end({ timeout: 1 });
   }
 };
 

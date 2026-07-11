@@ -1,9 +1,19 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import postgres from "https://deno.land/x/postgresjs@v3.4.5/mod.js";
 import { sendSMS } from "../_shared/twilio.ts";
 import { sendLineGroupMessage } from "../_shared/line.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { buildSimpleEmailHtml, sendAppEmail } from "../_shared/lovable-email.ts";
+
+// DB アクセスは直接 Postgres(POSTGRES_URL)を使う。本番では自動注入の
+// SUPABASE_SERVICE_ROLE_KEY(legacy キー)が PostgREST に拒否され、
+// supabase-js 経由のクエリ(枠ラベル・access_token 取得)が失敗していたため
+// 置き換えた(2026-07-11)。
+const getDb = () => {
+  const databaseUrl = Deno.env.get('POSTGRES_URL') ?? Deno.env.get('SUPABASE_DB_URL');
+  if (!databaseUrl) throw new Error('Missing POSTGRES_URL / SUPABASE_DB_URL');
+  return postgres(databaseUrl, { max: 1, idle_timeout: 5, connect_timeout: 10 });
+};
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -22,10 +32,7 @@ interface ReservationNotification {
   total_price: number;
 }
 
-import { getTimeSlotLabel as getSharedTimeSlotLabel } from "../_shared/time-slot-rules.ts";
-
-const getTimeSlotLabel = (timeSlot: string, date: string, supabase: any) =>
-  getSharedTimeSlotLabel(supabase, timeSlot, date);
+import { getTimeSlotLabelViaSql } from "../_shared/time-slot-rules.ts";
 
 const formatPhoneNumber = (phone: string): string => {
   const digits = phone.replace(/\D/g, '');
@@ -36,18 +43,18 @@ const handler = async (req: Request): Promise<Response> => {
   console.log("Confirmation notification function called");
 
   if (req.method === "OPTIONS") {
-    return new Response(null, { 
+    return new Response(null, {
       headers: { ...corsHeaders }
     });
   }
+
+  const sql = getDb();
 
   try {
     const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID');
     const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN');
     const TWILIO_PHONE_NUMBER = Deno.env.get('TWILIO_PHONE_NUMBER');
     const OWNER_PHONE_NUMBER = Deno.env.get('OWNER_PHONE_NUMBER');
-    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
     console.log("Environment variables check:", {
       hasTwilioSid: !!TWILIO_ACCOUNT_SID,
@@ -56,12 +63,11 @@ const handler = async (req: Request): Promise<Response> => {
       hasOwnerPhone: !!OWNER_PHONE_NUMBER
     });
 
-    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER || !OWNER_PHONE_NUMBER || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER || !OWNER_PHONE_NUMBER) {
       console.error("Missing required environment variables");
       throw new Error("Server configuration error");
     }
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const reservation: ReservationNotification = await req.json();
     console.log("Received reservation data:", {
       ...reservation,
@@ -75,15 +81,21 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Using stored total price:", totalPrice);
     
     // Get dynamic time slot label
-    const timeSlotLabel = await getTimeSlotLabel(reservation.timeSlot, reservation.date, supabase);
+    const timeSlotLabel = await getTimeSlotLabelViaSql(sql, reservation.timeSlot, reservation.date);
 
     // Fetch access_token to build a signed detail URL (so the link auto-authenticates)
-    const { data: tokenRow } = await supabase
-      .from("reservations")
-      .select("access_token")
-      .eq("reservation_code", reservation.reservationCode)
-      .maybeSingle();
-    const tokenQuery = tokenRow?.access_token ? `?t=${tokenRow.access_token}` : "";
+    let tokenQuery = "";
+    try {
+      const tokenRows = await sql`
+        select access_token
+        from public.reservations
+        where reservation_code = ${reservation.reservationCode}
+        limit 1
+      `;
+      if (tokenRows[0]?.access_token) tokenQuery = `?t=${tokenRows[0].access_token}`;
+    } catch (error) {
+      console.error("access_token lookup error:", error);
+    }
     // 既定は本番フロント。staging/ローカル検証時は APP_BASE_URL で上書き可（本番は未設定なので不変）。
     const BASE_URL = Deno.env.get('APP_BASE_URL') ?? "https://www.u-sauna-private.com";
     const reservationDetailUrl = `${BASE_URL}/reservation/${reservation.reservationCode}${tokenQuery}`;
@@ -222,13 +234,15 @@ ${reservationDetailUrl}
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message,
+        error: error instanceof Error ? error.message : "notification failed",
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,
       }
     );
+  } finally {
+    await sql.end({ timeout: 1 });
   }
 };
 

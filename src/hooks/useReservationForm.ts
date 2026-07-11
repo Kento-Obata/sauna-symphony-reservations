@@ -20,7 +20,8 @@ export const useReservationForm = () => {
   // 水温を常に15°Cに固定
   const [temperature, setTemperature] = useState("15");
   // 'onsite'(現地払い・従来フロー) / 'square_online'(事前決済: 支払い完了で確定)
-  const [paymentMethod, setPaymentMethod] = useState<"onsite" | "square_online">("onsite");
+  // 既定は事前決済(オーナー要望 2026-07-11)
+  const [paymentMethod, setPaymentMethod] = useState<"onsite" | "square_online">("square_online");
   const [selectedOptions, setSelectedOptions] = useState<ReservationOption[]>([]);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -38,6 +39,7 @@ export const useReservationForm = () => {
     setPeople("");
     // リセット時も15°Cに固定
     setTemperature("15");
+    setPaymentMethod("square_online");
     setSelectedOptions([]);
     setShowConfirmDialog(false);
     setIsSubmitting(false);

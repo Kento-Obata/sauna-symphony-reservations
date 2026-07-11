@@ -50,6 +50,37 @@ export const getDefaultSlotLabel = (timeSlot: string, date: string): string => {
 };
 
 /**
+ * getTimeSlotLabel の直接 Postgres 版。
+ * 本番では自動注入の SUPABASE_SERVICE_ROLE_KEY(legacy キー)が PostgREST に
+ * 拒否されるため、supabase-js 経由の getTimeSlotLabel が機能しない。
+ * 通知系関数はこちら(POSTGRES_URL 直結の sql)を使うこと。
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const getTimeSlotLabelViaSql = async (
+  sql: any,
+  timeSlot: string,
+  date: string,
+): Promise<string> => {
+  try {
+    const rows = await sql`
+      select start_time, end_time
+      from public.daily_time_slots
+      where date = ${date}::date
+        and time_slot = ${timeSlot}::public.time_slot
+        and is_active = true
+      limit 1
+    `;
+    if (rows[0]) {
+      return `${String(rows[0].start_time).slice(0, 5)}-${String(rows[0].end_time).slice(0, 5)}`;
+    }
+    return getDefaultSlotLabel(timeSlot, date);
+  } catch (e) {
+    console.error("getTimeSlotLabelViaSql error:", e);
+    return getDefaultSlotLabel(timeSlot, date);
+  }
+};
+
+/**
  * 通知などで使う「時間帯ラベル」を返す唯一の関数。
  * 1) daily_time_slots に明示行 (is_active) があればそれを優先
  * 2) 無ければデフォルトルール (土日祝4枠/平日3枠) を適用
