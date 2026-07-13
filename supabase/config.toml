@@ -66,3 +66,7 @@ verify_jwt = true
 # 同上(貸切予約の管理者キャンセル・返金)
 [functions.admin-cancel-reservation]
 verify_jwt = true
+
+# pg_cron から CRON_SHARED_SECRET の Bearer で呼ばれる(関数内で定数時間比較)
+[functions.line-staff-daily-push]
+verify_jwt = false
