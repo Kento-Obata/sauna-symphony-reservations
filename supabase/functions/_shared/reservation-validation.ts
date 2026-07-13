@@ -34,11 +34,22 @@ export interface ReservationInput {
   waterTemperature?: unknown;
 }
 
+/** 当日予約お断りの案内文。フォーム外の経路(直接POST)にも同じ文言を返す。 */
+export const SAME_DAY_RESERVATION_MESSAGE =
+  "当日のご予約はこちらのフォームからはお受けできません。Instagram（@u__sauna）のDMにてお問い合わせください";
+
 /**
  * 予約入力を検証し、日本語のエラーメッセージ配列を返す（空配列なら妥当）。
  * ここに単一定義を置くことで、通知・admin作成など他経路と検証がぶれないようにする。
+ *
+ * todayJstYmd (JSTの今日 "YYYY-MM-DD") を渡すと、当日・過去日付を拒否する。
+ * 当日予約は Instagram DM 案内の運用のためフォームでは受け付けない(2026-07-13)。
+ * 管理画面からの当日代理入力は直接 insert のためこの検証を通らず、影響しない。
  */
-export const validateReservationInput = (body: ReservationInput): string[] => {
+export const validateReservationInput = (
+  body: ReservationInput,
+  todayJstYmd?: string,
+): string[] => {
   const { date, timeSlot, guestName, guestCount, email, phone, waterTemperature } = body;
   const errors: string[] = [];
 
@@ -47,6 +58,10 @@ export const validateReservationInput = (body: ReservationInput): string[] => {
   }
   if (typeof date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
     errors.push("日付の形式が正しくありません");
+  } else if (todayJstYmd && date <= todayJstYmd) {
+    errors.push(
+      date === todayJstYmd ? SAME_DAY_RESERVATION_MESSAGE : "過去の日付は予約できません",
+    );
   }
   if (typeof timeSlot !== "string" || !VALID_TIME_SLOTS.has(timeSlot)) {
     errors.push("時間帯が不正です");

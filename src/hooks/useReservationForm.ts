@@ -7,6 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useShopClosures } from "@/hooks/useShopClosures";
 import { isShopClosed } from "@/utils/dateUtils";
+import { getJstTodayYmd } from "@/utils/jstDate";
 import { getTotalPrice } from "@/utils/priceCalculations";
 import { ReservationOption } from "@/types/option";
 
@@ -46,9 +47,18 @@ export const useReservationForm = () => {
     setReservationCode(undefined);
   };
 
+  // 当日予約はフォームでは受け付けない(Instagram DM 案内の運用)。
+  // カレンダー側でも選択不可だが、日付跨ぎ(23時台に選択→0時以降に送信)に備えて送信時にも検証する
+  const isSameDayOrPast = (d: Date) => format(d, "yyyy-MM-dd") <= getJstTodayYmd();
+
   const validateForm = () => {
     if (!date || !isValid(date)) {
       toast.error("有効な日付を選択してください。");
+      return false;
+    }
+
+    if (isSameDayOrPast(date)) {
+      toast.error("当日のご予約はこちらのフォームからはお受けできません。Instagram（@u__sauna）のDMにてお問い合わせください。");
       return false;
     }
 
@@ -96,7 +106,12 @@ export const useReservationForm = () => {
         return;
       }
 
-      // 予約確定前に再度休業日チェック
+      // 予約確定前に再度、当日・休業日チェック
+      if (isSameDayOrPast(date)) {
+        toast.error("当日のご予約はこちらのフォームからはお受けできません。Instagram（@u__sauna）のDMにてお問い合わせください。");
+        setIsSubmitting(false);
+        return;
+      }
       if (isShopClosed(date, closures)) {
         toast.error("選択された日付は休業日です。別の日を選択してください。");
         setIsSubmitting(false);

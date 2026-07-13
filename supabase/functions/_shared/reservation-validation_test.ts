@@ -5,6 +5,7 @@ import {
 } from "https://deno.land/std@0.190.0/testing/asserts.ts";
 import {
   normalizeOptions,
+  SAME_DAY_RESERVATION_MESSAGE,
   validateReservationInput,
 } from "./reservation-validation.ts";
 
@@ -38,6 +39,31 @@ Deno.test("日付形式が不正", () => {
       "日付の形式が正しくありません",
     ),
   );
+});
+
+Deno.test("todayJstYmd 指定時: 当日は Instagram DM 案内で拒否", () => {
+  assert(
+    validateReservationInput({ ...validBody(), date: "2026-08-03" }, "2026-08-03")
+      .includes(SAME_DAY_RESERVATION_MESSAGE),
+  );
+});
+
+Deno.test("todayJstYmd 指定時: 過去日付は拒否", () => {
+  assert(
+    validateReservationInput({ ...validBody(), date: "2026-08-02" }, "2026-08-03")
+      .includes("過去の日付は予約できません"),
+  );
+});
+
+Deno.test("todayJstYmd 指定時: 翌日以降は妥当", () => {
+  assertEquals(
+    validateReservationInput({ ...validBody(), date: "2026-08-04" }, "2026-08-03"),
+    [],
+  );
+});
+
+Deno.test("todayJstYmd 未指定なら日付下限チェック無し(従来互換)", () => {
+  assertEquals(validateReservationInput({ ...validBody(), date: "2020-01-01" }), []);
 });
 
 Deno.test("時間帯が不正な列挙値", () => {

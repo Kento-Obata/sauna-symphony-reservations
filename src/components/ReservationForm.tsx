@@ -150,8 +150,20 @@ const ReservationForm = () => {
       
       <form onSubmit={handleFormSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="w-full flex justify-center md:justify-start">
+          <div className="w-full flex flex-col items-center md:items-start gap-2">
             <ReservationCalendar date={date} setDate={handleDateChange} reservations={reservations} />
+            <p className="text-xs text-muted-foreground">
+              当日のご予約は
+              <a
+                href="https://www.instagram.com/u__sauna/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline"
+              >
+                Instagram（@u__sauna）
+              </a>
+              のDMにて承ります。
+            </p>
           </div>
           
           <ReservationDetails

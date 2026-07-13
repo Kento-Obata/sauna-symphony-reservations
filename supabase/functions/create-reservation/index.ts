@@ -5,6 +5,7 @@ import { createPaymentLink, deletePaymentLink } from "../_shared/square.ts";
 import { acquireSlotLock, TIME_SLOT_LABELS } from "../_shared/reservation-payment.ts";
 import { formatJstDateLabel } from "../_shared/event-format.ts";
 import { getClientIp, isRateLimited, recordAttempt } from "../_shared/rate-limit.ts";
+import { getJstTodayYmd } from "../_shared/date-jst.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -70,7 +71,8 @@ const handler = async (req: Request): Promise<Response> => {
     const { date, timeSlot, guestName, guestCount, email, phone, waterTemperature } = body;
     const selectedOptions = normalizeOptions(body.selectedOptions);
 
-    const errors = validateReservationInput(body);
+    // 当日・過去日付は拒否(当日は Instagram DM 案内の運用)
+    const errors = validateReservationInput(body, getJstTodayYmd());
 
     if (errors.length > 0) {
       return new Response(

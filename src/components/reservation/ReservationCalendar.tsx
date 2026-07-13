@@ -1,6 +1,7 @@
 import React from "react";
 import { Calendar } from "@/components/ui/calendar";
-import { isBefore, isAfter, addMonths, format } from "date-fns";
+import { isAfter, addMonths, format } from "date-fns";
+import { getJstTodayYmd } from "@/utils/jstDate";
 import { ReservationStatus } from "@/components/ReservationStatus";
 import { Reservation } from "@/types/reservation";
 import { useShopClosures } from "@/hooks/useShopClosures";
@@ -18,10 +19,14 @@ export const ReservationCalendar = ({
   setDate,
   reservations,
 }: ReservationCalendarProps) => {
-  const today = new Date();
-  const threeMonthsFromNow = addMonths(today, 3);
+  const threeMonthsFromNow = addMonths(new Date(), 3);
   const { closures: shopClosures } = useShopClosures();
   const { data: dailyTimeSlots } = useDailyTimeSlots();
+
+  // 当日予約はフォームでは受け付けない(Instagram DM 案内の運用)ため、
+  // JST の暦日文字列で比較して今日以前を選択不可にする(端末タイムゾーン非依存)
+  const isOnOrBeforeJstToday = (day: Date) =>
+    format(day, "yyyy-MM-dd") <= getJstTodayYmd();
 
   const isDateClosed = (day: Date) => {
     const dateString = format(day, 'yyyy-MM-dd');
@@ -31,7 +36,7 @@ export const ReservationCalendar = ({
   const getDayContent = (day: Date) => {
     if (
       !reservations ||
-      isBefore(day, today) ||
+      isOnOrBeforeJstToday(day) ||
       isAfter(day, threeMonthsFromNow)
     ) return null;
 
@@ -59,7 +64,7 @@ export const ReservationCalendar = ({
 
   const isDateDisabled = (day: Date) => {
     if (
-      isBefore(day, today) ||
+      isOnOrBeforeJstToday(day) ||
       isAfter(day, threeMonthsFromNow) ||
       isDateClosed(day)
     ) return true;
