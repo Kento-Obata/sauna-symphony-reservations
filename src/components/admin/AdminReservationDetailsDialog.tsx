@@ -133,13 +133,32 @@ export const AdminReservationDetailsDialog = ({
     switch (status) {
       case "pending":
         return "仮予約";
+      case "pending_payment":
+        return "決済待ち(仮予約)";
       case "confirmed":
         return "予約確定";
       case "cancelled":
         return "キャンセル済み";
+      case "expired":
+        return "期限切れ";
       default:
         return status;
     }
+  };
+
+  // 事前決済(Square)の支払い状況。onsite・旧データ(未設定)は現地払い扱い
+  const getPaymentDisplay = (r: Reservation) => {
+    if (r.payment_method === "square_online") {
+      switch (r.payment_status) {
+        case "paid":
+          return <span className="font-medium text-green-600">事前決済済み(Square)</span>;
+        case "refunded":
+          return <span className="font-medium text-red-600">返金済み(Square)</span>;
+        default:
+          return <span className="text-amber-600">事前決済・未払い(決済待ち)</span>;
+      }
+    }
+    return "現地払い";
   };
 
   // Calculate total options price
@@ -246,10 +265,7 @@ export const AdminReservationDetailsDialog = ({
   const handleSave = async () => {
     try {
       // 支払い済み予約の金額変更は Square 決済額と乖離する(差額の自動調整はしない)
-      if (
-        (reservation as { payment_status?: string }).payment_status === "paid" &&
-        totalPrice !== reservation.total_price
-      ) {
+      if (reservation.payment_status === "paid" && totalPrice !== reservation.total_price) {
         toast.warning(
           "事前決済済みの予約です。金額の変更は自動では返金/追加請求されません。差額は Square ダッシュボード等で手動対応してください。",
         );
@@ -368,7 +384,7 @@ export const AdminReservationDetailsDialog = ({
     try {
       // 支払い済み(Square事前決済)は返金を伴うため admin-cancel-reservation 経由。
       // 未払いは従来どおり直接 UPDATE
-      if ((reservation as { payment_status?: string }).payment_status === "paid") {
+      if (reservation.payment_status === "paid") {
         const { data, error } = await supabase.functions.invoke("admin-cancel-reservation", {
           body: { reservationId: reservation.id },
         });
@@ -677,6 +693,9 @@ export const AdminReservationDetailsDialog = ({
             <div>
               {getStatusDisplay(reservation.status)}
             </div>
+
+            <div className="text-muted-foreground">支払い:</div>
+            <div>{getPaymentDisplay(reservation)}</div>
 
             <div className="text-muted-foreground">料金:</div>
             <div>
