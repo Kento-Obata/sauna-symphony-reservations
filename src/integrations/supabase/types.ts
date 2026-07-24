@@ -14,6 +14,84 @@ export type Database = {
   }
   public: {
     Tables: {
+      bulk_email_campaigns: {
+        Row: {
+          body_html: string
+          completed_at: string | null
+          created_at: string
+          failed_count: number
+          id: string
+          sent_count: number
+          status: string
+          subject: string
+          total_recipients: number
+        }
+        Insert: {
+          body_html: string
+          completed_at?: string | null
+          created_at?: string
+          failed_count?: number
+          id?: string
+          sent_count?: number
+          status?: string
+          subject: string
+          total_recipients?: number
+        }
+        Update: {
+          body_html?: string
+          completed_at?: string | null
+          created_at?: string
+          failed_count?: number
+          id?: string
+          sent_count?: number
+          status?: string
+          subject?: string
+          total_recipients?: number
+        }
+        Relationships: []
+      }
+      customers: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          last_visit_date: string | null
+          marketing_email_opt_in: boolean
+          name: string | null
+          notes: string | null
+          phone: string | null
+          source: string
+          updated_at: string
+          visit_count: number
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          last_visit_date?: string | null
+          marketing_email_opt_in?: boolean
+          name?: string | null
+          notes?: string | null
+          phone?: string | null
+          source?: string
+          updated_at?: string
+          visit_count?: number
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          last_visit_date?: string | null
+          marketing_email_opt_in?: boolean
+          name?: string | null
+          notes?: string | null
+          phone?: string | null
+          source?: string
+          updated_at?: string
+          visit_count?: number
+        }
+        Relationships: []
+      }
       approved_shifts: {
         Row: {
           created_at: string
