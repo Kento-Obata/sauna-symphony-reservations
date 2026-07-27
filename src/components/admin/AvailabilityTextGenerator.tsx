@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { addWeeks, subWeeks, format } from "date-fns";
+import { addDays, addWeeks, subWeeks, format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,20 +8,22 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronLeft, ChevronRight, Copy, Check } from "lucide-react";
 import { generateAvailabilityText, getMondayOfWeek } from "@/utils/availabilityUtils";
-import { Reservation } from "@/types/reservation";
 import { useShopClosures } from "@/hooks/useShopClosures";
 import { useDailyTimeSlots } from "@/hooks/useDailyTimeSlots";
+import { useAdminReservations } from "@/hooks/useAdminReservations";
 import { toast } from "sonner";
 
-interface AvailabilityTextGeneratorProps {
-  reservations?: Reservation[];
-}
-
-export const AvailabilityTextGenerator = ({ reservations = [] }: AvailabilityTextGeneratorProps) => {
+export const AvailabilityTextGenerator = () => {
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(getMondayOfWeek(new Date()));
   const [copied, setCopied] = useState(false);
   const { closures: shopClosures } = useShopClosures();
   const { data: dailyTimeSlots } = useDailyTimeSlots();
+
+  // 表示中の週(月曜〜日曜)だけを取得する。過去の週でも実績どおりの空き枠になる
+  const { data: reservations = [] } = useAdminReservations({
+    from: format(currentWeekStart, "yyyy-MM-dd"),
+    to: format(addDays(currentWeekStart, 6), "yyyy-MM-dd"),
+  });
 
   const handlePrevWeek = () => setCurrentWeekStart(subWeeks(currentWeekStart, 1));
   const handleNextWeek = () => setCurrentWeekStart(addWeeks(currentWeekStart, 1));

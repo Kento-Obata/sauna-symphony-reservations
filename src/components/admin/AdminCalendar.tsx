@@ -15,6 +15,7 @@ import { Reservation, TimeSlot } from "@/types/reservation";
 import { AdminReservationDialog } from "./AdminReservationDialog";
 import { AdminReservationDetailsDialog } from "./AdminReservationDetailsDialog";
 import { useShopClosures } from "@/hooks/useShopClosures";
+import { useAdminReservations } from "@/hooks/useAdminReservations";
 import { AdminCalendarEventDialog } from "./AdminCalendarEventDialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,15 +25,13 @@ import { toast } from "sonner";
 import { getApplicableSlotsForDate, getDefaultSlotTimesForDate, isNightSlotDefault, WEEKEND_4SLOT_TIMES } from "@/utils/timeSlotRules";
 
 interface AdminCalendarProps {
-  reservations?: Reservation[];
   onDateSelect?: (date: Date) => void;
   onCustomerDetailClick?: (userKey: string) => void;
 }
 
-export const AdminCalendar = ({ 
-  reservations = [], 
+export const AdminCalendar = ({
   onDateSelect,
-  onCustomerDetailClick 
+  onCustomerDetailClick
 }: AdminCalendarProps) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -48,15 +47,20 @@ export const AdminCalendar = ({
   const start = startOfWeek(currentDate, { weekStartsOn: 1 });
   const end = endOfWeek(currentDate, { weekStartsOn: 1 });
   const days = eachDayOfInterval({ start, end });
+  const weekStart = format(start, "yyyy-MM-dd");
+  const weekEnd = format(end, "yyyy-MM-dd");
+
+  // 表示中の週だけを取得する。過去の週に移動しても予約が表示される
+  const { data: reservations = [] } = useAdminReservations({ from: weekStart, to: weekEnd });
 
   const { data: events } = useQuery({
-    queryKey: ["calendar-events", format(start, "yyyy-MM-dd"), format(end, "yyyy-MM-dd")],
+    queryKey: ["calendar-events", weekStart, weekEnd],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("calendar_events")
         .select("*")
-        .gte("date", format(start, "yyyy-MM-dd"))
-        .lte("date", format(end, "yyyy-MM-dd"));
+        .gte("date", weekStart)
+        .lte("date", weekEnd);
 
       if (error) throw error;
       return data;
@@ -66,13 +70,13 @@ export const AdminCalendar = ({
   // Detect which days in the current week have a `night` slot enabled.
   // Only render the 4th row when at least one day in the week has it.
   const { data: weekDailySlots } = useQuery({
-    queryKey: ["daily_time_slots_week", format(start, "yyyy-MM-dd"), format(end, "yyyy-MM-dd")],
+    queryKey: ["daily_time_slots_week", weekStart, weekEnd],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("daily_time_slots")
         .select("date, time_slot, is_active")
-        .gte("date", format(start, "yyyy-MM-dd"))
-        .lte("date", format(end, "yyyy-MM-dd"));
+        .gte("date", weekStart)
+        .lte("date", weekEnd);
       if (error) throw error;
       return data;
     },

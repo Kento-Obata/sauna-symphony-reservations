@@ -12,14 +12,19 @@ import { ja } from "date-fns/locale";
 
 interface AdminSearchResultsProps {
   reservations: Reservation[];
+  isLoading?: boolean;
+  /** 上限件数に達しており、さらに古い予約が隠れている可能性がある */
+  isTruncated?: boolean;
   onStatusChange: (id: string, status: string, isConfirmed?: boolean) => void;
   onCustomerDetailClick?: (userKey: string) => void;
 }
 
-export const AdminSearchResults = ({ 
-  reservations, 
+export const AdminSearchResults = ({
+  reservations,
+  isLoading = false,
+  isTruncated = false,
   onStatusChange,
-  onCustomerDetailClick 
+  onCustomerDetailClick
 }: AdminSearchResultsProps) => {
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
@@ -47,6 +52,13 @@ export const AdminSearchResults = ({
       <Card>
         <CardHeader>
           <CardTitle>検索結果</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            {isLoading
+              ? "検索中..."
+              : isTruncated
+                ? `新しい順に${reservations.length}件を表示しています(条件を絞り込んでください)`
+                : `${reservations.length}件(過去の予約を含む)`}
+          </p>
         </CardHeader>
         <CardContent>
           <Table>

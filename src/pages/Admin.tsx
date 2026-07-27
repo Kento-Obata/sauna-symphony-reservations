@@ -20,6 +20,7 @@ import { DailyTimeSlotManager } from "@/components/admin/DailyTimeSlotManager";
 import { TimeSlotPatternManager } from "@/components/admin/TimeSlotPatternManager";
 import { EventManager } from "@/components/admin/EventManager";
 import { useAdminReservations } from "@/hooks/useAdminReservations";
+import { ADMIN_SEARCH_LIMIT, useAdminReservationSearch } from "@/hooks/useAdminReservationSearch";
 
 const Admin = () => {
   const [showNewReservationDialog, setShowNewReservationDialog] = useState(false);
@@ -31,6 +32,14 @@ const Admin = () => {
   const [dateQuery, setDateQuery] = useState<Date | undefined>(undefined);
   const [activeTab, setActiveTab] = useState("reservations");
   const [selectedUserKey, setSelectedUserKey] = useState<string | null>(null);
+
+  const hasSearchQuery = Boolean(nameQuery || phoneQuery || dateQuery);
+  // 検索は過去日も対象にするためサーバ側で実行する(一覧は今日以降しか保持していない)
+  const { data: searchResults, isSearching } = useAdminReservationSearch({
+    name: nameQuery,
+    phone: phoneQuery,
+    date: dateQuery ? format(dateQuery, "yyyy-MM-dd") : undefined,
+  });
 
   const handleNewReservation = () => {
     setSelectedDate(new Date());
@@ -58,7 +67,8 @@ const Admin = () => {
     try {
       // 支払い済み(Square事前決済)の予約は返金を伴うため、直接UPDATEではなく
       // admin-cancel-reservation(返金 + 顧客通知)を経由する
-      const target = reservations?.find((r) => r.id === id);
+      const target =
+        reservations?.find((r) => r.id === id) ?? searchResults?.find((r) => r.id === id);
       if (target?.payment_status === "paid") {
         if (status !== "cancelled") {
           toast.error("事前決済済みの予約はキャンセル(自動返金)のみ操作できます");
@@ -107,19 +117,6 @@ const Admin = () => {
     setSelectedUserKey(userKey);
     setActiveTab("customers");
   };
-
-  const filteredReservations = reservations?.filter((reservation) => {
-    const matchesName = reservation.guest_name
-      .toLowerCase()
-      .includes(nameQuery.toLowerCase());
-    const matchesPhone = reservation.phone
-      .toLowerCase()
-      .includes(phoneQuery.toLowerCase());
-    const matchesDate = dateQuery
-      ? reservation.date === format(dateQuery, "yyyy-MM-dd")
-      : true;
-    return matchesName && matchesPhone && matchesDate;
-  });
 
   const upcomingReservations = reservations?.filter(
     (reservation) => reservation.status !== "cancelled" && 
@@ -175,10 +172,12 @@ const Admin = () => {
             onClearFilters={handleClearFilters}
           />
 
-          {(nameQuery || phoneQuery || dateQuery) && (
+          {hasSearchQuery && (
             <div className="mb-8">
               <AdminSearchResults
-                reservations={filteredReservations || []}
+                reservations={searchResults || []}
+                isLoading={isSearching}
+                isTruncated={(searchResults?.length ?? 0) >= ADMIN_SEARCH_LIMIT}
                 onStatusChange={handleStatusChange}
                 onCustomerDetailClick={handleCustomerDetailClick}
               />
@@ -187,8 +186,7 @@ const Admin = () => {
 
           <div className="grid lg:grid-cols-3 gap-8 mb-8">
             <div className="lg:col-span-2">
-              <AdminCalendar 
-                reservations={reservations} 
+              <AdminCalendar
                 onDateSelect={setSelectedDate}
                 onCustomerDetailClick={handleCustomerDetailClick}
               />
@@ -215,7 +213,7 @@ const Admin = () => {
         </TabsContent>
 
         <TabsContent value="availability" className="space-y-6">
-          <AvailabilityTextGenerator reservations={reservations} />
+          <AvailabilityTextGenerator />
         </TabsContent>
 
         <TabsContent value="closures" className="space-y-6">
