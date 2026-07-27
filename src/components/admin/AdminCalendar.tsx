@@ -273,7 +273,7 @@ export const AdminCalendar = ({
               {days.map((day) => {
                 const slotReservations = getReservationsForDateAndSlot(day, slot);
                 const isBlocked = slotReservations.some((r) => r.guest_name === "休枠");
-                // その日にこの枠が既定で開いていない（平日8/1以降の午前 / 夜の非稼働日）かつ
+                // その日にこの枠が既定で開いていない（平日8/1以降の午前・午後 / 夜の非稼働日）かつ
                 // 予約なし → 顧客にはおやすみ。管理者は上書き予約できるようクリックは有効のまま、
                 // 表示だけ「おやすみ」で区別する（明示的に開けた日・予約のある日は通常表示）。
                 const isClosedForCustomers =

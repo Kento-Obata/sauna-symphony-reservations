@@ -22,40 +22,56 @@ const times = (date: string, slots: string[]) =>
   });
 
 describe("平日4枠ルール（RULE_WEEKDAY_4SLOT_FROM = 2026-08-01）", () => {
-  it("8/1以降の平日: 午前おやすみ + 午後/夕方/夜の3枠稼働", () => {
+  it("8/1以降の平日: 午前・午後おやすみ + 夕方/夜の2枠稼働", () => {
     expect(getApplicableSlotsForDate(WEEKDAY_POST)).toEqual([
-      "afternoon",
       "evening",
       "night",
     ]);
-    expect(getMaxSlotsForDate(WEEKDAY_POST)).toBe(3);
+    expect(getMaxSlotsForDate(WEEKDAY_POST)).toBe(2);
     expect(isWeekday4SlotDate(WEEKDAY_POST)).toBe(true);
   });
 
   it("8/1以降の平日: 時間帯は土日と同一の統一4枠時間", () => {
-    expect(times(WEEKDAY_POST, ["afternoon", "evening", "night"])).toEqual([
-      "afternoon 13:00-15:30",
+    expect(times(WEEKDAY_POST, ["evening", "night"])).toEqual([
       "evening 16:00-18:30",
       "night 19:00-21:30",
     ]);
-    // 午前を開放した場合の既定時刻
+    // 既定おやすみの枠も、開放した場合／既存予約の表示に使う時刻は統一4枠のまま
     expect(getDefaultSlotTimesForDate(WEEKDAY_POST, "morning")).toEqual({
       start: "10:00",
       end: "12:30",
     });
+    expect(getDefaultSlotTimesForDate(WEEKDAY_POST, "afternoon")).toEqual({
+      start: "13:00",
+      end: "15:30",
+    });
   });
 
-  it("8/1以降の平日: 管理画面で午前を明示開放（active morning 行）すると4枠になる", () => {
-    const openMorning = [
-      { date: WEEKDAY_POST, time_slot: "morning", is_active: true },
+  it("8/1以降の平日: 管理画面で午後を明示開放（active afternoon 行）すると3枠になる", () => {
+    // 既に平日午後の予約が入っている日を個別に開けるための運用パス
+    const openAfternoon = [
+      { date: WEEKDAY_POST, time_slot: "afternoon", is_active: true },
     ];
-    expect(getApplicableSlotsForDate(WEEKDAY_POST, openMorning)).toEqual([
+    expect(getApplicableSlotsForDate(WEEKDAY_POST, openAfternoon)).toEqual([
+      "afternoon",
+      "evening",
+      "night",
+    ]);
+    expect(getMaxSlotsForDate(WEEKDAY_POST, openAfternoon)).toBe(3);
+  });
+
+  it("8/1以降の平日: 午前・午後の両方を明示開放すると4枠になる", () => {
+    const openBoth = [
+      { date: WEEKDAY_POST, time_slot: "morning", is_active: true },
+      { date: WEEKDAY_POST, time_slot: "afternoon", is_active: true },
+    ];
+    expect(getApplicableSlotsForDate(WEEKDAY_POST, openBoth)).toEqual([
       "morning",
       "afternoon",
       "evening",
       "night",
     ]);
-    expect(getMaxSlotsForDate(WEEKDAY_POST, openMorning)).toBe(4);
+    expect(getMaxSlotsForDate(WEEKDAY_POST, openBoth)).toBe(4);
   });
 
   it("8/1より前の平日: 従来3枠・従来時間のまま（既存予約の表示時刻を保護）", () => {
@@ -132,7 +148,6 @@ describe("既存挙動の維持（回帰防止）", () => {
 
   it("getDefaultApplicableSlots は占有・明示行を除いた既定集合を返す", () => {
     expect(getDefaultApplicableSlots(WEEKDAY_POST)).toEqual([
-      "afternoon",
       "evening",
       "night",
     ]);

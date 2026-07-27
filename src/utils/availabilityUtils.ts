@@ -40,7 +40,7 @@ export const isTimeSlotOccupied = (
 
 // その日に表示すべき時間枠は timeSlotRules.getApplicableSlotsForDate に集約。
 //  - 土日祝(6/6〜): 4 枠
-//  - 平日(8/1〜): 午後・夕方・夜（午前は既定おやすみ）
+//  - 平日(8/1〜): 夕方・夜（午前・午後は既定おやすみ）
 //  - それ以外(従来): 午前・午後・夕方
 //  - いずれも明示的な active 行がある枠は追加で開放
 export const getAvailableTimeSlotsForDate = (

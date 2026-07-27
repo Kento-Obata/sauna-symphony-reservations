@@ -9,9 +9,14 @@ import type { TimeSlot } from "@/types/reservation";
 export const RULE_DEFAULT_4SLOT_FROM = "2026-06-06";
 
 /**
- * 「この日付以降、平日も土日と同じ 4 枠時間へ統一。ただし午前(10:00-12:30)は既定でおやすみ」
+ * 「この日付以降、平日も土日と同じ 4 枠時間へ統一。ただし午前(10:00-12:30) と
+ * 午後(13:00-15:30) は既定でおやすみ＝稼働は夕方・夜の 2 枠」
  * という平日ルールの開始日。この日より前の平日は従来どおり（3枠・従来時間）。
  * 既存の平日予約の表示時刻を遡って変えないよう、開始日で区切る。
+ *
+ * 既定おやすみでも枠の「時刻」は WEEKEND_4SLOT_TIMES を返し続けるため、
+ * 既に入っている平日午後の予約は表示時刻も通知ラベルも変わらない。
+ * 個別に開けたい日は daily_time_slots に明示 active 行を入れる。
  */
 export const RULE_WEEKDAY_4SLOT_FROM = "2026-08-01";
 
@@ -103,7 +108,7 @@ export const isWeekday4SlotDate = (date: Date | string): boolean => {
  * その日付で「既定で開いている枠」の一覧。
  * （予約占有フィルタや、管理画面で個別に開いた明示行の追加分は含めない基準集合）
  *  - 土日祝(6/6〜, 明示行なし): 午前・午後・夕方・夜 の 4 枠
- *  - 平日(8/1〜): 午後・夕方・夜（午前は既定おやすみ）
+ *  - 平日(8/1〜): 夕方・夜（午前・午後は既定おやすみ）
  *  - それ以外(従来): 午前・午後・夕方
  */
 export const getDefaultApplicableSlots = (
@@ -114,7 +119,7 @@ export const getDefaultApplicableSlots = (
     return ["morning", "afternoon", "evening", "night"];
   }
   if (isWeekday4SlotDate(date)) {
-    return ["afternoon", "evening", "night"];
+    return ["evening", "night"];
   }
   return ["morning", "afternoon", "evening"];
 };
@@ -128,7 +133,7 @@ export const isNightSlotDefault = (
 /**
  * その日付に表示すべき枠一覧（予約占有フィルタ前）。
  * 既定集合に加え、明示的な active 行がある枠を開く
- * （例: 平日 8/1〜の「午前おやすみ」を、特定日だけ明示行で開放する）。
+ * （例: 平日 8/1〜の「午前・午後おやすみ」を、特定日だけ明示行で開放する）。
  */
 export const getApplicableSlotsForDate = (
   date: Date | string,

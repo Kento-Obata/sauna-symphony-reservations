@@ -9,19 +9,17 @@ const resv = (date: string, slot: string, status = "confirmed"): Reservation =>
 const closure = (date: string): ShopClosure => ({ date } as unknown as ShopClosure);
 
 describe("getAvailableTimeSlotsForDate（占有・定休の反映）", () => {
-  it("平日8/1以降: 午前おやすみ。午後が予約済みなら残りは夕方・夜", () => {
+  it("平日8/1以降: 午前・午後おやすみ。夕方が予約済みなら残りは夜のみ", () => {
     const date = new Date(2026, 7, 3); // 2026-08-03 月
-    const reservations = [resv("2026-08-03", "afternoon")];
+    const reservations = [resv("2026-08-03", "evening")];
     expect(getAvailableTimeSlotsForDate(date, reservations, [], [])).toEqual([
-      "evening",
       "night",
     ]);
   });
 
-  it("平日8/1以降: 予約が無ければ午後・夕方・夜が空き（午前は出ない）", () => {
+  it("平日8/1以降: 予約が無ければ夕方・夜が空き（午前・午後は出ない）", () => {
     const date = new Date(2026, 7, 3);
     expect(getAvailableTimeSlotsForDate(date, [], [], [])).toEqual([
-      "afternoon",
       "evening",
       "night",
     ]);
@@ -46,9 +44,8 @@ describe("getAvailableTimeSlotsForDate（占有・定休の反映）", () => {
 
   it("キャンセル済み(status=cancelled)は占有扱いしない", () => {
     const date = new Date(2026, 7, 3);
-    const reservations = [resv("2026-08-03", "afternoon", "cancelled")];
+    const reservations = [resv("2026-08-03", "evening", "cancelled")];
     expect(getAvailableTimeSlotsForDate(date, reservations, [], [])).toEqual([
-      "afternoon",
       "evening",
       "night",
     ]);
