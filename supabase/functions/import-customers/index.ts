@@ -52,7 +52,7 @@ function parseCsv(csv: string): CustomerRow[] {
 }
 
 function normalizePhone(raw: string): string {
-  const digits = raw.replace(/[-\s　()（）]/g, "");
+  const digits = raw.replace(/[-\s\u3000()（）]/g, "");
   if (digits.startsWith("+81")) return "0" + digits.slice(3);
   if (digits.startsWith("81") && digits.length >= 11) return "0" + digits.slice(2);
   return digits;
