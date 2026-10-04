@@ -150,17 +150,32 @@ export const getApplicableSlotsForDate = (
 };
 
 /**
+ * 統一 4 枠「時刻」を使う日か（土日祝 6/6〜 または 平日 8/1〜）。
+ * どの枠が開いているか（shouldApplyDefault4Slot）と違い、明示行の有無に依らない。
+ * DB 側の public.default_slot_times() と同じ判定。
+ */
+export const isUnified4SlotTimesDate = (date: Date | string): boolean => {
+  const dateStr = toDateStr(date);
+  if (dateStr >= RULE_DEFAULT_4SLOT_FROM && isWeekendOrHoliday(toDate(date))) return true;
+  return isWeekday4SlotDate(date);
+};
+
+/**
  * その日付・スロットのデフォルト時間を返す。
- * - 土日祝4枠 or 平日4枠(8/1〜) → WEEKEND_4SLOT_TIMES（統一）
+ * - 土日祝4枠(6/6〜) or 平日4枠(8/1〜) → WEEKEND_4SLOT_TIMES（統一）
  * - それ以外 → 従来の平日時間（WEEKDAY_LEGACY_TIMES）
+ *
+ * これは「これから予約する枠」のプレビュー・空き判定用。既存予約の時刻は
+ * reservations.start_time / end_time（作成時に DB トリガーが確定）を表示すること。
+ * 同じ既定ルールは DB の public.default_slot_times() にもあり、両者は一致させる。
  */
 export const getDefaultSlotTimesForDate = (
   date: Date | string,
   slot: string,
-  dailyTimeSlots?: DailyTimeSlotRowLite[]
+  // 互換のため残している（時刻の判定には使わない）
+  _dailyTimeSlots?: DailyTimeSlotRowLite[]
 ): { start: string; end: string } => {
-  const use4Slot =
-    shouldApplyDefault4Slot(date, dailyTimeSlots) || isWeekday4SlotDate(date);
+  const use4Slot = isUnified4SlotTimesDate(date);
   const table = (use4Slot ? WEEKEND_4SLOT_TIMES : WEEKDAY_LEGACY_TIMES) as Record<
     string,
     { start: string; end: string }

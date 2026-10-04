@@ -32,7 +32,7 @@ interface ReservationNotification {
   total_price: number;
 }
 
-import { getTimeSlotLabelViaSql } from "../_shared/time-slot-rules.ts";
+import { fetchReservationTimeLabel } from "../_shared/reservation-time.ts";
 
 const formatPhoneNumber = (phone: string): string => {
   const digits = phone.replace(/\D/g, '');
@@ -80,8 +80,8 @@ const handler = async (req: Request): Promise<Response> => {
     const totalPrice = reservation.total_price || 0;
     console.log("Using stored total price:", totalPrice);
     
-    // Get dynamic time slot label
-    const timeSlotLabel = await getTimeSlotLabelViaSql(sql, reservation.timeSlot, reservation.date);
+    // 予約行に保存された実時刻(作成時にトリガーで確定)を使う
+    const timeSlotLabel = await fetchReservationTimeLabel(sql, reservation.reservationCode);
 
     // Fetch access_token to build a signed detail URL (so the link auto-authenticates)
     let tokenQuery = "";

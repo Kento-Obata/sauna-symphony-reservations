@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AdminReservationDetailsDialog } from "./AdminReservationDetailsDialog";
 import { useState } from "react";
 import { Reservation } from "@/types/reservation";
+import { formatReservationTime } from "@/utils/reservationTime";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 
@@ -43,6 +44,7 @@ export const AdminUpcomingReservations = ({
     }
   };
 
+  // 枠名 + 予約行に保存された実時刻（time_slot から時刻を計算しない）
   const getTimeSlotText = (timeSlot: string) => {
     switch (timeSlot) {
       case "morning":
@@ -80,7 +82,7 @@ export const AdminUpcomingReservations = ({
                     <div>
                       <div className="font-medium">
                         {format(new Date(reservation.date), "MM月dd日", { locale: ja })} 
-                        ({getTimeSlotText(reservation.time_slot)})
+                        ({getTimeSlotText(reservation.time_slot)} {formatReservationTime(reservation)})
                       </div>
                       <div className="text-sm text-gray-600">
                         {reservation.guest_name}様 ({reservation.guest_count}名)

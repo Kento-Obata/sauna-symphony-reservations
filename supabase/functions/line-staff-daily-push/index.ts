@@ -1,9 +1,16 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import postgres from "https://deno.land/x/postgresjs@v3.4.5/mod.js";
+import { formatYmdWithWeekday, getJstTodayYmd } from "../_shared/date-jst.ts";
+import { formatReservationTime } from "../_shared/reservation-time.ts";
+import { pushLineMessage } from "../_shared/line.ts";
+import { listShifts } from "../_shared/shift-service.ts";
+import { formatDailyShiftBlock } from "../_shared/shift-bot.ts";
 
-// pg_cron から呼ばれる前提。LINE webhook ではないので署名検証ではなく
-// CRON_SHARED_SECRET による Bearer 認証を行う。
-const LINE_PUSH_ENDPOINT = "https://api.line.me/v2/bot/message/push";
+// pg_cron から毎朝 08:00 JST (cron: 0 23 * * * UTC) に呼ばれる前提。
+// LINE webhook ではないので署名検証ではなく CRON_SHARED_SECRET による Bearer 認証を行う。
+//
+// 動作確認用: `?dry_run=1` (または body {"dry_run":true}) を付けると LINE へ送らず
+// メッセージ本文を JSON で返す。dry_run 時のみ `date=YYYY-MM-DD` で対象日を差し替え可。
 
 const TIME_SLOT_ORDER: Record<string, number> = {
   morning: 0,
@@ -12,73 +19,13 @@ const TIME_SLOT_ORDER: Record<string, number> = {
   night: 3,
 };
 
-const RULE_DEFAULT_4SLOT_FROM = "2026-06-06";
-
-const WEEKDAY_TIMES: Record<string, [string, string]> = {
-  morning: ["10:00", "12:30"],
-  afternoon: ["13:30", "16:00"],
-  evening: ["17:00", "19:30"],
-  night: ["20:00", "22:30"],
-};
-
-const WEEKEND_4SLOT_TIMES: Record<string, [string, string]> = {
-  morning: ["10:00", "12:30"],
-  afternoon: ["13:00", "15:30"],
-  evening: ["16:00", "18:30"],
-  night: ["19:00", "21:30"],
-};
-
-const WEEKDAY_JA = ["日", "月", "火", "水", "木", "金", "土"];
-
 const getDb = () => {
-  const databaseUrl = Deno.env.get("POSTGRES_URL");
-  if (!databaseUrl) throw new Error("Missing POSTGRES_URL");
+  // 本番は POSTGRES_URL（プーラ）を使用。未設定環境（staging 等）では
+  // Supabase が自動提供する SUPABASE_DB_URL にフォールバックする（本番は挙動不変）。
+  const databaseUrl = Deno.env.get("POSTGRES_URL") ?? Deno.env.get("SUPABASE_DB_URL");
+  if (!databaseUrl) throw new Error("Missing POSTGRES_URL / SUPABASE_DB_URL");
   return postgres(databaseUrl, { max: 1, idle_timeout: 5, connect_timeout: 10 });
 };
-
-function jstNow(): Date {
-  return new Date(Date.now() + 9 * 60 * 60 * 1000);
-}
-
-function formatJstDate(d: Date): string {
-  const y = d.getUTCFullYear();
-  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(d.getUTCDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-function dateParts(dateStr: string): { y: number; m: number; d: number; weekday: number } {
-  const [y, m, d] = dateStr.split("-").map(Number);
-  const weekday = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
-  return { y, m, d, weekday };
-}
-
-function withWeekday(dateStr: string): string {
-  const { weekday } = dateParts(dateStr);
-  return `${dateStr} (${WEEKDAY_JA[weekday]})`;
-}
-
-function isWeekend(dateStr: string): boolean {
-  const { weekday } = dateParts(dateStr);
-  return weekday === 0 || weekday === 6;
-}
-
-function defaultSlotTime(date: string, slot: string): [string, string] | null {
-  const useWeekend = date >= RULE_DEFAULT_4SLOT_FROM && isWeekend(date);
-  const map = useWeekend ? WEEKEND_4SLOT_TIMES : WEEKDAY_TIMES;
-  return map[slot] ?? null;
-}
-
-function formatSlotTime(
-  date: string,
-  slot: string,
-  startOverride: string | null,
-  endOverride: string | null,
-): string {
-  if (startOverride && endOverride) return `${startOverride}-${endOverride}`;
-  const def = defaultSlotTime(date, slot);
-  return def ? `${def[0]}-${def[1]}` : slot;
-}
 
 type Reservation = {
   date: string;
@@ -93,44 +40,28 @@ type Reservation = {
   end_time: string | null;
 };
 
+// 予約行に保存された実時刻（作成時に DB トリガーが確定）をそのまま表示する。
+// time_slot や日付から時刻を計算してはいけない（過去に計算ロジックの重複でズレた）。
+const formatSlotTime = (r: Reservation): string => formatReservationTime(r) || r.time_slot;
+
 function formatReservationLine(r: Reservation): string {
-  const time = formatSlotTime(r.date, r.time_slot, r.start_time, r.end_time);
   return [
-    `🕐 ${time}｜${r.guest_name} 様 ${r.guest_count}名`,
+    `🕐 ${formatSlotTime(r)}｜${r.guest_name} 様 ${r.guest_count}名`,
     `  📞 ${r.phone ?? "-"}`,
     `  💧 ${r.water_temperature ?? "-"}℃ ¥${(r.total_price ?? 0).toLocaleString()}`,
     `  🔖 R-${r.reservation_code}`,
   ].join("\n");
 }
 
-function buildMessage(date: string, rows: Reservation[]): string {
-  const heading = `☀ おはようございます\n\n📅 ${withWeekday(date)}`;
-  if (rows.length === 0) {
-    return `${heading}\n\n本日の予約はありません。`;
-  }
-  const header = `${heading} の予約 ${rows.length}件`;
-  return [header, "", ...rows.map(formatReservationLine)].join("\n\n");
+function buildMessage(date: string, shiftBlock: string, rows: Reservation[]): string {
+  const heading = `☀ おはようございます\n\n📅 ${formatYmdWithWeekday(date)}`;
+  const reservationBlock = rows.length === 0
+    ? "本日の予約はありません。"
+    : [`🛁 本日の予約 ${rows.length}件`, ...rows.map(formatReservationLine)].join("\n\n");
+  return [heading, shiftBlock, reservationBlock].join("\n\n");
 }
 
-async function pushToUser(userId: string, accessToken: string, text: string): Promise<{ ok: boolean; status: number; body?: string }> {
-  const safe = text.length > 4900 ? text.slice(0, 4900) + "\n…(略)" : text;
-  const res = await fetch(LINE_PUSH_ENDPOINT, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify({
-      to: userId,
-      messages: [{ type: "text", text: safe }],
-    }),
-  });
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    return { ok: false, status: res.status, body };
-  }
-  return { ok: true, status: res.status };
-}
+const isYmd = (s: unknown): s is string => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method !== "POST" && req.method !== "GET") {
@@ -166,28 +97,42 @@ const handler = async (req: Request): Promise<Response> => {
     );
   }
 
+  const url = new URL(req.url);
+  // deno-lint-ignore no-explicit-any
+  let body: any = {};
+  if (req.method === "POST") {
+    body = await req.json().catch(() => ({}));
+  }
+  const dryRun = url.searchParams.get("dry_run") === "1" || body?.dry_run === true;
+  const dateOverride = url.searchParams.get("date") ?? body?.date;
+
   const sql = getDb();
   try {
-    const today = formatJstDate(jstNow());
+    const today = dryRun && isYmd(dateOverride) ? dateOverride : getJstTodayYmd();
 
     // status は管理画面カレンダー（AdminCalendar / useAdminReservations）と同一基準。
     // != 'cancelled' だと expired（決済期限切れの失効予約）まで通知してしまう。
     const rows = await sql<Reservation[]>`
       select r.date::text, r.time_slot::text, r.guest_name, r.guest_count, r.phone,
              r.water_temperature, r.total_price, r.reservation_code,
-             to_char(d.start_time, 'HH24:MI') as start_time,
-             to_char(d.end_time, 'HH24:MI') as end_time
+             r.start_time::text, r.end_time::text
       from public.reservations r
-      left join public.daily_time_slots d
-        on d.date = r.date and d.time_slot = r.time_slot and d.is_active = true
       where r.date = ${today}
         and r.status in ('confirmed', 'pending', 'pending_payment')
     `;
-    rows.sort((a, b) => (TIME_SLOT_ORDER[a.time_slot] ?? 99) - (TIME_SLOT_ORDER[b.time_slot] ?? 99));
+    rows.sort((a: Reservation, b: Reservation) => (TIME_SLOT_ORDER[a.time_slot] ?? 99) - (TIME_SLOT_ORDER[b.time_slot] ?? 99));
 
-    const message = buildMessage(today, rows);
-    const result = await pushToUser(groupId, accessToken, message);
+    const shifts = await listShifts(sql, today, today);
+    const message = buildMessage(today, formatDailyShiftBlock(shifts), rows);
 
+    if (dryRun) {
+      return new Response(
+        JSON.stringify({ dry_run: true, date: today, shifts: shifts.length, reservations: rows.length, message }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      );
+    }
+
+    const result = await pushLineMessage(groupId, message, accessToken);
     if (!result.ok) {
       console.error("Group push failed", { groupId, status: result.status, body: result.body });
     }
@@ -195,6 +140,7 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({
         date: today,
+        shifts: shifts.length,
         reservations: rows.length,
         target: groupId,
         ok: result.ok,

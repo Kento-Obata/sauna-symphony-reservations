@@ -533,6 +533,7 @@ export type Database = {
           created_at: string
           date: string
           email: string | null
+          end_time: string
           expires_at: string | null
           guest_count: number
           guest_name: string
@@ -545,6 +546,7 @@ export type Database = {
           square_order_id: string | null
           square_payment_id: string | null
           square_payment_link_id: string | null
+          start_time: string
           status: string
           time_slot: Database["public"]["Enums"]["time_slot"]
           total_price: number
@@ -559,6 +561,7 @@ export type Database = {
           created_at?: string
           date: string
           email?: string | null
+          end_time?: string
           expires_at?: string | null
           guest_count: number
           guest_name: string
@@ -571,6 +574,7 @@ export type Database = {
           square_order_id?: string | null
           square_payment_id?: string | null
           square_payment_link_id?: string | null
+          start_time?: string
           status?: string
           time_slot: Database["public"]["Enums"]["time_slot"]
           total_price?: number
@@ -585,6 +589,7 @@ export type Database = {
           created_at?: string
           date?: string
           email?: string | null
+          end_time?: string
           expires_at?: string | null
           guest_count?: number
           guest_name?: string
@@ -597,6 +602,7 @@ export type Database = {
           square_order_id?: string | null
           square_payment_id?: string | null
           square_payment_link_id?: string | null
+          start_time?: string
           status?: string
           time_slot?: Database["public"]["Enums"]["time_slot"]
           total_price?: number

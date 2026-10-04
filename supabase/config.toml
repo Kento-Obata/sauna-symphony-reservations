@@ -70,3 +70,6 @@ verify_jwt = true
 # pg_cron から CRON_SHARED_SECRET の Bearer で呼ばれる(関数内で定数時間比較)
 [functions.line-staff-daily-push]
 verify_jwt = false
+# LINE Messaging API の webhook。関数内で X-Line-Signature を検証する
+[functions.line-staff-webhook]
+verify_jwt = false

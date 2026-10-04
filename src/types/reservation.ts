@@ -16,6 +16,9 @@ export interface Reservation {
   confirmation_token: string | null;
   expires_at: string | null;
   total_price: number;
+  // 予約枠の実時刻(JST, "HH:MM:SS")。作成時に DB トリガーが確定。表示はこれを使い、time_slot から計算しない
+  start_time: string;
+  end_time: string;
   // Square 事前決済(未設定の旧データ・キャッシュを考慮して optional)
   payment_method?: string;
   payment_status?: string;

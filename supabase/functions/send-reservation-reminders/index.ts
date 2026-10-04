@@ -8,7 +8,7 @@ const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
 const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
 const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER");
 
-import { getTimeSlotLabelViaSql } from "../_shared/time-slot-rules.ts";
+import { formatReservationTime } from "../_shared/reservation-time.ts";
 
 // DB アクセスは直接 Postgres(POSTGRES_URL)を使う。本番では自動注入の
 // SUPABASE_SERVICE_ROLE_KEY(legacy キー)が PostgREST に拒否され、
@@ -42,6 +42,8 @@ interface ReminderReservation {
   guest_count: number;
   water_temperature: number;
   date: string;
+  start_time: string;
+  end_time: string;
 }
 
 const sendEmail = async (to: string, reservation: ReminderReservation, timeSlotLabel: string) => {
@@ -138,7 +140,8 @@ const handler = async (req: Request): Promise<Response> => {
     //  含んでしまっていたため、confirmed に絞る)
     const reservations = await sql`
       select id::text, reservation_code, guest_name, guest_count, water_temperature,
-             email, phone, status, date::text, time_slot::text
+             email, phone, status, date::text, time_slot::text,
+             start_time::text, end_time::text
       from public.reservations
       where date = ${tomorrowStr}::date
         and status = 'confirmed'
@@ -150,8 +153,8 @@ const handler = async (req: Request): Promise<Response> => {
     for (const reservation of reservations) {
       console.log(`予約を処理中: ${reservation.guest_name} (ステータス: ${reservation.status})`);
 
-      // 動的時間帯を取得
-      const timeSlotLabel = await getTimeSlotLabelViaSql(sql, reservation.time_slot, reservation.date);
+      // 予約行に保存された実時刻(作成時にトリガーで確定)を使う
+      const timeSlotLabel = formatReservationTime(reservation);
 
       // メールがある場合は送信
       if (reservation.email) {

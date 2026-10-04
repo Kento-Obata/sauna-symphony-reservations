@@ -63,3 +63,23 @@ export const isJstWeekendOrHoliday = (ymd: string): boolean =>
  */
 export const getJstTodayYmd = (now: Date = new Date()): string =>
   new Date(now.getTime() + 9 * 3600 * 1000).toISOString().slice(0, 10);
+
+/** "YYYY-MM-DD" に日数を加算した "YYYY-MM-DD"。Date.UTC ベースなので TZ 非依存。 */
+export const addJstDays = (ymd: string, days: number): string => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);
+  if (!m) throw new Error(`Invalid YYYY-MM-DD: ${ymd}`);
+  const t = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]) + days);
+  return new Date(t).toISOString().slice(0, 10);
+};
+
+export const WEEKDAY_JA = ["日", "月", "火", "水", "木", "金", "土"] as const;
+
+/** "2026-09-29" → "2026-09-29 (火)" */
+export const formatYmdWithWeekday = (ymd: string): string =>
+  `${ymd} (${WEEKDAY_JA[getJstDayOfWeek(ymd)]})`;
+
+/** "2026-09-29" → "9/29 (火)" */
+export const formatMdWithWeekday = (ymd: string): string => {
+  const [, m, d] = ymd.split("-");
+  return `${Number(m)}/${Number(d)} (${WEEKDAY_JA[getJstDayOfWeek(ymd)]})`;
+};

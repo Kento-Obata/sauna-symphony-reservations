@@ -72,7 +72,8 @@ const handler = async (req: Request): Promise<Response> => {
     const selectReservation = () => sql`
       select id::text, date::text, time_slot::text, guest_name, guest_count, email, phone, water_temperature,
              created_at, reservation_code, status, is_confirmed, expires_at, total_price, access_token,
-             payment_method, payment_status, square_order_id
+             payment_method, payment_status, square_order_id,
+             start_time::text, end_time::text
       from public.reservations
       where reservation_code = ${reservationCode}
       limit 1

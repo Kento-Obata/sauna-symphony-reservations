@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AdminReservationDetailsDialog } from "./AdminReservationDetailsDialog";
 import { useState } from "react";
 import { Reservation } from "@/types/reservation";
+import { formatReservationTime } from "@/utils/reservationTime";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 
@@ -84,6 +85,8 @@ export const AdminSearchResults = ({
                     {reservation.time_slot === "morning" ? "午前" :
                      reservation.time_slot === "afternoon" ? "午後" :
                      reservation.time_slot === "evening" ? "夕方" : "夜"}
+                    {" "}
+                    {formatReservationTime(reservation)}
                   </TableCell>
                   <TableCell>{reservation.guest_name}</TableCell>
                   <TableCell>{reservation.phone}</TableCell>

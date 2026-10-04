@@ -31,7 +31,7 @@ interface ReservationNotification {
   total_price: number;
 }
 
-import { getTimeSlotLabelViaSql } from "../_shared/time-slot-rules.ts";
+import { fetchReservationTimeLabel } from "../_shared/reservation-time.ts";
 
 const formatPhoneNumber = (phone: string): string => {
   const digits = phone.replace(/\D/g, '');
@@ -70,8 +70,8 @@ const handler = async (req: Request): Promise<Response> => {
     // Ensure total_price is a number and handle default
     const totalPrice = reservation.total_price || 0;
     
-    // Get dynamic time slot label
-    const timeSlotLabel = await getTimeSlotLabelViaSql(sql, reservation.timeSlot, reservation.date);
+    // 予約行に保存された実時刻(作成時にトリガーで確定)を使う
+    const timeSlotLabel = await fetchReservationTimeLabel(sql, reservation.reservationCode);
 
     const messageContent = `【Sauna U】 仮予約ありがとうございます。
 最終確認のため、下記リンクより予約確定手続きをお願いいたします。
