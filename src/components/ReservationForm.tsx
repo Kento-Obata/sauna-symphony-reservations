@@ -31,8 +31,6 @@ const ReservationForm = () => {
     setPhone,
     people,
     setPeople,
-    temperature,
-    setTemperature,
     paymentMethod,
     setPaymentMethod,
     selectedOptions,
@@ -57,11 +55,10 @@ const ReservationForm = () => {
 
   useEffect(() => {
     const updatePrice = async () => {
-      if (people && temperature) {
+      if (people) {
         try {
           const price = await getTotalPrice(
-            parseInt(people), 
-            temperature,
+            parseInt(people),
             date,
             selectedOptions
           );
@@ -75,7 +72,7 @@ const ReservationForm = () => {
       }
     };
     updatePrice();
-  }, [people, temperature, date, selectedOptions]);
+  }, [people, date, selectedOptions]);
 
   const handleDateChange = (newDate: Date | undefined) => {
     setDate(newDate);
@@ -138,7 +135,7 @@ const ReservationForm = () => {
     guest_count: parseInt(people) || 0,
     email: email || null,
     phone: phone,
-    water_temperature: parseInt(temperature) || 0,
+    water_temperature: 15,
     options: selectedOptions
   } : null;
 
@@ -177,8 +174,6 @@ const ReservationForm = () => {
             setPhone={setPhone}
             people={people}
             setPeople={setPeople}
-            temperature={temperature}
-            setTemperature={setTemperature}
             date={date}
             setDate={handleDateChange}
             timeSlotReservations={timeSlotReservations}

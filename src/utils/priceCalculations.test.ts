@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import {
   calculateOptionTotalPrice,
   formatPrice,
-  getSurcharge,
 } from "./priceCalculations";
 import type { Option } from "@/types/option";
 
@@ -35,14 +34,9 @@ describe("calculateOptionTotalPrice", () => {
   });
 });
 
-describe("formatPrice / getSurcharge", () => {
+describe("formatPrice", () => {
   it("formatPrice は円記号＋桁区切り", () => {
     expect(formatPrice(15000)).toBe("¥15,000");
     expect(formatPrice(0)).toBe("¥0");
-  });
-
-  it("getSurcharge は現状常に0（水温サーチャージ未導入）", () => {
-    expect(getSurcharge("5")).toBe(0);
-    expect(getSurcharge("15")).toBe(0);
   });
 });

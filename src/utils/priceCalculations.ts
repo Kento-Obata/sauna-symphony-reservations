@@ -3,12 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { PriceSetting } from "@/types/price";
 import { Option, ReservationOption } from "@/types/option";
 
-// 水温による追加料金の計算
-export const getSurcharge = (temp: string): number => {
-  // 水温機能は2025年9月から導入のため、現在は常に0円を返す
-  return 0;
-};
-
 // プレオープン期間（2025年3月）かどうかを判定
 const isPreOpeningPeriod = (date: Date): boolean => {
   console.log('Checking pre-opening period for date:', date);
@@ -129,8 +123,7 @@ export const getPricePerPerson = async (guestCount: number, date?: Date): Promis
 };
 
 export const getTotalPrice = async (
-  guestCount: number, 
-  temperature: string, 
+  guestCount: number,
   date?: Date,
   selectedOptions: ReservationOption[] = []
 ): Promise<number> => {
@@ -138,20 +131,18 @@ export const getTotalPrice = async (
   // 文字列の日付をDateオブジェクトに変換
   const dateObj = date ? new Date(date) : undefined;
   console.log('Converted date object:', dateObj);
-  
+
   const pricePerPerson = await getPricePerPerson(guestCount, dateObj);
   console.log('Price per person:', pricePerPerson);
-  
+
   const basePrice = pricePerPerson * guestCount;
-  // 水温機能は2025年9月から導入のため、サーチャージは常に0円
-  const surcharge = 0;
-  
+
   // オプション料金を計算
   const optionsTotal = await calculateOptionsTotal(selectedOptions);
-  
-  console.log('Base price:', basePrice, 'Surcharge:', surcharge, 'Options total:', optionsTotal);
-  
-  return basePrice + surcharge + optionsTotal;
+
+  console.log('Base price:', basePrice, 'Options total:', optionsTotal);
+
+  return basePrice + optionsTotal;
 };
 
 export const formatPrice = (price: number): string => {

@@ -6,7 +6,7 @@ import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getTotalPrice, getSurcharge, formatPrice } from "@/utils/priceCalculations";
+import { getTotalPrice, formatPrice } from "@/utils/priceCalculations";
 import { useOptions } from "@/hooks/useOptions";
 import { Option } from "@/types/option";
 import { useDailyTimeSlots } from "@/hooks/useDailyTimeSlots";
@@ -50,7 +50,6 @@ export const ReservationConfirmDialog = ({
 }: ReservationConfirmDialogProps) => {
   const isPrepaid = paymentMethod === "square_online";
   const [totalPrice, setTotalPrice] = useState<number>(0);
-  const surcharge = getSurcharge(reservation.water_temperature.toString());
   const { data: dailyTimeSlots } = useDailyTimeSlots();
   const { data: options } = useOptions();
 
@@ -85,7 +84,6 @@ export const ReservationConfirmDialog = ({
         
         const basePrice = await getTotalPrice(
           reservation.guest_count,
-          reservation.water_temperature.toString(),
           dateObj
         );
 
@@ -98,7 +96,7 @@ export const ReservationConfirmDialog = ({
     };
 
     calculatePrice();
-  }, [reservation.guest_count, reservation.water_temperature, reservation.date, reservation.options, options]);
+  }, [reservation.guest_count, reservation.date, reservation.options, options]);
 
   const formattedDate = reservation.date
     ? format(new Date(reservation.date), "yyyy年MM月dd日 (E)", {
@@ -135,16 +133,6 @@ export const ReservationConfirmDialog = ({
 
             <div className="text-muted-foreground">電話番号</div>
             <div>{reservation.phone}</div>
-
-            <div className="text-muted-foreground">水風呂温度</div>
-            <div>
-              {reservation.water_temperature}℃
-              {surcharge > 0 && (
-                <div className="text-xs text-muted-foreground">
-                  ※ 水温オプション料金 +{formatPrice(surcharge)} が適用されます
-                </div>
-              )}
-            </div>
 
             {selectedOptions.length > 0 && (
               <>
@@ -184,11 +172,6 @@ export const ReservationConfirmDialog = ({
             <div className="text-muted-foreground">料金</div>
             <div>
               {formatPrice(totalPrice)}
-              {surcharge > 0 && (
-                <span className="block text-xs text-muted-foreground">
-                  ※ 水温オプション料金 +{formatPrice(surcharge)}を含む
-                </span>
-              )}
               {selectedOptions.length > 0 && (
                 <span className="block text-xs text-muted-foreground">
                   ※ オプション料金 +{formatPrice(calculateOptionsTotalPrice(options || [], reservation.options))}を含む
@@ -199,11 +182,6 @@ export const ReservationConfirmDialog = ({
 
           <div className="text-center text-sm text-muted-foreground">
             <p>上記の内容で予約を確定しますか？</p>
-            {reservation.water_temperature <= 10 && (
-              <p className="mt-2 text-red-500">
-                ※ 10℃以下は本当に冷たいです。入ったことのない方はご注意ください。
-              </p>
-            )}
             <p className="mt-2">受付時間: 予約時間の10分前からご案内いたします。</p>
             {isPrepaid ? (
               <p className="mt-2 text-yellow-600 font-bold">

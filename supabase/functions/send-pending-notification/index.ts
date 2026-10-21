@@ -131,7 +131,14 @@ URL：${CONFIRMATION_URL}
         if (!twilioResponse.ok) {
           throw new Error(`Twilio API error: ${JSON.stringify(twilioResult)}`);
         }
-        console.log("SMS sent successfully");
+        // Twilio 側の配信調査(届いた/届かない)に必須なので SID を必ず残す
+        console.log("SMS sent successfully:", {
+          sid: twilioResult.sid,
+          status: twilioResult.status,
+          to: twilioResult.to,
+          numSegments: twilioResult.num_segments,
+          errorCode: twilioResult.error_code ?? null,
+        });
         notifications.push("sms");
       } catch (error) {
         console.error("SMS sending error:", error);

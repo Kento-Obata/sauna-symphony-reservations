@@ -1,7 +1,7 @@
 
 import { format } from "date-fns";
 import { Reservation } from "@/types/reservation";
-import { getTotalPrice, getSurcharge, formatPrice } from "@/utils/priceCalculations";
+import { getTotalPrice, formatPrice } from "@/utils/priceCalculations";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Option } from "@/types/option";
@@ -14,7 +14,6 @@ interface ReservationInfoProps {
 export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const [options, setOptions] = useState<{option: Option, quantity: number, total_price?: number}[]>([]);
-  const surcharge = getSurcharge(reservation.water_temperature.toString());
 
   // オプション情報を取得
   useEffect(() => {
@@ -74,7 +73,6 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
         
         const price = await getTotalPrice(
           reservation.guest_count,
-          reservation.water_temperature.toString(),
           dateObj
         );
         setTotalPrice(price);
@@ -84,7 +82,7 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
     };
 
     calculatePrice();
-  }, [reservation.guest_count, reservation.water_temperature, reservation.date]);
+  }, [reservation.guest_count, reservation.date]);
 
   const getStatusDisplay = (status: string) => {
     switch (status) {
@@ -158,16 +156,6 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
         </>
       )}
       
-      <div className="text-sauna-stone">水風呂温度:</div>
-      <div>
-        {reservation.water_temperature}°C
-        {surcharge > 0 && (
-          <div className="text-xs text-muted-foreground">
-            ※ 水温オプション料金 +{formatPrice(surcharge)} が適用されます
-          </div>
-        )}
-      </div>
-
       {options.length > 0 && (
         <>
           <div className="text-sauna-stone">選択オプション:</div>
@@ -204,14 +192,9 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
       <div className="text-sauna-stone">料金:</div>
       <div>
         {formatPrice(reservation.total_price)} (税込)
-        {(surcharge > 0 || options.length > 0) && (
+        {options.length > 0 && (
           <div className="text-xs text-muted-foreground">
-            {surcharge > 0 && (
-              <div>※ 水温オプション料金 +{formatPrice(surcharge)} を含む</div>
-            )}
-            {options.length > 0 && (
-              <div>※ オプション料金 +{formatPrice(calculateOptionsTotal())} を含む</div>
-            )}
+            <div>※ オプション料金 +{formatPrice(calculateOptionsTotal())} を含む</div>
           </div>
         )}
       </div>

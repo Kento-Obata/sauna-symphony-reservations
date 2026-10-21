@@ -8,7 +8,6 @@ import { useNavigate } from "react-router-dom";
 import { useShopClosures } from "@/hooks/useShopClosures";
 import { isShopClosed } from "@/utils/dateUtils";
 import { getJstTodayYmd } from "@/utils/jstDate";
-import { getTotalPrice } from "@/utils/priceCalculations";
 import { ReservationOption } from "@/types/option";
 
 export const useReservationForm = () => {
@@ -18,8 +17,6 @@ export const useReservationForm = () => {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [people, setPeople] = useState("");
-  // 水温を常に15°Cに固定
-  const [temperature, setTemperature] = useState("15");
   // 'onsite'(現地払い・従来フロー) / 'square_online'(事前決済: 支払い完了で確定)
   // 既定は事前決済(オーナー要望 2026-07-11)
   const [paymentMethod, setPaymentMethod] = useState<"onsite" | "square_online">("square_online");
@@ -38,8 +35,6 @@ export const useReservationForm = () => {
     setEmail("");
     setPhone("");
     setPeople("");
-    // リセット時も15°Cに固定
-    setTemperature("15");
     setPaymentMethod("square_online");
     setSelectedOptions([]);
     setShowConfirmDialog(false);
@@ -131,7 +126,8 @@ export const useReservationForm = () => {
           guestCount: guestCount,
           email: email || null,
           phone: phone,
-          waterTemperature: 15, // 水温を常に15°Cに固定
+          // 水温機能は廃止(DB の water_temperature は 15 固定で維持)
+          waterTemperature: 15,
           paymentMethod,
           selectedOptions: selectedOptions
         }
@@ -200,8 +196,6 @@ export const useReservationForm = () => {
     setPhone,
     people,
     setPeople,
-    temperature,
-    setTemperature,
     paymentMethod,
     setPaymentMethod,
     selectedOptions,
