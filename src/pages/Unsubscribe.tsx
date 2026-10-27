@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Loader2, CheckCircle, XCircle } from "lucide-react";
+import { Loader2, Check, X } from "lucide-react";
+import { SiteShell } from "@/components/site/SiteShell";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
@@ -69,55 +68,72 @@ export default function Unsubscribe() {
     }
   };
 
+  const Icon = ({ tone }: { tone: "ok" | "ng" }) => (
+    <span
+      className={`flex h-16 w-16 items-center justify-center rounded-full ${tone === "ok" ? "bg-u-ink text-u-copper" : "border border-u-ink/25"}`}
+      style={{ animation: "u-pop .6s var(--u-ease) both" }}
+    >
+      {tone === "ok" ? <Check className="h-6 w-6" strokeWidth={1.6} /> : <X className="h-6 w-6" strokeWidth={1.4} />}
+    </span>
+  );
+
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: "rgb(186, 192, 173)" }}>
-      <Card className="max-w-md w-full p-8 space-y-4">
-        <h1 className="text-xl font-bold text-center">メール配信停止</h1>
+    <SiteShell minimalFooter>
+      <div className="u-container flex justify-center py-16 md:py-24">
+        <div className="w-full max-w-md text-center" style={{ animation: "u-fade-up 1s var(--u-ease) both" }}>
+          <p className="u-latin text-xl italic text-u-ink/70">Unsubscribe</p>
+          <h1 className="u-mincho mt-2 text-2xl tracking-[0.1em]">メール配信停止</h1>
 
-        {state === "loading" && (
-          <div className="flex flex-col items-center gap-3 py-6">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <p className="text-sm text-muted-foreground">確認中...</p>
+          <div className="mt-10 rounded-[1.75rem] bg-u-paper p-8 shadow-[0_40px_80px_-50px_rgba(27,28,25,0.5)]">
+            {state === "loading" && (
+              <div className="flex flex-col items-center gap-3 py-6">
+                <Loader2 className="h-6 w-6 animate-spin text-u-ink/70" />
+                <p className="text-sm text-u-ink/70">確認中...</p>
+              </div>
+            )}
+
+            {state === "valid" && (
+              <>
+                <p className="text-sm leading-[2]">
+                  {email && <strong className="block break-all font-medium">{email}</strong>}
+                  宛のメール配信を停止します。よろしいですか？
+                </p>
+                <button type="button" className="u-btn u-btn-primary mt-6 w-full" onClick={confirm}>
+                  配信停止を確定する
+                </button>
+              </>
+            )}
+
+            {state === "submitting" && (
+              <div className="flex flex-col items-center gap-3 py-6">
+                <Loader2 className="h-6 w-6 animate-spin text-u-ink/70" />
+                <p className="text-sm text-u-ink/70">処理中...</p>
+              </div>
+            )}
+
+            {state === "success" && (
+              <div className="flex flex-col items-center gap-4 py-4">
+                <Icon tone="ok" />
+                <p className="text-sm">配信停止が完了しました</p>
+              </div>
+            )}
+
+            {state === "already" && (
+              <div className="flex flex-col items-center gap-4 py-4">
+                <Icon tone="ok" />
+                <p className="text-sm">既に配信停止済みです</p>
+              </div>
+            )}
+
+            {(state === "invalid" || state === "error") && (
+              <div className="flex flex-col items-center gap-4 py-4">
+                <Icon tone="ng" />
+                <p className="text-sm">{errorMsg || "リンクが無効または期限切れです"}</p>
+              </div>
+            )}
           </div>
-        )}
-
-        {state === "valid" && (
-          <>
-            <p className="text-sm text-center">
-              {email && <strong>{email}</strong>} 宛のメール配信を停止します。よろしいですか？
-            </p>
-            <Button className="w-full" onClick={confirm}>配信停止を確定する</Button>
-          </>
-        )}
-
-        {state === "submitting" && (
-          <div className="flex flex-col items-center gap-3 py-6">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <p className="text-sm text-muted-foreground">処理中...</p>
-          </div>
-        )}
-
-        {state === "success" && (
-          <div className="flex flex-col items-center gap-3 py-6">
-            <CheckCircle className="h-10 w-10 text-green-600" />
-            <p className="text-sm text-center">配信停止が完了しました。</p>
-          </div>
-        )}
-
-        {state === "already" && (
-          <div className="flex flex-col items-center gap-3 py-6">
-            <CheckCircle className="h-10 w-10 text-green-600" />
-            <p className="text-sm text-center">既に配信停止済みです。</p>
-          </div>
-        )}
-
-        {(state === "invalid" || state === "error") && (
-          <div className="flex flex-col items-center gap-3 py-6">
-            <XCircle className="h-10 w-10 text-destructive" />
-            <p className="text-sm text-center">{errorMsg || "リンクが無効または期限切れです。"}</p>
-          </div>
-        )}
-      </Card>
-    </div>
+        </div>
+      </div>
+    </SiteShell>
   );
 }

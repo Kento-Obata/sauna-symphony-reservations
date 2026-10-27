@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   calculateOptionTotalPrice,
   formatPrice,
+  getPrepayDiscount,
 } from "./priceCalculations";
 import type { Option } from "@/types/option";
 
@@ -38,5 +39,16 @@ describe("formatPrice", () => {
   it("formatPrice は円記号＋桁区切り", () => {
     expect(formatPrice(15000)).toBe("¥15,000");
     expect(formatPrice(0)).toBe("¥0");
+  });
+});
+
+describe("getPrepayDiscount", () => {
+  it("事前決済は5%割引", () => {
+    expect(getPrepayDiscount(15000)).toBe(750);
+    expect(getPrepayDiscount(42000)).toBe(2100);
+  });
+  it("1円未満は切り捨て(割引額を切り捨てるので、支払額は切り上げ側)", () => {
+    expect(getPrepayDiscount(15030)).toBe(751);
+    expect(15030 - getPrepayDiscount(15030)).toBe(14279);
   });
 });

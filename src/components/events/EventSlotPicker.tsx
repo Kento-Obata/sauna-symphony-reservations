@@ -14,20 +14,18 @@ export const EventSlotPicker = ({ slots, selectedSlotId, onSelect }: EventSlotPi
 
   if (slots.length === 0) {
     return (
-      <p className="text-center text-sm font-mplus font-extralight text-black/60 py-8">
-        現在ご予約いただける枠はありません。
-      </p>
+      <div className="rounded-2xl border border-dashed border-u-ink/20 px-5 py-8 text-center text-sm text-u-ink/65">
+        現在ご予約いただける枠はありません
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       {dates.map((date) => (
         <div key={date}>
-          <div className="text-sm font-mplus font-light text-black mb-3">
-            {formatEventDateLabel(date)}
-          </div>
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="mb-3 text-sm tracking-[0.1em]">{formatEventDateLabel(date)}</div>
+          <div role="radiogroup" aria-label={formatEventDateLabel(date)} className="grid gap-2.5 sm:grid-cols-2 sm:gap-3">
             {slots
               .filter((slot) => slot.date === date)
               .map((slot) => {
@@ -37,26 +35,25 @@ export const EventSlotPicker = ({ slots, selectedSlotId, onSelect }: EventSlotPi
                   <button
                     key={slot.id}
                     type="button"
+                    role="radio"
+                    aria-checked={isSelected}
+                    aria-disabled={isFull}
+                    data-selected={isSelected}
                     disabled={isFull}
                     onClick={() => onSelect(slot.id)}
-                    className={cn(
-                      "flex items-center justify-between rounded-lg border p-4 text-left transition-colors font-mplus",
-                      isFull
-                        ? "border-sauna-stone/10 bg-gray-50 text-black/40 cursor-not-allowed"
-                        : isSelected
-                          ? "border-sauna-button bg-sauna-button/10"
-                          : "border-sauna-stone/20 bg-sauna-base/40 hover:border-sauna-stone/50",
-                    )}
+                    className="u-choice flex items-center justify-between gap-3 px-5 py-4"
                   >
-                    <span className="text-sm font-light">
+                    <span className={cn("u-num text-[1.5rem] font-light leading-none", isFull && "line-through decoration-1")}>
                       {formatEventTimeRange(slot.start_time, slot.end_time)}
                     </span>
                     <span
                       className={cn(
-                        "text-xs rounded-full px-3 py-1",
+                        "shrink-0 rounded-full px-3 py-1 text-[0.6875rem] tracking-[0.12em]",
                         isFull
-                          ? "bg-gray-200 text-black/50"
-                          : "bg-sauna-base border border-sauna-stone/20 text-black/70",
+                          ? "text-u-ink/40"
+                          : isSelected
+                            ? "bg-u-copper text-u-ink"
+                            : "bg-u-ink/[0.06] text-u-ink/70",
                       )}
                     >
                       {isFull ? "満席" : `残り${slot.remaining}名`}

@@ -1,211 +1,85 @@
-import { Header } from "@/components/Header";
-import ReservationForm from "@/components/ReservationForm";
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { fetchPriceSettings } from "@/utils/priceCalculations";
-import { PriceSetting } from "@/types/price";
-import { CreditCard, Wallet } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import ReservationForm from "@/components/ReservationForm";
+import { SiteNav } from "@/components/site/SiteNav";
+import { Hero } from "@/components/site/Hero";
+import { SectionHeading } from "@/components/site/SectionHeading";
+import { HoursPrice } from "@/components/site/HoursPrice";
+import { Guide } from "@/components/site/Guide";
+import { Amenities } from "@/components/site/Amenities";
+import { Access } from "@/components/site/Access";
+import { SiteFooter } from "@/components/site/SiteFooter";
+import { Reveal } from "@/components/site/Reveal";
+import { IntroCurtain } from "@/components/site/IntroCurtain";
+import { useState } from "react";
+import { KodawariTeaser } from "@/components/site/kodawari/KodawariTeaser";
+import { useHashScroll } from "@/hooks/useHashScroll";
+
 const Index = () => {
-  const [priceData, setPriceData] = useState<{
-    people: number;
-    perPerson: number;
-    total: number;
-  }[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  useEffect(() => {
-    const loadPriceData = async () => {
-      try {
-        setIsLoading(true);
-        const priceSettings = await fetchPriceSettings();
-        if (priceSettings.length > 0) {
-          // データベースから取得した料金設定を使用
-          const formattedData = priceSettings.map(setting => ({
-            people: setting.guest_count,
-            perPerson: setting.price_per_person,
-            total: setting.guest_count * setting.price_per_person
-          }));
-          setPriceData(formattedData);
-        } else {
-          // 料金設定がない場合はデフォルト値を使用
-          setPriceData([{
-            people: 2,
-            perPerson: 7500,
-            total: 15000
-          }, {
-            people: 3,
-            perPerson: 7000,
-            total: 21000
-          }, {
-            people: 4,
-            perPerson: 7000,
-            total: 28000
-          }, {
-            people: 5,
-            perPerson: 6000,
-            total: 30000
-          }, {
-            people: 6,
-            perPerson: 6000,
-            total: 36000
-          }]);
-        }
-      } catch (error) {
-        console.error("Error loading price data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadPriceData();
-  }, []);
-  return <div className="min-h-screen flex flex-col bg-sauna-base">
-      <Header />
-      <div className="h-[30vh] relative bg-sauna-base">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-w-4xl w-full px-4">
-          <div className="glass-card p-2 space-y-2 w-full hover-lift text-center">
-            <div className="text-lg font-mplus font-extralight tracking-[0.2em] text-black">体験型サウナU</div>
-            <div className="flex flex-col items-center gap-1 mt-2">
-              <Link
-                to="/events"
-                className="text-sm font-mplus font-extralight text-black/80 hover:text-black underline underline-offset-4 decoration-black/30 hover:decoration-black transition-colors"
-              >
-                パブリックサウナイベントのご予約はこちらから →
-              </Link>
-              <span className="text-sm font-mplus font-extralight text-black/80">
-                通常貸切予約は↓
+  const [introDone, setIntroDone] = useState(false);
+  useHashScroll();
+  return (
+    <div
+      className={`u-site u-grain min-h-screen ${introDone ? "" : "u-intro-hold"}`}
+    >
+      <IntroCurtain onLift={() => setIntroDone(true)} />
+      <a
+        href="#reserve"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[70] focus:rounded-full focus:bg-u-ink focus:px-4 focus:py-2 focus:text-u-paper"
+      >
+        予約フォームへスキップ
+      </a>
+      <SiteNav />
+      <main>
+        <Hero />
+
+        <section
+          id="reserve"
+          className="scroll-mt-16 bg-u-paper pb-32 pt-20 md:py-32"
+          aria-labelledby="reserve-title"
+        >
+          <div className="u-container">
+            <SectionHeading
+              index="01"
+              latin="Reserve"
+              title={<span id="reserve-title">ご予約</span>}
+            />
+            <Reveal className="mt-12 md:mt-20">
+              <ReservationForm />
+            </Reveal>
+          </div>
+        </section>
+
+        <KodawariTeaser />
+        <HoursPrice />
+        <Amenities />
+        <Guide />
+        <Access />
+
+        <section className="border-t border-u-ink/15">
+          <Link to="/events" className="group block">
+            <div className="u-container flex flex-col items-start justify-between gap-6 py-16 md:flex-row md:items-center md:py-24">
+              <div>
+                <p className="u-eyebrow">Public sauna event</p>
+                <p className="u-mincho mt-4 text-[clamp(1.5rem,3.4vw,2.5rem)] leading-[1.5] tracking-[0.08em]">
+                  パブリックサウナイベントの
+                  <br className="sm:hidden" />
+                  ご予約はこちら
+                </p>
+              </div>
+              <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-u-ink/25 transition-all duration-500 group-hover:scale-110 group-hover:bg-u-ink group-hover:text-u-paper md:h-24 md:w-24">
+                <ArrowRight
+                  className="h-6 w-6 transition-transform duration-500 group-hover:-rotate-45"
+                  strokeWidth={1.2}
+                />
               </span>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <section className="max-w-4xl mx-auto w-full px-4 pt-2 pb-4">
-        <div className="glass-card p-6 border border-sauna-stone/20">
-          <div className="text-center mb-3">
-            <span className="text-xs tracking-[0.3em] font-mplus font-extralight text-black/60">お知らせ</span>
-          </div>
-          <p className="text-center text-base font-mplus font-light text-black mb-1">
-            平日の営業時間 変更のご案内
-          </p>
-          <p className="text-center text-sm font-mplus font-extralight text-black/70 mb-5">
-            2026年8月1日（土）より、平日の営業枠を土日・祝日と同じ時間帯に統一いたします。
-          </p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-lg border border-sauna-stone/20 p-4 bg-sauna-base/40">
-              <div className="text-sm font-mplus font-medium text-black mb-2">平日</div>
-              <ul className="text-sm font-mplus font-extralight text-black/80 space-y-1">
-                <li className="flex justify-between"><span>午後</span><span>13:00 - 15:30</span></li>
-                <li className="flex justify-between"><span>夕方</span><span>16:00 - 18:30</span></li>
-                <li className="flex justify-between"><span>夜</span><span>19:00 - 21:30</span></li>
-                <li className="text-black/50 pt-1">午前（10:00 - 12:30）は当面おやすみ</li>
-              </ul>
-            </div>
-            <div className="rounded-lg border border-sauna-stone/20 p-4 bg-sauna-base/40">
-              <div className="text-sm font-mplus font-medium text-black mb-2">土日・祝日</div>
-              <ul className="text-sm font-mplus font-extralight text-black/80 space-y-1">
-                <li className="flex justify-between"><span>午前</span><span>10:00 - 12:30</span></li>
-                <li className="flex justify-between"><span>午後</span><span>13:00 - 15:30</span></li>
-                <li className="flex justify-between"><span>夕方</span><span>16:00 - 18:30</span></li>
-                <li className="flex justify-between"><span>夜</span><span>19:00 - 21:30</span></li>
-              </ul>
-            </div>
-          </div>
-          <p className="text-center text-xs font-mplus font-extralight text-black/50 mt-4">
-            ※ 各回のあいだに清掃・入替のためのお時間をいただきます。
-          </p>
-        </div>
-      </section>
-
-      <div className="relative z-10 text-center">
-        <ReservationForm />
-      </div>
-
-      <div className="max-w-4xl mx-auto w-full px-4 py-8">
-        <div className="glass-card p-8 mb-8">
-          <div className="text-3xl font-mplus font-thin mb-8 text-center text-gradient">
-            Price
-          </div>
-          <div className="mb-8 text-center">
-            
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-sauna-stone/10">
-                  <th className="py-4 px-6 text-left text-sm font-mplus font-extralight">人数</th>
-                  <th className="py-4 px-6 text-right text-sm font-mplus font-extralight">お一人様</th>
-                  <th className="py-4 px-6 text-right text-sm font-mplus font-extralight">合計金額</th>
-                </tr>
-              </thead>
-              <tbody>
-                {isLoading ? <tr>
-                    <td colSpan={3} className="py-4 px-6 text-center">
-                      <div className="flex justify-center">
-                        <div className="animate-pulse h-4 w-24 bg-sauna-stone/10 rounded"></div>
-                      </div>
-                    </td>
-                  </tr> : priceData.map(({
-                people,
-                perPerson,
-                total
-              }) => <tr key={people} className="border-b border-sauna-stone/10">
-                      <td className="py-4 px-6 text-left">{people}</td>
-                      <td className="py-4 px-6 text-right">¥{perPerson.toLocaleString()}</td>
-                      <td className="py-4 px-6 text-right">¥{total.toLocaleString()}</td>
-                    </tr>)}
-              </tbody>
-            </table>
-          </div>
-          <div className="mt-4 text-sm text-black/90 space-y-2">
-            <p className="bg-sauna-base p-4 rounded-lg border border-sauna-stone/20 flex items-center justify-center flex-wrap gap-2">
-              <span>お支払い方法：</span>
-              <span className="inline-flex items-center"><CreditCard className="h-4 w-4 mr-1" /> カードまたは <Wallet className="h-4 w-4 mx-1" /> 現金</span>
-            </p>
-            <p>※ 1名様でのご利用をご希望の際は、2名様料金でご利用いただけます。</p>
-          </div>
-        </div>
-      </div>
-      
-      <section className="max-w-4xl mx-auto px-4 py-8 bg-sauna-base">
-        <div className="mt-20 glass-card p-8">
-          <div className="text-3xl font-mplus font-extralight mb-8 text-center text-gradient">
-            Access
-          </div>
-          
-          <div className="space-y-6">
-            <div className="text-center space-y-4">
-              <div>
-                <p className="text-black">
-                  〒811-2127<br />
-                  福岡県糟屋郡宇美町障子岳6-8-4
-                </p>
-                <a href="https://g.co/kgs/9f4Eqdv" target="_blank" rel="noopener noreferrer" className="text-black hover:underline mt-2 inline-block">
-                  Google Mapsで見る
-                </a>
-              </div>
-              
-              <div className="pt-6">
-                <div className="font-mplus font-extralight mb-2">お車でお越しの場合</div>
-                <p className="text-black">福岡空港から車で30分（交通状況によってはそれ以上かかることがありますので、ご注意ください）</p>
-              </div>
-              
-              <div>
-                <div className="font-mplus font-extralight mb-2">電車でお越しの場合</div>
-                <p className="text-black">
-                  JR香椎線 宇美駅からバスで20分
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <footer className="mt-auto py-8 px-4 border-t border-sauna-stone/10">
-        <div className="max-w-4xl mx-auto text-center">
-          <p className="text-sm text-sauna-stone/70">
-            © 2024 株式会社sync All rights reserved.
-          </p>
-        </div>
-      </footer>
-    </div>;
+          </Link>
+        </section>
+      </main>
+      <SiteFooter />
+    </div>
+  );
 };
+
 export default Index;

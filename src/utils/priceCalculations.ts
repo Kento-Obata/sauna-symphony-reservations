@@ -88,7 +88,7 @@ export const calculateOptionsTotal = async (
 };
 
 // 人数に応じた一人あたりの料金を計算
-const getPricePerPersonRegular = (guestCount: number): number => {
+export const getPricePerPersonRegular = (guestCount: number): number => {
   if (guestCount === 2) return 7500;
   if (guestCount === 3 || guestCount === 4) return 7000;
   if (guestCount === 5 || guestCount === 6) return 6000;
@@ -144,6 +144,13 @@ export const getTotalPrice = async (
 
   return basePrice + optionsTotal;
 };
+
+// オンライン事前決済の割引率(%)。create-reservation(Edge Function)の PREPAY_DISCOUNT_PERCENT と同じ値にすること
+export const PREPAY_DISCOUNT_PERCENT = 5;
+
+// 事前決済の割引額(1円未満は切り捨て)。保存・請求する金額は「定価 - 割引額」
+export const getPrepayDiscount = (listPrice: number): number =>
+  Math.floor((listPrice * PREPAY_DISCOUNT_PERCENT) / 100);
 
 export const formatPrice = (price: number): string => {
   return `¥${price.toLocaleString()}`;

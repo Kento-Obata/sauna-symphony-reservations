@@ -1,6 +1,8 @@
 
 import { useLocation, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { SiteShell } from "@/components/site/SiteShell";
+import { StatusTicket, TicketNote, TicketRow } from "@/components/site/StatusTicket";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/utils/priceCalculations";
@@ -102,68 +104,50 @@ export default function ReservationPending() {
 
   if (!reservationCode) return null;
 
+  const optionLabel = (item: NonNullable<ReservationDetails["options"]>[number]) =>
+    item.option.pricing_type === "flat"
+      ? `${formatPrice(item.option.flat_price || 0)}（一律）`
+      : `${formatPrice(item.option.price_per_person)} × ${item.quantity}名様`;
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sauna-wood to-sauna-stone/10">
-      <div className="glass-card p-8 max-w-2xl w-full mx-4">
-        <div className="text-center space-y-6">
-          <h1 className="text-3xl font-bold text-gradient">仮予約を受け付けました</h1>
-          
-          <div className="space-y-4">
-            <p className="text-lg">予約コード</p>
-            <p className="text-2xl font-bold">{reservationCode}</p>
+    <SiteShell minimalFooter>
+      <StatusTicket
+        state="pending"
+        latin="Almost there"
+        title="仮予約を受け付けました"
+        lead="SMS・メールでお送りした確認リンクから、2時間以内に予約を確定してください"
+        code={reservationCode}
+        actions={
+          <Link to="/" className="u-btn u-btn-ghost">
+            トップページに戻る
+          </Link>
+        }
+      >
+        {error && <TicketNote tone="warn">{error}</TicketNote>}
+        {isLoading ? (
+          <div className="space-y-3">
+            <div className="h-5 animate-pulse rounded bg-u-ink/[0.06]" />
+            <div className="h-5 w-2/3 animate-pulse rounded bg-u-ink/[0.06]" />
           </div>
-
-          {error && (
-            <div className="bg-red-50 text-red-600 p-4 rounded-md">
-              {error}
-            </div>
-          )}
-
-          {!isLoading && details !== null && (
-            <div className="space-y-2">
-              <p className="text-lg">料金</p>
-              <p className="text-2xl font-bold">{formatPrice(details.total_price)}</p>
-              
-              {details.options && details.options.length > 0 && (
-                <div className="mt-2 text-sm">
-                  <p className="font-medium mb-1">選択オプション:</p>
-                  <ul className="space-y-1">
-                    {details.options.map((item, index) => {
-                      const priceDisplay = item.option.pricing_type === 'flat'
-                        ? `${formatPrice(item.option.flat_price || 0)}（一律）`
-                        : item.option.pricing_type === 'per_guest'
-                        ? `${formatPrice(item.option.price_per_person)} / 人 × ${item.quantity}名様（予約人数適用）`
-                        : `${formatPrice(item.option.price_per_person)} × ${item.quantity}名様`;
-                      
-                      return (
-                        <li key={index} className="flex justify-between">
-                          <span>{item.option.name}</span>
-                          <span>{priceDisplay}</span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="space-y-4 text-sauna-stone">
-            <p>メールまたはSMSに送信された確認リンクから、2時間以内に予約を確定してください。</p>
-            <p>2時間を過ぎると予約は自動的にキャンセルされます。</p>
-          </div>
-
-          <div className="pt-6">
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/')}
-              className="w-full sm:w-auto"
-            >
-              トップページに戻る
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
+        ) : (
+          details && (
+            <>
+              {details.options?.map((item, index) => (
+                <TicketRow key={index} label={item.option.name}>
+                  <span className="u-num">{optionLabel(item)}</span>
+                </TicketRow>
+              ))}
+              <TicketRow label="料金">
+                <span className="u-num text-2xl font-light">{formatPrice(details.total_price)}</span>
+              </TicketRow>
+            </>
+          )
+        )}
+        <TicketNote tone="warn">
+          <strong className="font-medium text-u-copper-deep">まだ予約は確定していません</strong>
+          2時間を過ぎると、仮予約は自動的にキャンセルされます。リンクが届かない場合は迷惑メールフォルダもご確認ください
+        </TicketNote>
+      </StatusTicket>
+    </SiteShell>
   );
 }

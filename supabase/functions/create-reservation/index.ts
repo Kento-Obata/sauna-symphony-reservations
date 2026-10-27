@@ -51,6 +51,9 @@ const getDb = () => {
   return postgres(databaseUrl, { max: 1, idle_timeout: 5, connect_timeout: 10 });
 };
 
+// オンライン事前決済の割引率(%)。フロントの src/utils/priceCalculations.ts と同じ値にすること
+const PREPAY_DISCOUNT_PERCENT = 5;
+
 const randomHex = (bytes = 32) => {
   const buffer = new Uint8Array(bytes);
   crypto.getRandomValues(buffer);
@@ -172,7 +175,12 @@ const handler = async (req: Request): Promise<Response> => {
         }
       }
 
-      const totalPrice = basePrice + optionsTotalPrice;
+      // 事前決済は割引後の金額を total_price に保存する。
+      // 決済リンクの請求額・Webhook の照合・返金・通知はすべて total_price を使うため、ここだけで完結する
+      const listPrice = basePrice + optionsTotalPrice;
+      const totalPrice = isPrepaid
+        ? listPrice - Math.floor((listPrice * PREPAY_DISCOUNT_PERCENT) / 100)
+        : listPrice;
       const confirmationToken = randomHex(32);
       const accessToken = randomHex(32);
 

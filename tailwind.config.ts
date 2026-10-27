@@ -21,7 +21,22 @@ export default {
       fontFamily: {
         mplus: ["'Zen Kaku Gothic New'", 'sans-serif'],
       },
+      screens: {
+        xs: "420px",
+      },
       colors: {
+        // 顧客向けサイト(.u-site)のパレット。値は index.css の --u-* と揃える
+        u: {
+          sage: "#a4a99d",
+          "sage-deep": "#959a8d",
+          "sage-light": "#b4b8ad",
+          paper: "#f2f1eb",
+          "paper-2": "#e8e7df",
+          ink: "#1b1c19",
+          "ink-2": "#2b2d28",
+          copper: "#d38248",
+          "copper-deep": "#a95d27",
+        },
         sauna: {
           base: "#A4A99D",
           charcoal: "#A4A99D",
