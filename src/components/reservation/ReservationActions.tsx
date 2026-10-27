@@ -77,7 +77,7 @@ export const ReservationActions = ({
           </AlertDialogTrigger>
           <AlertDialogContent className="u-site w-[calc(100%-1.5rem)] rounded-[1.5rem] border-0 bg-u-paper sm:rounded-[1.5rem]">
             <AlertDialogHeader>
-              <AlertDialogTitle className="u-mincho font-medium tracking-[0.08em]">予約をキャンセルしますか？</AlertDialogTitle>
+              <AlertDialogTitle className="u-display font-medium tracking-[0.08em]">予約をキャンセルしますか？</AlertDialogTitle>
               <AlertDialogDescription>
                 この操作は取り消すことができません
                 {isPaid && (

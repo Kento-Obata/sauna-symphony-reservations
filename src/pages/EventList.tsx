@@ -23,7 +23,7 @@ const EventList = () => {
         ) : !events || events.length === 0 ? (
           <div className="flex flex-col items-center rounded-[1.5rem] border border-dashed border-u-ink/20 px-6 py-20 text-center">
             <span className="u-mark w-12 text-u-ink/25" aria-hidden />
-            <p className="u-mincho mt-8 text-xl tracking-[0.1em]">現在受付中のイベントはありません</p>
+            <p className="u-display mt-8 text-xl tracking-[0.1em]">現在受付中のイベントはありません</p>
             <p className="mt-3 text-sm text-u-ink/80">次回の開催をお楽しみに</p>
             <Link to="/" className="u-btn u-btn-ghost mt-8">
               貸切のご予約はこちら
@@ -41,7 +41,7 @@ const EventList = () => {
                   >
                     <span className="u-num text-sm text-u-ink/80 md:col-span-1">{String(i + 1).padStart(2, "0")}</span>
                     <div className="md:col-span-7">
-                      <h2 className="u-mincho text-[clamp(1.375rem,3vw,2rem)] leading-[1.5] tracking-[0.08em] transition-transform duration-700 [transition-timing-function:var(--u-ease)] group-hover:translate-x-2">
+                      <h2 className="u-display text-[clamp(1.375rem,3vw,2rem)] leading-[1.5] tracking-[0.08em] transition-transform duration-700 [transition-timing-function:var(--u-ease)] group-hover:translate-x-2">
                         {event.title}
                       </h2>
                       {event.description && (

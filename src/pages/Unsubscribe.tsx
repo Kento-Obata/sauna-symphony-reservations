@@ -70,7 +70,7 @@ export default function Unsubscribe() {
 
   const Icon = ({ tone }: { tone: "ok" | "ng" }) => (
     <span
-      className={`flex h-16 w-16 items-center justify-center rounded-full ${tone === "ok" ? "bg-u-ink text-u-copper" : "border border-u-ink/25"}`}
+      className={`flex h-16 w-16 items-center justify-center rounded-full ${tone === "ok" ? "bg-u-ink text-u-amber" : "border border-u-ink/25"}`}
       style={{ animation: "u-pop .6s var(--u-ease) both" }}
     >
       {tone === "ok" ? <Check className="h-6 w-6" strokeWidth={1.6} /> : <X className="h-6 w-6" strokeWidth={1.4} />}
@@ -82,9 +82,9 @@ export default function Unsubscribe() {
       <div className="u-container flex justify-center py-16 md:py-24">
         <div className="w-full max-w-md text-center" style={{ animation: "u-fade-up 1s var(--u-ease) both" }}>
           <p className="u-latin text-xl italic text-u-ink/70">Unsubscribe</p>
-          <h1 className="u-mincho mt-2 text-2xl tracking-[0.1em]">メール配信停止</h1>
+          <h1 className="u-display mt-2 text-2xl tracking-[0.1em]">メール配信停止</h1>
 
-          <div className="mt-10 rounded-[1.75rem] bg-u-paper p-8 shadow-[0_40px_80px_-50px_rgba(27,28,25,0.5)]">
+          <div className="mt-10 rounded-[1.75rem] bg-u-paper p-8 shadow-[0_40px_80px_-50px_rgba(35,31,32,0.5)]">
             {state === "loading" && (
               <div className="flex flex-col items-center gap-3 py-6">
                 <Loader2 className="h-6 w-6 animate-spin text-u-ink/70" />
@@ -96,7 +96,7 @@ export default function Unsubscribe() {
               <>
                 <p className="text-sm leading-[2]">
                   {email && <strong className="block break-all font-medium">{email}</strong>}
-                  宛のメール配信を停止します。よろしいですか？
+                  宛のメール配信を停止します<br />よろしいですか？
                 </p>
                 <button type="button" className="u-btn u-btn-primary mt-6 w-full" onClick={confirm}>
                   配信停止を確定する

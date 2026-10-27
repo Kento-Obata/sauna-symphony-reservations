@@ -37,7 +37,7 @@ export default function EventReservationComplete() {
         state="done"
         latin="Thank you"
         title="ご予約ありがとうございます"
-        lead="ご予約が確定しました。確認メールをお送りしています。当日は予約コードをご提示ください"
+        lead={"ご予約が確定しました\n確認メールをお送りしています\n当日は予約コードをご提示ください"}
         code={reservationCode}
         actions={
           <>

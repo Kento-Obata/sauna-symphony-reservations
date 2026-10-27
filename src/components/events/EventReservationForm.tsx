@@ -62,7 +62,7 @@ export const EventReservationForm = ({ event, form }: EventReservationFormProps)
           <span className="text-sm">
             {formatEventDateLabel(selectedSlot.date)}{" "}
             <span className="u-num text-lg">{formatEventTimeRange(selectedSlot.start_time, selectedSlot.end_time)}</span>
-            <span className="ml-2 text-u-copper">残り{selectedSlot.remaining}名</span>
+            <span className="ml-2 text-u-wood">残り{selectedSlot.remaining}名</span>
           </span>
         </div>
 
@@ -106,7 +106,7 @@ export const EventReservationForm = ({ event, form }: EventReservationFormProps)
             <span className="u-field-label">電話番号</span>
           </label>
         </div>
-        <p className="-mt-3 text-xs text-u-ink/65">予約確認・キャンセル用のリンクをメールでお送りします。すべて必須項目です</p>
+        <p className="-mt-3 text-xs text-u-ink/65">予約確認・キャンセル用のリンクをメールでお送りします<br />すべて必須項目です</p>
 
         <div>
           <p className="mb-3 text-sm tracking-[0.1em]">人数</p>
@@ -156,7 +156,7 @@ export const EventReservationForm = ({ event, form }: EventReservationFormProps)
         <AlertDialogContent className="u-site w-[calc(100%-1.5rem)] max-w-[30rem] gap-0 rounded-[1.75rem] border-0 bg-u-paper p-6 sm:rounded-[1.75rem] sm:p-8">
           <AlertDialogHeader className="text-left">
             <p className="u-latin text-sm italic text-u-ink/65">Confirm</p>
-            <AlertDialogTitle className="u-mincho text-xl font-medium tracking-[0.12em]">予約内容の確認</AlertDialogTitle>
+            <AlertDialogTitle className="u-display text-xl font-medium tracking-[0.12em]">予約内容の確認</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="pt-4 text-left text-u-ink">
                 <div className="rounded-2xl bg-u-ink p-5 text-u-paper">
@@ -180,10 +180,10 @@ export const EventReservationForm = ({ event, form }: EventReservationFormProps)
                     </div>
                   ))}
                 </dl>
-                <div className="mt-5 rounded-2xl border border-u-copper/40 bg-u-copper/[0.08] p-4 text-xs leading-[1.9] text-u-ink/80">
+                <div className="mt-5 rounded-2xl border border-u-amber/40 bg-u-amber/[0.08] p-4 text-xs leading-[1.9] text-u-ink/80">
                   {isPrepaid
-                    ? `このあと決済ページ（Square）へ移動します。お席は20分間確保され、時間内にお支払いが完了しない場合は予約が無効になります。お支払い完了後、確認メールが ${email} に送信されます`
-                    : `この内容で予約を確定します。確認メールが ${email} に送信されます`}
+                    ? `このあと決済ページ（Square）へ移動します\nお席は20分間確保され、時間内にお支払いが完了しない場合は予約が無効になります\nお支払い完了後、確認メールが ${email} に送信されます`
+                    : `この内容で予約を確定します\n確認メールが ${email} に送信されます`}
                 </div>
               </div>
             </AlertDialogDescription>

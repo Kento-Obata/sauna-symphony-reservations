@@ -48,35 +48,35 @@ export const useReservationForm = () => {
 
   const validateForm = () => {
     if (!date || !isValid(date)) {
-      toast.error("有効な日付を選択してください。");
+      toast.error("有効な日付を選択してください");
       return false;
     }
 
     if (isSameDayOrPast(date)) {
-      toast.error("当日のご予約はこちらのフォームからはお受けできません。Instagram（@u__sauna）のDMにてお問い合わせください。");
+      toast.error("当日のご予約はこちらのフォームからはお受けできません　Instagram（@u__sauna）のDMにてお問い合わせください");
       return false;
     }
 
     // 休業日チェックを追加
     if (isShopClosed(date, closures)) {
-      toast.error("選択された日付は休業日です。別の日を選択してください。");
+      toast.error("選択された日付は休業日です　別の日を選択してください");
       return false;
     }
 
     if (!timeSlot) {
-      toast.error("時間帯を選択してください。");
+      toast.error("時間帯を選択してください");
       return false;
     }
     if (!name) {
-      toast.error("お名前を入力してください。");
+      toast.error("お名前を入力してください");
       return false;
     }
     if (!phone) {
-      toast.error("電話番号を入力してください。");
+      toast.error("電話番号を入力してください");
       return false;
     }
     if (!people) {
-      toast.error("人数を選択してください。");
+      toast.error("人数を選択してください");
       return false;
     }
     return true;
@@ -97,18 +97,18 @@ export const useReservationForm = () => {
       setIsSubmitting(true);
 
       if (!date || !isValid(date)) {
-        toast.error("無効な日付です。");
+        toast.error("無効な日付です");
         return;
       }
 
       // 予約確定前に再度、当日・休業日チェック
       if (isSameDayOrPast(date)) {
-        toast.error("当日のご予約はこちらのフォームからはお受けできません。Instagram（@u__sauna）のDMにてお問い合わせください。");
+        toast.error("当日のご予約はこちらのフォームからはお受けできません　Instagram（@u__sauna）のDMにてお問い合わせください");
         setIsSubmitting(false);
         return;
       }
       if (isShopClosed(date, closures)) {
-        toast.error("選択された日付は休業日です。別の日を選択してください。");
+        toast.error("選択された日付は休業日です　別の日を選択してください");
         setIsSubmitting(false);
         return;
       }
@@ -155,7 +155,7 @@ export const useReservationForm = () => {
       }
 
       if (!data?.reservationCode) {
-        throw new Error("予約コードが生成されませんでした。");
+        throw new Error("予約コードが生成されませんでした");
       }
 
       setReservationCode(data.reservationCode);
@@ -173,7 +173,7 @@ export const useReservationForm = () => {
         replace: true
       });
 
-      toast.success("仮予約を受け付けました。メールまたはSMSの確認リンクから予約を確定してください。");
+      toast.success("仮予約を受け付けました　メールまたはSMSの確認リンクから予約を確定してください");
       queryClient.invalidateQueries({ queryKey: ["reservations"] });
     } catch (error) {
       console.error("予約の登録に失敗しました:", error);

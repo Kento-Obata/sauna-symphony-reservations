@@ -46,7 +46,7 @@ export const IntroCurtain = ({ onLift }: { onLift: () => void }) => {
       aria-hidden
     >
       <div className="flex flex-col items-center gap-5">
-        <span className="u-mark w-16 text-u-copper" style={{ animation: "u-rise 1s var(--u-ease) both" }} />
+        <span className="u-mark w-16 text-u-mist" style={{ animation: "u-rise 1s var(--u-ease) both" }} />
         <span className="u-latin text-lg italic tracking-[0.1em] text-u-paper/70" style={{ animation: "u-fade-up .8s var(--u-ease) .25s both" }}>
           U sauna
         </span>

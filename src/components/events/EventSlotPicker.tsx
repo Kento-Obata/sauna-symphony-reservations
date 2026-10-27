@@ -52,7 +52,7 @@ export const EventSlotPicker = ({ slots, selectedSlotId, onSelect }: EventSlotPi
                         isFull
                           ? "text-u-ink/40"
                           : isSelected
-                            ? "bg-u-copper text-u-ink"
+                            ? "bg-u-green text-white"
                             : "bg-u-ink/[0.06] text-u-ink/70",
                       )}
                     >

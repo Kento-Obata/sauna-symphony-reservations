@@ -27,15 +27,17 @@ export default {
       colors: {
         // 顧客向けサイト(.u-site)のパレット。値は index.css の --u-* と揃える
         u: {
-          sage: "#a4a99d",
-          "sage-deep": "#959a8d",
-          "sage-light": "#b4b8ad",
-          paper: "#f2f1eb",
-          "paper-2": "#e8e7df",
-          ink: "#1b1c19",
-          "ink-2": "#2b2d28",
-          copper: "#d38248",
-          "copper-deep": "#a95d27",
+          green: "#52664e",
+          "green-deep": "#435440",
+          mist: "#bac0ad",
+          "mist-deep": "#abb29d",
+          "mist-light": "#c9cebe",
+          paper: "#f3f3ee",
+          "paper-2": "#e7e9e0",
+          ink: "#231f20",
+          "ink-2": "#2f2b2b",
+          amber: "#e28e38",
+          wood: "#844327",
         },
         sauna: {
           base: "#A4A99D",

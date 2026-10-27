@@ -115,7 +115,7 @@ export const ReservationDetail = () => {
         body: { reservationCode, phoneLastFourDigits: digits }
       });
       if (error || !data || data.requiresAuth || data.error || !data.reservation) {
-        setPhoneError("認証に失敗しました。電話番号下4桁または予約コードをご確認ください");
+        setPhoneError("認証に失敗しました\n電話番号下4桁または予約コードをご確認ください");
         return;
       }
       setPhoneVerifiedReservation(data.reservation);
@@ -154,7 +154,7 @@ export const ReservationDetail = () => {
               <Lock className="h-5 w-5" strokeWidth={1.4} />
             </span>
             <p className="u-latin mt-6 text-xl italic text-u-ink/80">Verify</p>
-            <h1 className="u-mincho mt-2 text-2xl tracking-[0.1em]">ご本人確認</h1>
+            <h1 className="u-display mt-2 text-2xl tracking-[0.1em]">ご本人確認</h1>
             <p className="mt-4 text-sm leading-[2] text-u-ink/80">
               ご予約時のお電話番号の<strong className="font-medium text-u-ink">下4桁</strong>を入力してください
             </p>
@@ -215,7 +215,7 @@ export const ReservationDetail = () => {
           <p className="u-latin text-[clamp(2.5rem,6vw,4rem)] font-light italic leading-none" style={{ animation: "u-fade-up 1s var(--u-ease) both" }}>
             Reservation
           </p>
-          <h1 className="u-mincho mt-4 text-2xl tracking-[0.1em]" style={{ animation: "u-fade-up 1s var(--u-ease) .1s both" }}>
+          <h1 className="u-display mt-4 text-2xl tracking-[0.1em]" style={{ animation: "u-fade-up 1s var(--u-ease) .1s both" }}>
             予約詳細
           </h1>
           <div className="mt-8 hidden space-y-2 text-xs leading-[1.9] text-u-ink/80 lg:block">
@@ -231,14 +231,14 @@ export const ReservationDetail = () => {
         </div>
         <div className="space-y-6 lg:col-span-8" style={{ animation: "u-fade-up 1s var(--u-ease) .15s both" }}>
           {reservation.status === "pending_payment" && fromCheckout && (
-            <div className="flex items-center gap-3 rounded-2xl border border-u-copper/40 bg-u-copper/[0.08] p-4 text-sm">
+            <div className="flex items-center gap-3 rounded-2xl border border-u-amber/40 bg-u-amber/[0.08] p-4 text-sm">
               {Date.now() - pollStartedAt.current <= POLL_TIMEOUT_MS ? (
                 <>
-                  <span className="h-2 w-2 shrink-0 animate-ping rounded-full bg-u-copper" />
-                  <p>お支払いの確認を行っています。このままお待ちください…</p>
+                  <span className="h-2 w-2 shrink-0 animate-ping rounded-full bg-u-amber" />
+                  <p>お支払いの確認を行っています<br />このままお待ちください…</p>
                 </>
               ) : (
-                <p>お支払いの確認に時間がかかっています。ページを再読み込みしてご確認ください</p>
+                <p>お支払いの確認に時間がかかっています<br />ページを再読み込みしてご確認ください</p>
               )}
             </div>
           )}
@@ -247,7 +247,7 @@ export const ReservationDetail = () => {
             <p className="mb-1 text-[0.6875rem] tracking-[0.2em] text-u-ink/80">キャンセルポリシー</p>
             <p>・2日前までのキャンセルは無料</p>
             <p>・24時間前までは料金の30%、24時間以内・無断キャンセルは料金の100%を申し受けます</p>
-            <p>・このページからのキャンセルは2日前まで。前日・当日はお電話かDMにてご連絡ください</p>
+            <p>・このページからのキャンセルは2日前まで、前日・当日はお電話かDMにてご連絡ください</p>
             {reservation.payment_status === "paid" && (
               <p>・事前決済分は、2日前までのキャンセルで全額返金いたします(反映まで数日かかる場合があります)</p>
             )}
@@ -277,7 +277,7 @@ const DetailMessage = ({ title, body }: { title: string; body: string }) => (
   <SiteShell minimalFooter>
     <div className="u-container flex flex-col items-center py-24 text-center">
       <span className="u-mark w-12 text-u-ink/30" aria-hidden />
-      <h1 className="u-mincho mt-8 text-2xl tracking-[0.1em]">{title}</h1>
+      <h1 className="u-display mt-8 text-2xl tracking-[0.1em]">{title}</h1>
       <p className="mt-3 text-sm text-u-ink/80">{body}</p>
       <Link to="/" className="u-btn u-btn-ghost mt-8">
         トップページへ戻る

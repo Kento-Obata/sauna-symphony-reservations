@@ -750,6 +750,7 @@ export type Database = {
         Row: {
           created_at: string
           date: string
+          event_id: string | null
           id: string
           reason: string | null
           updated_at: string
@@ -757,6 +758,7 @@ export type Database = {
         Insert: {
           created_at?: string
           date: string
+          event_id?: string | null
           id?: string
           reason?: string | null
           updated_at?: string
@@ -764,11 +766,20 @@ export type Database = {
         Update: {
           created_at?: string
           date?: string
+          event_id?: string | null
           id?: string
           reason?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "shop_closures_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       staff_auth: {
         Row: {

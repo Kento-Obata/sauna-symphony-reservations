@@ -34,7 +34,7 @@ export const Amenities = () => {
           index="04"
           latin="Amenities"
           title={<span id="amenities-title">設備・アメニティ</span>}
-          lead="水着もサウナハットも、すべてこちらでご用意しています。手ぶらでお越しください"
+          lead={"水着もサウナハットも、すべてこちらでご用意しています\n手ぶらでお越しください"}
         />
 
         <div className="mt-14 grid gap-4 md:mt-20 md:grid-cols-12 md:gap-6">
@@ -42,13 +42,13 @@ export const Amenities = () => {
           <Reveal className="relative flex flex-col overflow-hidden rounded-[1.5rem] bg-u-ink p-7 text-u-paper sm:p-10 md:col-span-6 md:row-span-2">
             <span className="u-mark pointer-events-none absolute -bottom-10 -right-10 w-64 text-u-paper/[0.05]" aria-hidden />
             <div className="relative flex items-baseline justify-between">
-              <span className="u-latin text-lg italic text-u-copper">Rental</span>
-              <span className="rounded-full bg-u-copper px-3 py-1 text-[0.6875rem] tracking-[0.2em] text-u-ink">無料貸出</span>
+              <span className="u-latin text-lg italic text-u-mist">Rental</span>
+              <span className="rounded-full bg-u-amber px-3 py-1 text-[0.6875rem] tracking-[0.2em] text-u-ink">無料貸出</span>
             </div>
             <p className="u-latin relative mt-10 text-[clamp(3rem,6.5vw,5.25rem)] font-light italic leading-[0.95] tracking-[-0.01em]">
               All inclusive
             </p>
-            <p className="u-mincho relative mt-5 text-[clamp(1.25rem,2.2vw,1.625rem)] leading-[1.6] tracking-[0.1em]">
+            <p className="u-display relative mt-5 text-[clamp(1.25rem,2.2vw,1.625rem)] leading-[1.6] tracking-[0.1em]">
               手ぶらでお越しください
             </p>
             <ul className="relative mt-10 flex flex-wrap gap-2 md:mt-auto md:pt-10">
@@ -63,7 +63,7 @@ export const Amenities = () => {
 
           <Reveal delay={100} className="rounded-[1.5rem] border border-u-ink/10 bg-white/40 p-7 sm:p-8 md:col-span-3 md:row-span-2">
             <div className="flex items-baseline justify-between">
-              <h3 className="u-mincho text-xl tracking-[0.12em]">アメニティ</h3>
+              <h3 className="u-display text-xl tracking-[0.12em]">アメニティ</h3>
               <Free />
             </div>
             <p className="u-latin mt-1 text-sm italic text-u-ink/65">Amenities</p>
@@ -72,7 +72,7 @@ export const Amenities = () => {
 
           <Reveal delay={200} className="rounded-[1.5rem] border border-u-ink/10 bg-white/40 p-7 sm:p-8 md:col-span-3 md:row-span-2">
             <div className="flex items-baseline justify-between">
-              <h3 className="u-mincho text-xl tracking-[0.12em]">設備</h3>
+              <h3 className="u-display text-xl tracking-[0.12em]">設備</h3>
               <span className="rounded-full border border-u-ink/20 px-2.5 py-0.5 text-[0.625rem] tracking-[0.2em] text-u-ink/80">完備</span>
             </div>
             <p className="u-latin mt-1 text-sm italic text-u-ink/65">Facilities</p>
@@ -83,7 +83,7 @@ export const Amenities = () => {
         {paid.length > 0 && (
           <Reveal className="mt-14 md:mt-20">
             <div className="flex items-baseline justify-between border-b border-u-ink/20 pb-4">
-              <h3 className="u-mincho text-xl tracking-[0.14em]">有料オプション</h3>
+              <h3 className="u-display text-xl tracking-[0.14em]">有料オプション</h3>
               <span className="text-xs text-u-ink/65">ご予約時に追加できます</span>
             </div>
             <ul>

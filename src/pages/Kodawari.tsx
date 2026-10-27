@@ -28,7 +28,7 @@ const PhotoReveal = ({ className, children }: { className?: string; children: Re
 
 const Figure = ({ figure }: { figure: NonNullable<KodawariItem["figure"]> }) => (
   <div className="mt-10 flex items-end gap-5 border-t border-u-paper/15 pt-6">
-    <p className="u-latin flex items-baseline leading-none text-u-copper">
+    <p className="u-latin flex items-baseline leading-none text-u-mist">
       <span className="text-[clamp(3.5rem,7vw,5.5rem)] font-light">{figure.value}</span>
       <span className="ml-1 text-2xl">{figure.unit}</span>
     </p>
@@ -40,12 +40,12 @@ const ChapterText = ({ item, className }: { item: KodawariItem; className?: stri
   <div className={className}>
     <Reveal>
       <div className="flex items-baseline gap-4">
-        <span className="u-latin text-[clamp(3rem,6vw,4.5rem)] font-light italic leading-none text-u-copper">{pad(item.no)}</span>
+        <span className="u-latin text-[clamp(3rem,6vw,4.5rem)] font-light italic leading-none text-u-mist">{pad(item.no)}</span>
         <span className="u-latin text-base italic text-u-paper/60">{item.latin}</span>
       </div>
     </Reveal>
     <Reveal delay={100}>
-      <h2 className="u-mincho mt-6 text-[clamp(1.5rem,2.8vw,2.25rem)] leading-[1.5] tracking-[0.1em]">{item.title}</h2>
+      <h2 className="u-display mt-6 text-[clamp(1.5rem,2.8vw,2.25rem)] leading-[1.5] tracking-[0.1em]">{item.title}</h2>
     </Reveal>
     <Reveal delay={180}>
       <p className="mt-6 max-w-[34rem] text-[0.9375rem] leading-[2.15] text-u-paper/75">{item.body}</p>
@@ -107,10 +107,10 @@ const ChapterBar = ({ active }: { active: number }) => {
         <span className="u-num text-xs text-u-paper/60">
           {pad(active || 1)} / {pad(KODAWARI.length)}
         </span>
-        <span className="u-mincho truncate text-sm tracking-[0.12em]">{item?.title}</span>
+        <span className="u-display truncate text-sm tracking-[0.12em]">{item?.title}</span>
         <span className="ml-auto hidden gap-1 sm:flex">
           {KODAWARI.map((k) => (
-            <span key={k.no} className={cn("h-px w-6 transition-colors duration-500", k.no <= active ? "bg-u-copper" : "bg-u-paper/20")} />
+            <span key={k.no} className={cn("h-px w-6 transition-colors duration-500", k.no <= active ? "bg-u-mist" : "bg-u-paper/20")} />
           ))}
         </span>
       </div>
@@ -176,10 +176,10 @@ const Kodawari = () => {
         <div className="u-container grid gap-10 lg:grid-cols-12 lg:items-end">
           <div className="lg:col-span-7">
             <p className="u-eyebrow" style={{ animation: "u-fade-up 1s var(--u-ease) both" }}>
-              Craft · 8 elements
+              Craft · {KODAWARI.length} elements
             </p>
             <h1
-              className="u-mincho mt-6 text-[clamp(2rem,5vw,3.75rem)] leading-[1.45] tracking-[0.08em]"
+              className="u-display mt-6 text-[clamp(2rem,5vw,3.75rem)] leading-[1.45] tracking-[0.08em]"
               style={{ animation: "u-fade-up 1.2s var(--u-ease) .1s both" }}
             >
               体験型サウナ U の
@@ -189,7 +189,7 @@ const Kodawari = () => {
           </div>
           <div className="lg:col-span-5 lg:pb-3" style={{ animation: "u-fade-up 1.2s var(--u-ease) .2s both" }}>
             <p className="max-w-md text-[0.9375rem] leading-[2.1] text-u-ink/80">
-              過熱水蒸気と飽和水蒸気、石の積み方、火の入れ方、水と木。ひとつの蒸気浴体験を形づくる、8つの要素をご紹介します
+              過熱水蒸気と飽和水蒸気、石の積み方、火の入れ方、水と木<br />ひとつの蒸気浴体験を形づくる、{KODAWARI.length}つの要素をご紹介します
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link to="/#reserve" className="u-btn u-btn-primary">
@@ -201,7 +201,7 @@ const Kodawari = () => {
         </div>
       </header>
 
-      {/* 8つのこだわり */}
+      {/* こだわりの各章 */}
       <div ref={chaptersRef} className="bg-u-ink text-u-paper">
         {KODAWARI.map((item) => (
           <Chapter key={item.slug} item={item} flip={FLIPPED.has(item.no)} />
@@ -213,11 +213,11 @@ const Kodawari = () => {
         <div className="u-container flex flex-col items-start gap-10 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="u-eyebrow">Reserve</p>
-            <h2 id="kodawari-reserve" className="u-mincho mt-5 text-[clamp(1.75rem,3.6vw,2.75rem)] leading-[1.5] tracking-[0.08em]">
+            <h2 id="kodawari-reserve" className="u-display mt-5 text-[clamp(1.75rem,3.6vw,2.75rem)] leading-[1.5] tracking-[0.08em]">
               150分、完全貸切で
             </h2>
             <p className="mt-4 max-w-md text-[0.9375rem] leading-[2] text-u-ink/70">
-              最大6名・手ぶらでお越しいただけます。空き状況と料金は、予約フォームでその場で確認できます
+              最大6名・手ぶらでお越しいただけます<br />空き状況と料金は、予約フォームでその場で確認できます
             </p>
           </div>
           <div className="flex flex-wrap gap-3">

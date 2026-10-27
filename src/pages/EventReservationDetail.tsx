@@ -89,7 +89,7 @@ export default function EventReservationDetail() {
       if (data?.error) throw new Error(data.error);
       toast.success(
         data?.refunded
-          ? "予約をキャンセルしました。返金手続きを行いました"
+          ? "予約をキャンセルしました　返金手続きを行いました"
           : "予約をキャンセルしました",
       );
       queryClient.invalidateQueries({ queryKey: ["event-reservation", code] });
@@ -121,11 +121,11 @@ export default function EventReservationDetail() {
       case "cancelled":
         return { label: `キャンセル済み${reservation.payment_status === "refunded" ? "（返金済み）" : ""}`, cls: "border border-u-paper/30 text-u-paper/70", dot: "bg-u-paper/50" };
       case "pending_payment":
-        return { label: "お支払い手続き中", cls: "border border-dashed border-u-copper text-u-copper", dot: "animate-pulse bg-u-copper" };
+        return { label: "お支払い手続き中", cls: "border border-dashed border-u-amber text-u-amber", dot: "animate-pulse bg-u-amber" };
       case "expired":
         return { label: "無効", cls: "border border-u-paper/30 text-u-paper/70", dot: "bg-u-paper/50" };
       case "confirmed":
-        return { label: isPaid ? "支払済（事前決済）" : "予約確定", cls: "bg-u-copper text-u-ink", dot: "bg-u-ink" };
+        return { label: isPaid ? "支払済（事前決済）" : "予約確定", cls: "bg-u-mist text-u-ink", dot: "bg-u-green" };
       default:
         return null;
     }
@@ -137,7 +137,7 @@ export default function EventReservationDetail() {
       {missingToken || error ? (
         <div className="u-container flex flex-col items-center py-24 text-center">
           <span className="u-mark w-12 text-u-ink/25" aria-hidden />
-          <h1 className="u-mincho mt-8 text-2xl tracking-[0.1em]">予約情報を表示できません</h1>
+          <h1 className="u-display mt-8 text-2xl tracking-[0.1em]">予約情報を表示できません</h1>
           <p className="mt-3 text-sm text-u-ink/80">
             {missingToken
               ? "確認メール内のリンクからアクセスしてください"
@@ -164,19 +164,19 @@ export default function EventReservationDetail() {
             <p className="u-latin text-[clamp(2.5rem,6vw,4rem)] font-light italic leading-none" style={{ animation: "u-fade-up 1s var(--u-ease) both" }}>
               Reservation
             </p>
-            <h1 className="u-mincho mt-4 text-2xl tracking-[0.1em]" style={{ animation: "u-fade-up 1s var(--u-ease) .1s both" }}>
+            <h1 className="u-display mt-4 text-2xl tracking-[0.1em]" style={{ animation: "u-fade-up 1s var(--u-ease) .1s both" }}>
               ご予約内容
             </h1>
           </div>
           <div className="space-y-6 lg:col-span-8" style={{ animation: "u-fade-up 1s var(--u-ease) .15s both" }}>
             {reservation.status === "pending_payment" && (
-              <div className="flex items-center gap-3 rounded-2xl border border-u-copper/40 bg-u-copper/[0.08] p-4 text-sm">
-                {isPolling && <span className="h-2 w-2 shrink-0 animate-ping rounded-full bg-u-copper" />}
+              <div className="flex items-center gap-3 rounded-2xl border border-u-amber/40 bg-u-amber/[0.08] p-4 text-sm">
+                {isPolling && <span className="h-2 w-2 shrink-0 animate-ping rounded-full bg-u-amber" />}
                 <p>
                   {isPolling
-                    ? "お支払いの確認を行っています。このままお待ちください..."
+                    ? "お支払いの確認を行っています\nこのままお待ちください..."
                     : fromCheckout
-                      ? "お支払いの確認に時間がかかっています。ページを再読み込みしてご確認ください"
+                      ? "お支払いの確認に時間がかかっています\nページを再読み込みしてご確認ください"
                       : "お支払いが完了すると予約が確定します（お席の確保は20分間です）"}
                 </p>
               </div>
@@ -184,7 +184,7 @@ export default function EventReservationDetail() {
             {reservation.status === "expired" && (
               <div className="rounded-2xl bg-u-ink/[0.05] p-4 text-sm leading-[1.9]">
                 <p>
-                  お支払いが確認できなかったため、この予約は無効になりました。
+                  お支払いが確認できなかったため、この予約は無効になりました
                   お手数ですが、空き状況をご確認のうえあらためてご予約ください
                 </p>
                 <Link to={`/events/${reservation.event_slug}`} className="u-link mt-2 inline-block">
@@ -256,11 +256,11 @@ export default function EventReservationDetail() {
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <AlertDialogContent className="u-site w-[calc(100%-1.5rem)] rounded-[1.5rem] border-0 bg-u-paper sm:rounded-[1.5rem]">
           <AlertDialogHeader>
-            <AlertDialogTitle className="u-mincho font-medium tracking-[0.08em]">予約をキャンセルしますか?</AlertDialogTitle>
+            <AlertDialogTitle className="u-display font-medium tracking-[0.08em]">予約をキャンセルしますか?</AlertDialogTitle>
             <AlertDialogDescription>
               {isPaid
-                ? "お支払いいただいた料金は全額返金いたします（カード会社により反映まで数日かかる場合があります）。この操作は取り消せません"
-                : "この操作は取り消せません。再度ご参加いただく場合は、あらためてご予約ください"}
+                ? "お支払いいただいた料金は全額返金いたします（カード会社により反映まで数日かかる場合があります）\nこの操作は取り消せません"
+                : "この操作は取り消せません\n再度ご参加いただく場合は、あらためてご予約ください"}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -37,31 +37,31 @@ export const useEventReservationForm = (
 
   const validateForm = () => {
     if (!selectedSlot) {
-      toast.error("ご希望の枠を選択してください。");
+      toast.error("ご希望の枠を選択してください");
       return false;
     }
     if (selectedSlot.remaining <= 0) {
-      toast.error("選択された枠は満席です。別の枠を選択してください。");
+      toast.error("選択された枠は満席です　別の枠を選択してください");
       return false;
     }
     if (!name.trim()) {
-      toast.error("お名前を入力してください。");
+      toast.error("お名前を入力してください");
       return false;
     }
     if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      toast.error("メールアドレスを入力してください（予約確認メールをお送りします）。");
+      toast.error("メールアドレスを入力してください（予約確認メールをお送りします）");
       return false;
     }
     if (!phone.trim()) {
-      toast.error("電話番号を入力してください。");
+      toast.error("電話番号を入力してください");
       return false;
     }
     if (!guestCount) {
-      toast.error("人数を選択してください。");
+      toast.error("人数を選択してください");
       return false;
     }
     if (guestCount > maxSelectableGuests) {
-      toast.error(`この枠でご予約いただける人数は${maxSelectableGuests}名までです。`);
+      toast.error(`この枠でご予約いただける人数は${maxSelectableGuests}名までです`);
       return false;
     }
     return true;
@@ -93,7 +93,7 @@ export const useEventReservationForm = (
         throw new Error(message || "予約の作成に失敗しました");
       }
       if (data?.error) throw new Error(data.error);
-      if (!data?.reservationCode) throw new Error("予約コードが生成されませんでした。");
+      if (!data?.reservationCode) throw new Error("予約コードが生成されませんでした");
 
       if (data.checkoutUrl) {
         // 事前決済: Square のホスト型決済ページへ全画面遷移する。
@@ -115,7 +115,7 @@ export const useEventReservationForm = (
         },
         replace: true,
       });
-      toast.success("ご予約が確定しました。確認メールをお送りしました。");
+      toast.success("ご予約が確定しました　確認メールをお送りしました");
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "もう一度お試しください";
       console.error("イベント予約の登録に失敗しました:", error);

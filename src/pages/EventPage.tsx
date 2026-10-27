@@ -23,7 +23,7 @@ const EventPage = () => {
       ) : error || !data ? (
         <div className="u-container flex flex-col items-center py-24 text-center">
           <span className="u-mark w-12 text-u-ink/25" aria-hidden />
-          <h1 className="u-mincho mt-8 text-2xl tracking-[0.1em]">イベントが見つかりません</h1>
+          <h1 className="u-display mt-8 text-2xl tracking-[0.1em]">イベントが見つかりません</h1>
           <p className="mt-3 text-sm text-u-ink/70">公開が終了したか、URLが間違っている可能性があります</p>
           <Link to="/events" className="u-btn u-btn-ghost mt-8">
             イベント一覧へ
@@ -40,7 +40,7 @@ const EventPage = () => {
               ← Public Events
             </Link>
             <h1
-              className="u-mincho mt-6 max-w-4xl text-[clamp(1.75rem,4.4vw,3.25rem)] leading-[1.5] tracking-[0.08em]"
+              className="u-display mt-6 max-w-4xl text-[clamp(1.75rem,4.4vw,3.25rem)] leading-[1.5] tracking-[0.08em]"
               style={{ animation: "u-fade-up 1s var(--u-ease) .1s both" }}
             >
               {data.event.title}

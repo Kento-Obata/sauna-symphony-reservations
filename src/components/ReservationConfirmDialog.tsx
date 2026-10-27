@@ -110,11 +110,11 @@ export const ReservationConfirmDialog = ({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         overlayClassName="bg-u-ink/50 backdrop-blur-sm"
-        className="u-site max-h-[92svh] w-[calc(100%-1.5rem)] max-w-[30rem] gap-0 overflow-y-auto rounded-[1.75rem] border-0 bg-u-paper p-0 shadow-[0_40px_120px_-30px_rgba(27,28,25,0.6)] sm:rounded-[1.75rem] [&>button]:right-5 [&>button]:top-5 [&>button]:flex [&>button]:h-9 [&>button]:w-9 [&>button]:items-center [&>button]:justify-center [&>button]:rounded-full [&>button]:bg-transparent [&>button[data-state=open]]:bg-transparent [&>button[data-state=open]]:text-u-ink [&>button:hover]:bg-u-ink/5 [&>button:focus]:ring-0 [&>button:focus-visible]:ring-2 [&>button:focus-visible]:ring-u-ink/30 [&>button:focus-visible]:ring-offset-0"
+        className="u-site max-h-[92svh] w-[calc(100%-1.5rem)] max-w-[30rem] gap-0 overflow-y-auto rounded-[1.75rem] border-0 bg-u-paper p-0 shadow-[0_40px_120px_-30px_rgba(35,31,32,0.6)] sm:rounded-[1.75rem] [&>button]:right-5 [&>button]:top-5 [&>button]:flex [&>button]:h-9 [&>button]:w-9 [&>button]:items-center [&>button]:justify-center [&>button]:rounded-full [&>button]:bg-transparent [&>button[data-state=open]]:bg-transparent [&>button[data-state=open]]:text-u-ink [&>button:hover]:bg-u-ink/5 [&>button:focus]:ring-0 [&>button:focus-visible]:ring-2 [&>button:focus-visible]:ring-u-ink/30 [&>button:focus-visible]:ring-offset-0"
       >
         <div className="p-6 pb-0 sm:p-8 sm:pb-0">
           <p className="u-latin text-sm italic text-u-ink/65">Confirm</p>
-          <DialogTitle className="u-mincho mt-1 text-xl font-medium tracking-[0.12em]">ご予約内容の確認</DialogTitle>
+          <DialogTitle className="u-display mt-1 text-xl font-medium tracking-[0.12em]">ご予約内容の確認</DialogTitle>
           <DialogDescription className="sr-only">内容をご確認のうえ、予約へお進みください</DialogDescription>
 
           {/* 日時を大きく */}
@@ -178,7 +178,7 @@ export const ReservationConfirmDialog = ({
                 <span>料金</span>
                 <span className="u-num text-sm">{formatPrice(totalPrice)}</span>
               </div>
-              <div className="flex justify-between text-u-copper-deep">
+              <div className="flex justify-between text-u-wood">
                 <span>事前決済割引（{PREPAY_DISCOUNT_PERCENT}%）</span>
                 <span className="u-num text-sm">−{formatPrice(discount)}</span>
               </div>
@@ -192,16 +192,16 @@ export const ReservationConfirmDialog = ({
             <span className="u-num text-[2.25rem] font-light leading-none">{formatPrice(totalPrice - discount)}</span>
           </div>
 
-          <div className="mt-6 rounded-2xl border border-u-copper/40 bg-u-copper/[0.08] p-4 text-xs leading-[1.9] text-u-ink/80">
+          <div className="mt-6 rounded-2xl border border-u-amber/40 bg-u-amber/[0.08] p-4 text-xs leading-[1.9] text-u-ink/80">
             {isPrepaid ? (
               <>
-                このあと決済ページ（Square）へ移動します。お席は<strong className="font-medium text-u-copper-deep">20分間</strong>
+                このあと決済ページ（Square）へ移動します<br />お席は<strong className="font-medium text-u-wood">20分間</strong>
                 確保され、お支払いの完了と同時に予約が確定します
               </>
             ) : (
               <>
-                仮予約のあと、確定用のリンクをSMS・メールでお送りします。
-                <strong className="font-medium text-u-copper-deep">2時間以内</strong>にリンクから確定してください
+                仮予約のあと、確定用のリンクをSMS・メールでお送りします<br />
+                <strong className="font-medium text-u-wood">2時間以内</strong>にリンクから確定してください
               </>
             )}
             <span className="mt-1 block text-u-ink/65">当日は開始時刻の10分前からご案内いたします</span>

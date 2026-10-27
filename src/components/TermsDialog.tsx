@@ -61,11 +61,11 @@ export const TermsDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         overlayClassName="bg-u-ink/50 backdrop-blur-sm"
-        className="u-site w-[calc(100%-1.5rem)] max-w-2xl gap-0 rounded-[1.75rem] border-0 bg-u-paper p-0 shadow-[0_40px_120px_-30px_rgba(27,28,25,0.6)] sm:rounded-[1.75rem] [&>button]:right-5 [&>button]:top-5 [&>button]:flex [&>button]:h-9 [&>button]:w-9 [&>button]:items-center [&>button]:justify-center [&>button]:rounded-full [&>button]:bg-transparent [&>button[data-state=open]]:bg-transparent [&>button[data-state=open]]:text-u-ink [&>button:hover]:bg-u-ink/5 [&>button:focus]:ring-0 [&>button:focus-visible]:ring-2 [&>button:focus-visible]:ring-u-ink/30 [&>button:focus-visible]:ring-offset-0"
+        className="u-site w-[calc(100%-1.5rem)] max-w-2xl gap-0 rounded-[1.75rem] border-0 bg-u-paper p-0 shadow-[0_40px_120px_-30px_rgba(35,31,32,0.6)] sm:rounded-[1.75rem] [&>button]:right-5 [&>button]:top-5 [&>button]:flex [&>button]:h-9 [&>button]:w-9 [&>button]:items-center [&>button]:justify-center [&>button]:rounded-full [&>button]:bg-transparent [&>button[data-state=open]]:bg-transparent [&>button[data-state=open]]:text-u-ink [&>button:hover]:bg-u-ink/5 [&>button:focus]:ring-0 [&>button:focus-visible]:ring-2 [&>button:focus-visible]:ring-u-ink/30 [&>button:focus-visible]:ring-offset-0"
       >
         <DialogHeader className="p-6 pb-4 text-left sm:p-8 sm:pb-5">
           <p className="u-latin text-sm italic text-u-ink/65">Terms</p>
-          <DialogTitle className="u-mincho text-xl font-medium tracking-[0.12em]">利用規約</DialogTitle>
+          <DialogTitle className="u-display text-xl font-medium tracking-[0.12em]">利用規約</DialogTitle>
           <DialogDescription className="text-xs text-u-ink/65">最後までお読みいただくと、同意できるようになります</DialogDescription>
         </DialogHeader>
         <ScrollArea 
@@ -76,7 +76,7 @@ export const TermsDialog = ({
           <div
             tabIndex={0}
             aria-label="利用規約の本文"
-            className="space-y-3 py-6 text-sm outline-none leading-[2] text-u-ink/80 [&_h3]:u-mincho [&_h3]:pt-4 [&_h3]:text-base [&_h3]:font-medium [&_h3]:tracking-[0.08em] [&_h3]:text-u-ink first:[&_h3]:pt-0"
+            className="space-y-3 py-6 text-sm outline-none leading-[2] text-u-ink/80 [&_h3]:u-display [&_h3]:pt-4 [&_h3]:text-base [&_h3]:font-medium [&_h3]:tracking-[0.08em] [&_h3]:text-u-ink first:[&_h3]:pt-0"
           >
             <h3>第1条（適用）</h3>
             <p>本規約は、当施設（以下「当社」といいます。）が提供するサウナサービス（以下「本サービス」といいます。）の利用に関する条件を、本サービスを利用するお客様（以下「利用者」といいます。）と当社との間で定めるものです。</p>

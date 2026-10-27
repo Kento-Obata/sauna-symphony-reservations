@@ -6,22 +6,22 @@ const STEPS = [
   {
     latin: "Book",
     title: "オンラインで予約",
-    body: "カレンダーから日付と時間帯を選び、人数とお支払い方法を指定します。前日までのご予約を承ります",
+    body: "カレンダーから日付と時間帯を選び、人数とお支払い方法を指定します\n前日までのご予約を承ります",
   },
   {
     latin: "Confirm",
     title: "予約を確定",
-    body: "事前決済なら決済完了と同時に確定。現地払いはSMS・メールのリンクから2時間以内に確定してください",
+    body: "事前決済なら決済完了と同時に確定\n現地払いはSMS・メールのリンクから2時間以内に確定してください",
   },
   {
     latin: "Arrive",
     title: "10分前に受付",
-    body: "開始時刻の10分前からご案内します。お車の場合は福岡空港から約30分が目安です",
+    body: "開始時刻の10分前からご案内します\nお車の場合は福岡空港から約30分が目安です",
   },
   {
     latin: "Unwind",
     title: "150分の貸切",
-    body: "ご予約のお時間はサウナを貸し切りでご利用いただけます。ご自身のペースでお過ごしください",
+    body: "ご予約のお時間はサウナを貸し切りでご利用いただけます\nご自身のペースでお過ごしください",
   },
 ];
 
@@ -48,7 +48,7 @@ export const Guide = () => (
           <Reveal as="li" key={s.latin} delay={i * 100} className="group relative bg-u-ink p-7 sm:p-8 lg:min-h-[22rem]">
             <div className="flex items-baseline justify-between">
               <span className="u-num text-sm text-u-paper/60">0{i + 1}</span>
-              <span className="u-latin text-lg italic text-u-copper">{s.latin}</span>
+              <span className="u-latin text-lg italic text-u-mist">{s.latin}</span>
             </div>
             {/* ロゴの層を一段ずつ増やして、進行を示す */}
             <div className="mt-6 flex h-12 flex-col justify-end gap-[5px] lg:mt-16" aria-hidden>
@@ -60,7 +60,7 @@ export const Guide = () => (
                 />
               ))}
             </div>
-            <h3 className="u-mincho mt-6 text-xl tracking-[0.12em]">{s.title}</h3>
+            <h3 className="u-display mt-6 text-xl tracking-[0.12em]">{s.title}</h3>
             <p className="mt-3 text-sm leading-[2] text-u-paper/60">{s.body}</p>
           </Reveal>
         ))}

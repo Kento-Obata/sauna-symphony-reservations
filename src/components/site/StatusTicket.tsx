@@ -41,17 +41,17 @@ export const StatusTicket = ({ state, latin, title, lead, code, children, action
               style={{ animation: "u-pop .8s var(--u-ease) .1s both" }}
             />
             <span
-              className={cn("u-mark relative w-9", state === "done" ? "text-u-copper" : "text-u-ink")}
+              className={cn("u-mark relative w-9", state === "done" ? "text-u-green" : "text-u-ink")}
               style={{ animation: "u-rise 1.2s var(--u-ease) .3s both" }}
               aria-hidden
             />
           </span>
           <p className="u-latin mt-6 text-xl italic text-u-ink/80">{latin}</p>
-          <h1 className="u-mincho mt-2 text-[clamp(1.5rem,4vw,2.25rem)] leading-[1.5] tracking-[0.1em]">{title}</h1>
+          <h1 className="u-display mt-2 text-[clamp(1.5rem,4vw,2.25rem)] leading-[1.5] tracking-[0.1em]">{title}</h1>
           {lead && <p className="mt-4 max-w-md text-sm leading-[2] text-u-ink/80">{lead}</p>}
         </div>
 
-        <div className="mt-10 overflow-hidden rounded-[1.75rem] bg-u-paper shadow-[0_40px_80px_-50px_rgba(27,28,25,0.5)]">
+        <div className="mt-10 overflow-hidden rounded-[1.75rem] bg-u-paper shadow-[0_40px_80px_-50px_rgba(35,31,32,0.5)]">
           <div className="flex items-center justify-between gap-4 bg-u-ink px-6 py-6 text-u-paper sm:px-8">
             <div>
               <p className="text-[0.6875rem] tracking-[0.24em] text-u-paper/55">予約コード</p>
@@ -86,7 +86,7 @@ export const TicketNote = ({ children, tone = "plain" }: { children: ReactNode; 
   <div
     className={cn(
       "mt-5 rounded-2xl p-4 text-xs leading-[1.9]",
-      tone === "warn" ? "border border-u-copper/40 bg-u-copper/[0.08] text-u-ink/80" : "bg-u-ink/[0.04] text-u-ink/70"
+      tone === "warn" ? "border border-u-amber/40 bg-u-amber/[0.08] text-u-ink/80" : "bg-u-ink/[0.04] text-u-ink/70"
     )}
   >
     {children}

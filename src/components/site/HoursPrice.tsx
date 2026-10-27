@@ -31,7 +31,7 @@ const scheduleFor = (date: Date) => {
 const Schedule = ({ title, latin, rows, delay }: { title: string; latin: string; rows: ReturnType<typeof scheduleFor>; delay: number }) => (
   <Reveal delay={delay} className="rounded-[1.5rem] border border-u-ink/10 bg-u-paper/50 p-6 backdrop-blur-sm sm:p-8">
     <div className="flex items-baseline justify-between">
-      <h3 className="u-mincho text-xl tracking-[0.14em]">{title}</h3>
+      <h3 className="u-display text-xl tracking-[0.14em]">{title}</h3>
       <span className="u-latin text-sm italic text-u-ink/80">{latin}</span>
     </div>
     <ul className="mt-6">
@@ -67,7 +67,7 @@ export const HoursPrice = () => {
           index="03"
           latin="Hours & Price"
           title={<span id="hours-title">営業時間と料金</span>}
-          lead="1回150分の完全貸切。時間帯の空きはカレンダーで日ごとにご確認いただけます"
+          lead={"1回150分の完全貸切\n時間帯の空きはカレンダーで日ごとにご確認いただけます"}
         />
 
         <div className="mt-14 grid gap-4 md:mt-20 md:grid-cols-2 md:gap-6">
@@ -75,12 +75,12 @@ export const HoursPrice = () => {
           <Schedule title="土日・祝日" latin="Weekends & Holidays" rows={weekend} delay={120} />
         </div>
         <Reveal as="p" className="mt-4 text-xs text-u-ink/80">
-          ※ 日によって開放する時間帯が変わる場合があります。最新の空きは予約カレンダーをご覧ください
+          ※ 日によって開放する時間帯が変わる場合があります<br />最新の空きは予約カレンダーをご覧ください
         </Reveal>
 
         <div className="mt-20 md:mt-28">
           <Reveal className="flex items-baseline justify-between border-b border-u-ink/20 pb-4">
-            <h3 className="u-mincho text-xl tracking-[0.14em]">料金</h3>
+            <h3 className="u-display text-xl tracking-[0.14em]">料金</h3>
             <span className="text-xs text-u-ink/80">1回（150分）あたり</span>
           </Reveal>
           {isLoading ? (
