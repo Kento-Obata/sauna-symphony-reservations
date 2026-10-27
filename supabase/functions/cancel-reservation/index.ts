@@ -3,7 +3,7 @@ import postgres from "https://deno.land/x/postgresjs@v3.4.5/mod.js";
 import { getClientIp, isRateLimited, recordAttempt } from "../_shared/rate-limit.ts";
 import { cancelReservationRow } from "../_shared/reservation-payment.ts";
 import { sendLineGroupMessage } from "../_shared/line.ts";
-import { getJstTodayYmd } from "../_shared/date-jst.ts";
+import { addJstDays, getJstTodayYmd } from "../_shared/date-jst.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -117,14 +117,15 @@ serve(async (req) => {
       );
     }
 
-    // 当日ブロックは確定済み予約のみ。決済待ち(pending_payment)は金銭の授受が
-    // 無いため日付によらずキャンセル可
+    // オンラインでキャンセルできるのは、キャンセル料のかからない2日前まで。
+    // 前日・当日はキャンセル料(30% / 100%)が発生するため、お電話・DMで店舗が対応する。
+    // 決済待ち(pending_payment)は金銭の授受が無いため日付によらずキャンセル可
     if (reservation.status !== 'pending_payment') {
-      // JST 基準の当日判定(旧実装の UTC 基準は最大9時間ズレるため置換)
-      const todayStr = getJstTodayYmd();
-      if (reservation.date === todayStr) {
+      // JST 基準で判定(UTC 基準は最大9時間ズレる)。YYYY-MM-DD は文字列比較で前後を判定できる
+      const lastFreeDate = addJstDays(getJstTodayYmd(), 2);
+      if (reservation.date < lastFreeDate) {
         return new Response(
-          JSON.stringify({ error: "当日のキャンセルはできません。直接お電話にてご連絡ください。" }),
+          JSON.stringify({ error: "前日・当日のキャンセルはオンラインでは承っておりません。お電話またはInstagramのDMにてご連絡ください。" }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }

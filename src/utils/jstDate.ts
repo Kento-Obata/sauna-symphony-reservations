@@ -6,3 +6,10 @@
 export const getJstTodayYmd = (now: Date = new Date()): string =>
   // eslint-disable-next-line no-restricted-syntax -- ここが JST 変換の正規の実装
   new Date(now.getTime() + 9 * 3600 * 1000).toISOString().slice(0, 10);
+
+/** "YYYY-MM-DD" に日数を足した "YYYY-MM-DD"。Date.UTC ベースなので TZ 非依存(サーバ側 addJstDays と同じ) */
+export const addJstDays = (ymd: string, days: number): string => {
+  const [y, m, d] = ymd.split("-").map(Number);
+  // eslint-disable-next-line no-restricted-syntax -- UTC 0 時の暦日をそのまま取り出すので安全
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+};

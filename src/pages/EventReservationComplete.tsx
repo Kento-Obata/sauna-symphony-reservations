@@ -1,6 +1,9 @@
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
+import { SiteShell } from "@/components/site/SiteShell";
+import { StatusTicket, TicketRow } from "@/components/site/StatusTicket";
 
 /**
  * イベント予約完了ページ。即時確定のため、遷移元 state の情報をそのまま表示する。
@@ -26,69 +29,44 @@ export default function EventReservationComplete() {
 
   if (!reservationCode) return null;
 
+  const detailUrl = `/events/reservation/${reservationCode}${accessToken ? `?t=${accessToken}` : ""}`;
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sauna-wood to-sauna-stone/10">
-      <div className="glass-card p-8 max-w-2xl w-full mx-4">
-        <div className="text-center space-y-6">
-          <h1 className="text-3xl font-bold text-gradient">ご予約ありがとうございます</h1>
-
-          <div className="space-y-2">
-            {eventTitle && <p className="text-lg">{eventTitle}</p>}
-            {dateLabel && (
-              <p className="text-sauna-stone">
-                {dateLabel} {timeLabel}
-                {guestCount ? ` ・ ${guestCount}名` : ""}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-4">
-            <p className="text-lg">予約コード</p>
-            <p className="text-2xl font-bold">{reservationCode}</p>
-          </div>
-
-          {typeof totalPrice === "number" && (
-            <div className="space-y-1">
-              <p className="text-lg">料金</p>
-              <p className="text-2xl font-bold">
-                {totalPrice > 0 ? `¥${totalPrice.toLocaleString()}` : priceNote || "無料"}
-              </p>
-              {totalPrice > 0 && (
-                <p className="text-sm text-sauna-stone">
-                  {priceNote || "当日現地払い"}
-                </p>
-              )}
-            </div>
-          )}
-
-          <div className="space-y-2 text-sauna-stone">
-            <p>ご予約が確定しました。確認メールをお送りしています。</p>
-            <p>当日は予約コードをご提示ください。</p>
-          </div>
-
-          <div className="space-y-4 pt-6">
-            <Button
-              onClick={() =>
-                navigate(
-                  `/events/reservation/${reservationCode}${accessToken ? `?t=${accessToken}` : ""}`,
-                )
-              }
-              className="w-full sm:w-auto"
-            >
+    <SiteShell minimalFooter>
+      <StatusTicket
+        state="done"
+        latin="Thank you"
+        title="ご予約ありがとうございます"
+        lead="ご予約が確定しました。確認メールをお送りしています。当日は予約コードをご提示ください"
+        code={reservationCode}
+        actions={
+          <>
+            <Link to={detailUrl} className="u-btn u-btn-primary">
               予約詳細を確認
-            </Button>
-            <div>
-              <Button
-                variant="outline"
-                onClick={() => navigate("/events")}
-                className="w-full sm:w-auto"
-              >
-                イベント一覧に戻る
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+              <ArrowRight className="u-btn-arrow h-4 w-4" strokeWidth={1.5} />
+            </Link>
+            <Link to="/events" className="u-btn u-btn-ghost">
+              イベント一覧に戻る
+            </Link>
+          </>
+        }
+      >
+        {eventTitle && <TicketRow label="イベント">{eventTitle}</TicketRow>}
+        {dateLabel && (
+          <TicketRow label="日時">
+            {dateLabel} <span className="u-num text-base">{timeLabel}</span>
+          </TicketRow>
+        )}
+        {guestCount ? <TicketRow label="人数">{guestCount}名</TicketRow> : null}
+        {typeof totalPrice === "number" && (
+          <TicketRow label="料金">
+            <span className="u-num text-2xl font-light">
+              {totalPrice > 0 ? `¥${totalPrice.toLocaleString()}` : priceNote || "無料"}
+            </span>
+            {totalPrice > 0 && <span className="block text-xs text-u-ink/65">{priceNote || "当日現地払い"}</span>}
+          </TicketRow>
+        )}
+      </StatusTicket>
+    </SiteShell>
   );
 }

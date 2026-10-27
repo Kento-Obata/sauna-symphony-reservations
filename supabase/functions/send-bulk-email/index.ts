@@ -1,20 +1,31 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { corsHeaders } from "../_shared/cors.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+};
+
+interface Recipient {
+  email: string;
+  name?: string;
+}
 
 interface BulkEmailRequest {
   subject: string;
   html: string;
+  recipients?: Recipient[];
   filter?: {
     source?: string;
     min_visits?: number;
   };
   dry_run?: boolean;
+  test_to?: string;
 }
 
 const BATCH_SIZE = 50;
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -34,7 +45,7 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
     const body: BulkEmailRequest = await req.json();
-    const { subject, html, filter, dry_run } = body;
+    const { subject, html, filter, dry_run, test_to } = body;
 
     if (!subject || !html) {
       return new Response(
@@ -43,30 +54,62 @@ serve(async (req) => {
       );
     }
 
-    // Query eligible recipients
-    let query = supabase
-      .from("customers")
-      .select("id, email, name, phone")
-      .eq("marketing_email_opt_in", true)
-      .not("email", "is", null);
+    // Test mode: send to a single address without querying customers
+    if (test_to) {
+      const testHtml =
+        html.replace(/\{\{name\}\}/g, "テスト") +
+        `<p style="font-size:11px;color:#999;margin-top:32px;text-align:center;"><a href="#" style="color:#999;">配信停止はこちら</a></p>`;
 
-    if (filter?.source) query = query.eq("source", filter.source);
-    if (filter?.min_visits) query = query.gte("visit_count", filter.min_visits);
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${RESEND_API_KEY}`,
+        },
+        body: JSON.stringify({ from: EMAIL_FROM, to: test_to, subject, html: testHtml }),
+      });
 
-    const { data: customers, error: customersError } = await query;
-    if (customersError) throw customersError;
+      const resBody = await res.text();
+      return new Response(
+        JSON.stringify({ success: res.ok, test_to, response: resBody }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
-    // Exclude suppressed emails
-    const { data: suppressed } = await supabase
-      .from("suppressed_emails")
-      .select("email");
+    let recipients: Array<{ id?: string; email: string; name?: string | null; phone?: string }>;
 
-    const suppressedSet = new Set(
-      (suppressed || []).map((s: { email: string }) => s.email.toLowerCase()),
-    );
-    const recipients = (customers || []).filter(
-      (c) => c.email && !suppressedSet.has(c.email.toLowerCase()),
-    );
+    if (body.recipients && body.recipients.length > 0) {
+      // Use externally provided recipients (bypasses DB query)
+      recipients = body.recipients.map((r) => ({
+        email: r.email,
+        name: r.name || null,
+      }));
+    } else {
+      // Query eligible recipients from DB
+      let query = supabase
+        .from("customers")
+        .select("id, email, name, phone")
+        .eq("marketing_email_opt_in", true)
+        .not("email", "is", null);
+
+      if (filter?.source) query = query.eq("source", filter.source);
+      if (filter?.min_visits) query = query.gte("visit_count", filter.min_visits);
+
+      const { data: customers, error: customersError } = await query;
+      if (customersError) throw customersError;
+
+      // Exclude suppressed emails
+      const { data: suppressed } = await supabase
+        .from("suppressed_emails")
+        .select("email");
+
+      const suppressedSet = new Set(
+        (suppressed || []).map((s: { email: string }) => s.email.toLowerCase()),
+      );
+      recipients = (customers || []).filter(
+        (c) => c.email && !suppressedSet.has(c.email.toLowerCase()),
+      );
+    }
 
     if (dry_run) {
       return new Response(
@@ -86,29 +129,39 @@ serve(async (req) => {
       );
     }
 
-    // Create campaign record
-    const { data: campaign, error: campaignError } = await supabase
-      .from("bulk_email_campaigns")
-      .insert({ subject, body_html: html, total_recipients: recipients.length, status: "sending" })
-      .select("id")
-      .single();
-    if (campaignError) throw campaignError;
+    // Try to create campaign record (non-fatal if DB unavailable)
+    let campaignId: string | null = null;
+    try {
+      const { data: campaign } = await supabase
+        .from("bulk_email_campaigns")
+        .insert({ subject, body_html: html, total_recipients: recipients.length, status: "sending" })
+        .select("id")
+        .single();
+      campaignId = campaign?.id ?? null;
+    } catch (e) {
+      console.warn("Could not create campaign record:", e);
+    }
 
     let sentCount = 0;
     let failedCount = 0;
+    const errors: Array<{ batch: number; status: number; error: string }> = [];
 
     for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
       const batch = recipients.slice(i, i + BATCH_SIZE);
 
-      // Create unsubscribe tokens for this batch
-      const { data: tokens } = await supabase
-        .from("email_unsubscribe_tokens")
-        .insert(batch.map((r) => ({ email: r.email!.toLowerCase() })))
-        .select("email, token");
-
-      const tokenMap = new Map(
-        (tokens || []).map((t: { email: string; token: string }) => [t.email, t.token]),
-      );
+      // Try to create unsubscribe tokens (non-fatal)
+      let tokenMap = new Map<string, string>();
+      try {
+        const { data: tokens } = await supabase
+          .from("email_unsubscribe_tokens")
+          .insert(batch.map((r) => ({ email: r.email!.toLowerCase() })))
+          .select("email, token");
+        tokenMap = new Map(
+          (tokens || []).map((t: { email: string; token: string }) => [t.email, t.token]),
+        );
+      } catch (e) {
+        console.warn("Could not create unsubscribe tokens:", e);
+      }
 
       const emails = batch.map((r) => {
         const token = tokenMap.get(r.email!.toLowerCase());
@@ -140,29 +193,13 @@ serve(async (req) => {
           body: JSON.stringify(emails),
         });
 
+        const resText = await res.text();
         if (res.ok) {
           sentCount += batch.length;
-          await supabase.from("email_send_log").insert(
-            batch.map((r) => ({
-              to_email: r.email!,
-              template_key: `bulk_${campaign.id}`,
-              status: "sent",
-              idempotency_key: `bulk_${campaign.id}_${r.id}`,
-            })),
-          );
         } else {
-          const errorText = await res.text();
-          console.error("Resend batch error:", res.status, errorText);
+          console.error("Resend batch error:", res.status, resText);
           failedCount += batch.length;
-          await supabase.from("email_send_log").insert(
-            batch.map((r) => ({
-              to_email: r.email!,
-              template_key: `bulk_${campaign.id}`,
-              status: "failed",
-              error_message: errorText.slice(0, 500),
-              idempotency_key: `bulk_${campaign.id}_${r.id}`,
-            })),
-          );
+          errors.push({ batch: Math.floor(i / BATCH_SIZE) + 1, status: res.status, error: resText.slice(0, 200) });
         }
       } catch (error) {
         console.error("Batch send error:", error);
@@ -175,30 +212,38 @@ serve(async (req) => {
       }
     }
 
-    await supabase
-      .from("bulk_email_campaigns")
-      .update({
-        sent_count: sentCount,
-        failed_count: failedCount,
-        status: "completed",
-        completed_at: new Date().toISOString(),
-      })
-      .eq("id", campaign.id);
+    // Try to update campaign record (non-fatal)
+    if (campaignId) {
+      try {
+        await supabase
+          .from("bulk_email_campaigns")
+          .update({
+            sent_count: sentCount,
+            failed_count: failedCount,
+            status: "completed",
+            completed_at: new Date().toISOString(),
+          })
+          .eq("id", campaignId);
+      } catch (e) {
+        console.warn("Could not update campaign record:", e);
+      }
+    }
 
     return new Response(
       JSON.stringify({
         success: true,
-        campaign_id: campaign.id,
+        campaign_id: campaignId,
         total_recipients: recipients.length,
         sent_count: sentCount,
         failed_count: failedCount,
+        errors,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (error) {
     console.error("Error in send-bulk-email:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }

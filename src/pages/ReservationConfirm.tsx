@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { SiteShell } from "@/components/site/SiteShell";
 
 export default function ReservationConfirm() {
   const { token } = useParams();
@@ -20,7 +21,7 @@ export default function ReservationConfirm() {
     const confirmReservation = async () => {
       if (!token) {
         console.error("No token provided");
-        toast.error("無効な確認リンクです。");
+        toast.error("無効な確認リンクです");
         navigate("/");
         return;
       }
@@ -48,14 +49,14 @@ export default function ReservationConfirm() {
               // JSON でないレスポンスは無視
             }
           }
-          toast.error(serverMessage || "予約の確定に失敗しました。リンクが無効か、有効期限が切れている可能性があります。");
+          toast.error(serverMessage || "予約の確定に失敗しました。リンクが無効か、有効期限が切れている可能性があります");
           navigate("/");
           return;
         }
 
         if (!data) {
           console.error("No data returned from edge function");
-          toast.error("予約の確定に失敗しました。");
+          toast.error("予約の確定に失敗しました");
           navigate("/");
           return;
         }
@@ -66,7 +67,7 @@ export default function ReservationConfirm() {
           navigate(`/reservation/${data.reservation_code}`);
         } else {
           console.error("Edge function returned success: false", data.error);
-          toast.error(data.error || "予約の確定に失敗しました。");
+          toast.error(data.error || "予約の確定に失敗しました");
           navigate("/");
         }
       } catch (error: any) {
@@ -83,11 +84,17 @@ export default function ReservationConfirm() {
 
   if (isConfirming) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sauna-wood to-sauna-stone/10">
-        <div className="glass-card p-8">
-          <p className="text-lg text-center">予約を確定しています...</p>
+      <SiteShell minimalFooter>
+        <div className="u-container flex min-h-[60vh] flex-col items-center justify-center py-20 text-center" role="status" aria-live="polite">
+          <span className="relative flex h-24 w-24 items-center justify-center">
+            <span className="absolute inset-0 animate-ping rounded-full border border-u-ink/20 [animation-duration:2.4s]" />
+            <span className="absolute inset-0 rounded-full border border-u-ink/15" />
+            <span className="u-mark w-10 text-u-ink" style={{ animation: "u-rise 1.4s var(--u-ease) infinite alternate" }} aria-hidden />
+          </span>
+          <p className="u-latin mt-8 text-xl italic text-u-ink/80">Confirming</p>
+          <p className="u-mincho mt-2 text-xl tracking-[0.12em]">予約を確定しています…</p>
         </div>
-      </div>
+      </SiteShell>
     );
   }
 

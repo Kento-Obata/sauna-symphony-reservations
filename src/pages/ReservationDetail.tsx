@@ -1,10 +1,9 @@
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Home, Lock } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Lock } from "lucide-react";
+import { SiteShell } from "@/components/site/SiteShell";
 import { toast } from "sonner";
 import { AdminReservationDetailsDialog } from "@/components/admin/AdminReservationDetailsDialog";
 import { useRef, useState } from "react";
@@ -99,19 +98,7 @@ export const ReservationDetail = () => {
 
   // 早期 return は全ての Hook 呼び出しの後に置く(rules-of-hooks)
   if (!reservationCode) {
-    return (
-      <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-bold text-red-500">
-          予約コードが見つかりません
-        </h1>
-        <p className="mt-2 text-gray-600">
-          URLをご確認の上、もう一度お試しください。
-        </p>
-        <Button className="mt-4" onClick={() => navigate('/')}>
-          トップページへ戻る
-        </Button>
-      </div>
-    );
+    return <DetailMessage title="予約コードが見つかりません" body="URLをご確認の上、もう一度お試しください" />;
   }
 
   const handlePhoneVerify = async (e: React.FormEvent) => {
@@ -128,7 +115,7 @@ export const ReservationDetail = () => {
         body: { reservationCode, phoneLastFourDigits: digits }
       });
       if (error || !data || data.requiresAuth || data.error || !data.reservation) {
-        setPhoneError("認証に失敗しました。電話番号下4桁または予約コードをご確認ください。");
+        setPhoneError("認証に失敗しました。電話番号下4桁または予約コードをご確認ください");
         return;
       }
       setPhoneVerifiedReservation(data.reservation);
@@ -145,129 +132,124 @@ export const ReservationDetail = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-4">
-        <div className="max-w-2xl mx-auto space-y-4">
-          <Skeleton className="h-8 w-64 mx-auto" />
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4 mx-auto" />
+      <SiteShell minimalFooter>
+        <div className="u-container max-w-2xl py-16">
+          <div className="h-56 animate-pulse rounded-[1.5rem] bg-u-ink/10" />
+          <div className="mt-6 space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="h-6 animate-pulse rounded bg-u-ink/[0.06]" />
+            ))}
           </div>
         </div>
-      </div>
+      </SiteShell>
     );
   }
 
   if (needsAuth) {
     return (
-      <div className="container mx-auto p-4">
-        <div className="glass-card p-6 max-w-md mx-auto">
-          <div className="flex items-center justify-center mb-4">
-            <Lock className="h-6 w-6 text-sauna-stone" />
+      <SiteShell minimalFooter>
+        <div className="u-container flex justify-center py-16 md:py-24">
+          <div className="w-full max-w-md text-center" style={{ animation: "u-fade-up 1s var(--u-ease) both" }}>
+            <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-u-ink/20">
+              <Lock className="h-5 w-5" strokeWidth={1.4} />
+            </span>
+            <p className="u-latin mt-6 text-xl italic text-u-ink/80">Verify</p>
+            <h1 className="u-mincho mt-2 text-2xl tracking-[0.1em]">ご本人確認</h1>
+            <p className="mt-4 text-sm leading-[2] text-u-ink/80">
+              ご予約時のお電話番号の<strong className="font-medium text-u-ink">下4桁</strong>を入力してください
+            </p>
+            <form onSubmit={handlePhoneVerify} className="mt-8 space-y-4">
+              <div className="flex justify-center gap-2" onClick={() => document.getElementById("phone-last4")?.focus()}>
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <span
+                    key={i}
+                    className={`u-num flex h-16 w-14 items-center justify-center rounded-2xl border text-3xl font-light transition-colors ${
+                      phoneInput.length === i ? "border-u-ink bg-white" : "border-u-ink/15 bg-white/50"
+                    }`}
+                  >
+                    {phoneInput[i] ?? ""}
+                  </span>
+                ))}
+              </div>
+              <input
+                id="phone-last4"
+                type="tel"
+                inputMode="numeric"
+                autoComplete="off"
+                maxLength={4}
+                aria-label="電話番号の下4桁"
+                value={phoneInput}
+                onChange={(e) => setPhoneInput(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                className="sr-only"
+                autoFocus
+              />
+              {phoneError && <p className="text-sm text-[hsl(var(--destructive))]">{phoneError}</p>}
+              <button type="submit" className="u-btn u-btn-primary w-full" disabled={phoneSubmitting || phoneInput.length !== 4}>
+                {phoneSubmitting ? "確認中…" : "予約を表示"}
+              </button>
+              <Link to="/" className="u-btn w-full text-u-ink/80 hover:text-u-ink">
+                トップページへ戻る
+              </Link>
+            </form>
+            <p className="mt-6 text-xs leading-[1.9] text-u-ink/80">
+              メール・SMSのリンクから開いた場合は自動で表示されます
+            </p>
           </div>
-          <h1 className="text-xl font-bold mb-2 text-center">予約内容を表示するには認証が必要です</h1>
-          <p className="text-sm text-muted-foreground text-center mb-6">
-            ご予約時にご登録いただいたお電話番号の<br />
-            <span className="font-medium">下4桁</span>を入力してください。
-          </p>
-          <form onSubmit={handlePhoneVerify} className="space-y-4">
-            <Input
-              type="tel"
-              inputMode="numeric"
-              maxLength={4}
-              placeholder="1234"
-              value={phoneInput}
-              onChange={(e) => setPhoneInput(e.target.value.replace(/\D/g, "").slice(0, 4))}
-              className="text-center text-lg tracking-widest"
-              autoFocus
-            />
-            {phoneError && (
-              <p className="text-sm text-red-600 text-center">{phoneError}</p>
-            )}
-            <Button type="submit" className="w-full" disabled={phoneSubmitting}>
-              {phoneSubmitting ? "確認中..." : "予約を表示"}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              className="w-full"
-              onClick={() => navigate('/')}
-            >
-              トップページへ戻る
-            </Button>
-          </form>
-          <p className="text-xs text-muted-foreground text-center mt-6">
-            メール・SMSのリンクから開いた場合は自動で表示されます。<br />
-            ご不明な場合はお問い合わせください。
-          </p>
         </div>
-      </div>
+      </SiteShell>
     );
   }
 
   if (error) {
-    return (
-      <div className="container mx-auto p-4">
-        <div className="max-w-2xl mx-auto text-center">
-          <h1 className="text-2xl font-bold text-red-500">
-            予約情報の取得に失敗しました
-          </h1>
-          <Button className="mt-4" onClick={() => navigate('/')}>
-            トップページへ戻る
-          </Button>
-        </div>
-      </div>
-    );
+    return <DetailMessage title="予約情報の取得に失敗しました" body="時間をおいて、もう一度お試しください" />;
   }
 
   if (!reservation) {
-    return (
-      <div className="container mx-auto p-4">
-        <div className="max-w-2xl mx-auto text-center">
-          <h1 className="text-2xl font-bold text-red-500">
-            予約が見つかりませんでした
-          </h1>
-          <Button className="mt-4" onClick={() => navigate('/')}>
-            トップページへ戻る
-          </Button>
-        </div>
-      </div>
-    );
+    return <DetailMessage title="予約が見つかりませんでした" body="予約コードをご確認ください" />;
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="glass-card p-6 max-w-2xl mx-auto relative">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="absolute top-4 right-4"
-          onClick={() => navigate('/')}
-        >
-          <Home className="h-6 w-6 text-sauna-stone" />
-        </Button>
-
-        <h1 className="text-3xl font-bold mb-6 text-center text-gradient">
-          予約詳細
-        </h1>
-        
-        <div className="space-y-4">
+    <SiteShell minimalFooter>
+      <div className="u-container grid gap-10 py-12 md:py-20 lg:grid-cols-12 lg:gap-14">
+        <div className="lg:col-span-4">
+          <p className="u-latin text-[clamp(2.5rem,6vw,4rem)] font-light italic leading-none" style={{ animation: "u-fade-up 1s var(--u-ease) both" }}>
+            Reservation
+          </p>
+          <h1 className="u-mincho mt-4 text-2xl tracking-[0.1em]" style={{ animation: "u-fade-up 1s var(--u-ease) .1s both" }}>
+            予約詳細
+          </h1>
+          <div className="mt-8 hidden space-y-2 text-xs leading-[1.9] text-u-ink/80 lg:block">
+            <p>当日は開始時刻の10分前からご案内いたします</p>
+            <p>
+              ご不明点は
+              <a href="https://www.instagram.com/u__sauna/" target="_blank" rel="noopener noreferrer" className="u-link mx-1 text-u-ink">
+                Instagram
+              </a>
+              のDMへどうぞ
+            </p>
+          </div>
+        </div>
+        <div className="space-y-6 lg:col-span-8" style={{ animation: "u-fade-up 1s var(--u-ease) .15s both" }}>
           {reservation.status === "pending_payment" && fromCheckout && (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800 text-center">
+            <div className="flex items-center gap-3 rounded-2xl border border-u-copper/40 bg-u-copper/[0.08] p-4 text-sm">
               {Date.now() - pollStartedAt.current <= POLL_TIMEOUT_MS ? (
-                <p className="animate-pulse">お支払いの確認を行っています。このままお待ちください...</p>
+                <>
+                  <span className="h-2 w-2 shrink-0 animate-ping rounded-full bg-u-copper" />
+                  <p>お支払いの確認を行っています。このままお待ちください…</p>
+                </>
               ) : (
-                <p>お支払いの確認に時間がかかっています。ページを再読み込みしてご確認ください。</p>
+                <p>お支払いの確認に時間がかかっています。ページを再読み込みしてご確認ください</p>
               )}
             </div>
           )}
           <ReservationInfo reservation={reservation} />
-          <div className="bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground space-y-1">
-            <p className="font-medium text-foreground">キャンセルポリシー</p>
-            <p>・前日までのキャンセルは無料です。</p>
-            <p>・当日のキャンセルはお電話かDMにてご連絡ください。</p>
+          <div className="rounded-2xl bg-u-ink/[0.04] p-5 text-xs leading-[1.9] text-u-ink/80">
+            <p className="mb-1 text-[0.6875rem] tracking-[0.2em] text-u-ink/80">キャンセルポリシー</p>
+            <p>・2日前までのキャンセルは無料</p>
+            <p>・24時間前までは料金の30%、24時間以内・無断キャンセルは料金の100%を申し受けます</p>
+            <p>・このページからのキャンセルは2日前まで。前日・当日はお電話かDMにてご連絡ください</p>
             {reservation.payment_status === "paid" && (
-              <p>・事前決済分は、キャンセル時に全額返金いたします(反映まで数日かかる場合があります)。</p>
+              <p>・事前決済分は、2日前までのキャンセルで全額返金いたします(反映まで数日かかる場合があります)</p>
             )}
           </div>
           <ReservationActions
@@ -287,8 +269,21 @@ export const ReservationDetail = () => {
           reservation={reservation}
         />
       )}
-    </div>
+    </SiteShell>
   );
 };
+
+const DetailMessage = ({ title, body }: { title: string; body: string }) => (
+  <SiteShell minimalFooter>
+    <div className="u-container flex flex-col items-center py-24 text-center">
+      <span className="u-mark w-12 text-u-ink/30" aria-hidden />
+      <h1 className="u-mincho mt-8 text-2xl tracking-[0.1em]">{title}</h1>
+      <p className="mt-3 text-sm text-u-ink/80">{body}</p>
+      <Link to="/" className="u-btn u-btn-ghost mt-8">
+        トップページへ戻る
+      </Link>
+    </div>
+  </SiteShell>
+);
 
 export default ReservationDetail;

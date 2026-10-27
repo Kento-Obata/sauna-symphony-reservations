@@ -57,3 +57,471 @@
 .text-gradient {
   @apply bg-clip-text text-transparent bg-gradient-to-r from-black via-black/90 to-black/80;
 }
+/* ==========================================================================
+   U sauna — 顧客向けサイトのデザインシステム
+   管理画面(shadcn トークン)には影響させないよう、.u-site 配下にスコープする。
+   ========================================================================== */
+
+:root {
+  --u-sage: #a4a99d;
+  --u-sage-deep: #959a8d;
+  --u-sage-light: #b4b8ad;
+  --u-paper: #f2f1eb;
+  --u-paper-2: #e8e7df;
+  --u-ink: #1b1c19;
+  --u-ink-2: #2b2d28;
+  --u-ink-soft: rgba(27, 28, 25, 0.66);
+  --u-ink-faint: rgba(27, 28, 25, 0.42);
+  --u-line: rgba(27, 28, 25, 0.14);
+  --u-line-strong: rgba(27, 28, 25, 0.28);
+  --u-copper: #d38248;
+  --u-copper-deep: #a95d27;
+  --u-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --u-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --u-gutter: clamp(1.25rem, 4vw, 3.5rem);
+}
+
+@layer components {
+  /* 既存の base で全要素に font-extralight / font-mplus が付くため、サイト配下は継承に戻す */
+  .u-site,
+  .u-site * {
+    font-family: inherit;
+    font-weight: inherit;
+  }
+  .u-site {
+    /* サイト配下の shadcn コンポーネントもブランドの色に揃える */
+    --background: 51 19% 93%;
+    --foreground: 80 6% 10%;
+    --card: 51 19% 93%;
+    --card-foreground: 80 6% 10%;
+    --popover: 51 19% 93%;
+    --popover-foreground: 80 6% 10%;
+    --primary: 80 6% 10%;
+    --primary-foreground: 51 19% 93%;
+    --secondary: 53 12% 89%;
+    --secondary-foreground: 80 6% 10%;
+    --muted: 53 12% 89%;
+    --muted-foreground: 80 3% 36%;
+    --accent: 53 12% 86%;
+    --accent-foreground: 80 6% 10%;
+    --destructive: 4 62% 42%;
+    --destructive-foreground: 51 19% 93%;
+    --border: 60 6% 78%;
+    --input: 60 6% 74%;
+    --ring: 80 6% 10%;
+    --radius: 0.875rem;
+    font-family: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", sans-serif;
+    font-weight: 400;
+    color: var(--u-ink);
+    background: var(--u-sage);
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "palt" 1;
+    letter-spacing: 0.04em;
+    line-height: 1.85;
+    text-rendering: optimizeLegibility;
+  }
+  .u-site ::selection {
+    background: var(--u-ink);
+    color: var(--u-paper);
+  }
+  .u-site :focus-visible {
+    outline: 2px solid var(--u-ink);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  .u-mincho {
+    font-family: "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+    font-weight: 500;
+    font-feature-settings: "palt" 1;
+  }
+  .u-latin {
+    font-family: "Cormorant Garamond", "Times New Roman", serif;
+    letter-spacing: 0.02em;
+    font-feature-settings: "lnum" 1;
+  }
+  .u-num {
+    font-family: "Cormorant Garamond", serif;
+    font-variant-numeric: lining-nums tabular-nums;
+    font-feature-settings: "lnum" 1, "tnum" 1;
+    letter-spacing: 0;
+  }
+  .u-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.6875rem;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: rgba(27, 28, 25, 0.8);
+  }
+  .u-eyebrow::before {
+    content: "";
+    width: 1.75rem;
+    height: 1px;
+    background: currentColor;
+    opacity: 0.6;
+  }
+
+  .u-container {
+    width: 100%;
+    max-width: 82rem;
+    margin-inline: auto;
+    padding-inline: var(--u-gutter);
+  }
+
+  .u-site .glass-card {
+    background: rgba(242, 241, 235, 0.72);
+    border: 1px solid rgba(27, 28, 25, 0.08);
+    border-radius: 1.5rem;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 30px 60px -40px rgba(27, 28, 25, 0.35);
+  }
+  .u-site .text-gradient {
+    background: none;
+    color: var(--u-ink);
+    -webkit-text-fill-color: currentColor;
+  }
+
+  /* ロゴマークは PNG のアルファをマスクとして使い、任意の色で塗る */
+  .u-mark {
+    display: inline-block;
+    aspect-ratio: 173.26 / 190.81;
+    background: currentColor;
+    -webkit-mask: url("/brand/mark.svg") center / contain no-repeat;
+    mask: url("/brand/mark.svg") center / contain no-repeat;
+  }
+
+  /* ボタン */
+  .u-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    min-height: 3.25rem;
+    padding: 0 1.75rem;
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    white-space: nowrap;
+    transition: background-color 0.4s var(--u-ease), color 0.4s var(--u-ease),
+      transform 0.4s var(--u-ease), box-shadow 0.4s var(--u-ease), opacity 0.3s;
+    -webkit-tap-highlight-color: transparent;
+    isolation: isolate;
+    overflow: hidden;
+  }
+  .u-btn:active {
+    transform: scale(0.98);
+  }
+  .u-btn:disabled {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+  .u-btn-primary {
+    background: var(--u-ink);
+    color: var(--u-paper);
+  }
+  .u-btn-primary::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--u-copper-deep);
+    transform: translateY(101%);
+    border-radius: inherit;
+    transition: transform 0.55s var(--u-ease);
+  }
+  @media (hover: hover) {
+    .u-btn-primary:hover::after {
+      transform: translateY(0);
+    }
+    .u-btn-ghost:hover {
+      background: var(--u-ink);
+      color: var(--u-paper);
+    }
+    .u-btn-light:hover {
+      background: var(--u-copper);
+      color: var(--u-ink);
+    }
+  }
+  .u-btn-ghost {
+    border: 1px solid var(--u-line-strong);
+    color: var(--u-ink);
+  }
+  .u-btn-light {
+    background: var(--u-paper);
+    color: var(--u-ink);
+  }
+  .u-btn .u-btn-arrow {
+    transition: transform 0.5s var(--u-ease);
+  }
+  .u-btn:hover .u-btn-arrow {
+    transform: translateX(4px);
+  }
+
+  .u-link {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-size: 100% 1px;
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    padding-bottom: 2px;
+    transition: background-size 0.5s var(--u-ease);
+  }
+  @media (hover: hover) {
+    .u-link:hover {
+      background-size: 0% 1px;
+      background-position: 100% 100%;
+    }
+  }
+
+  /* 入力 */
+  .u-field {
+    position: relative;
+    display: block;
+  }
+  .u-input {
+    width: 100%;
+    height: 3.5rem;
+    padding: 1.35rem 1rem 0.35rem;
+    border-radius: 0.875rem;
+    border: 1px solid var(--u-line);
+    background: rgba(255, 255, 255, 0.55);
+    font-size: 1rem;
+    color: var(--u-ink);
+    transition: border-color 0.3s, background-color 0.3s, box-shadow 0.3s;
+    outline: none;
+  }
+  .u-input:focus-visible {
+    outline: none;
+  }
+  .u-input:hover {
+    border-color: var(--u-line-strong);
+  }
+  .u-input:focus {
+    border-color: var(--u-ink);
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(27, 28, 25, 0.06);
+  }
+  .u-field-label {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.9375rem;
+    color: var(--u-ink-faint);
+    pointer-events: none;
+    transition: all 0.3s var(--u-ease);
+    transform-origin: left top;
+  }
+  .u-input:focus + .u-field-label,
+  .u-input:not(:placeholder-shown) + .u-field-label {
+    top: 0.55rem;
+    transform: translateY(0) scale(0.75);
+    color: var(--u-ink-soft);
+    letter-spacing: 0.08em;
+  }
+
+  /* 選択カード(時間帯・人数・支払い等) */
+  .u-choice {
+    position: relative;
+    border: 1px solid var(--u-line);
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 1rem;
+    transition: border-color 0.35s var(--u-ease), background-color 0.35s var(--u-ease),
+      color 0.35s var(--u-ease), transform 0.35s var(--u-ease);
+    -webkit-tap-highlight-color: transparent;
+    text-align: left;
+  }
+  @media (hover: hover) {
+    .u-choice:not([aria-disabled="true"]):not([data-selected="true"]):hover {
+      border-color: var(--u-ink);
+      background: rgba(255, 255, 255, 0.75);
+    }
+  }
+  .u-choice[data-selected="true"] {
+    border-color: var(--u-ink);
+    background: var(--u-ink);
+    color: var(--u-paper);
+  }
+  .u-choice[aria-disabled="true"] {
+    cursor: not-allowed;
+    background: transparent;
+    border-style: dashed;
+    color: var(--u-ink-faint);
+  }
+
+  /* スクロール出現 */
+  .u-reveal {
+    opacity: 0;
+    transform: translate3d(0, 28px, 0);
+    transition: opacity 1.1s var(--u-ease), transform 1.1s var(--u-ease);
+    transition-delay: var(--u-delay, 0ms);
+  }
+  .u-reveal.is-in {
+    opacity: 1;
+    transform: none;
+  }
+  .u-reveal-line {
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 1.4s var(--u-ease);
+    transition-delay: var(--u-delay, 0ms);
+  }
+  .u-reveal-line.is-in {
+    transform: scaleX(1);
+  }
+
+  /* 写真: スマホ撮影の色味をそろえる + 下から幕が開くように出す */
+  .u-photo {
+    filter: saturate(0.82) contrast(1.04);
+  }
+  /* 監視は外側(.u-photo-reveal)で行う。clip-path を付けた要素自体は交差判定で見えない扱いになるため */
+  .u-photo-reveal > * {
+    clip-path: inset(100% 0 0 0);
+    transition: clip-path 1.4s var(--u-ease);
+    transition-delay: var(--u-delay, 0ms);
+  }
+  .u-photo-reveal > * > * {
+    transform: scale(1.12);
+    transition: transform 2s var(--u-ease);
+    transition-delay: var(--u-delay, 0ms);
+  }
+  .u-photo-reveal.is-in > * {
+    clip-path: inset(0 0 0 0);
+  }
+  .u-photo-reveal.is-in > * > * {
+    transform: none;
+  }
+
+  /* 網点(ブランドガイドの霧・湯気の表現) */
+  .u-halftone {
+    background-image: radial-gradient(circle, currentColor 1.4px, transparent 1.9px);
+    background-size: 7px 7px;
+  }
+
+  /* 紙のような粒子感 */
+  .u-grain::after {
+    content: "";
+    position: fixed;
+    inset: -50%;
+    z-index: 60;
+    pointer-events: none;
+    opacity: 0.07;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* トースト */
+  .u-toast {
+    font-family: "Zen Kaku Gothic New", sans-serif !important;
+    border-radius: 999px !important;
+    background: var(--u-ink) !important;
+    color: var(--u-paper) !important;
+    border: none !important;
+    letter-spacing: 0.04em;
+    font-size: 0.8125rem !important;
+    padding: 0.9rem 1.4rem !important;
+  }
+}
+
+/* 導入の幕が上がるまで、ヒーローの登場アニメーションを止めておく */
+.u-intro-hold .u-hero-anim,
+.u-intro-hold .u-hero-anim * {
+  animation-play-state: paused !important;
+}
+
+/* 湯気: ぼかした楕円がゆっくり立ち上る */
+@keyframes u-steam {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.6);
+    opacity: 0;
+  }
+  20% {
+    opacity: var(--u-steam-o, 0.55);
+  }
+  100% {
+    transform: translate3d(var(--u-steam-x, 0px), -46vh, 0) scale(1.8);
+    opacity: 0;
+  }
+}
+@keyframes u-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -10px, 0);
+  }
+}
+@keyframes u-rise {
+  from {
+    clip-path: inset(100% 0 0 0);
+    transform: translate3d(0, 24px, 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+    transform: none;
+  }
+}
+@keyframes u-fade-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 24px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes u-scroll-cue {
+  0% {
+    transform: scaleY(0);
+    transform-origin: top;
+  }
+  45% {
+    transform: scaleY(1);
+    transform-origin: top;
+  }
+  55% {
+    transform: scaleY(1);
+    transform-origin: bottom;
+  }
+  100% {
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+}
+@keyframes u-pop {
+  0% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .u-site *,
+  .u-site *::before,
+  .u-site *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .u-reveal {
+    opacity: 1;
+    transform: none;
+  }
+  .u-reveal-line {
+    transform: none;
+  }
+  .u-photo-reveal > * {
+    clip-path: none;
+  }
+  .u-photo-reveal > * > * {
+    transform: none;
+  }
+}

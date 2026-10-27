@@ -34,7 +34,6 @@ export const AdminReservationDetailsDialog = ({
   const [guestCount, setGuestCount] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [waterTemperature, setWaterTemperature] = useState("15");
   const [timeSlot, setTimeSlot] = useState<TimeSlot>("morning");
   const [date, setDate] = useState("");
   const [isEditing, setIsEditing] = useState(false);
@@ -42,7 +41,12 @@ export const AdminReservationDetailsDialog = ({
   const [basePrice, setBasePrice] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
   const [availableOptions, setAvailableOptions] = useState<Option[]>([]);
-  const [isDirty, setIsDirty] = useState(false); // Track if options or price have been modified
+  // basePrice はオプション取得完了後にしか正しく計算できない。読込前に
+  // totalPrice を再計算すると 0 円になり、そのまま保存すると DB を壊す
+  // (2026-08-26 に実際に発生)ため、読込完了を明示的に追跡する
+  const [optionsLoaded, setOptionsLoaded] = useState(false);
+  const [optionsDirty, setOptionsDirty] = useState(false);
+  const [priceDirty, setPriceDirty] = useState(false);
 
   // Fetch all available options
   useEffect(() => {
@@ -68,10 +72,12 @@ export const AdminReservationDetailsDialog = ({
       setGuestCount(reservation.guest_count.toString());
       setPhone(reservation.phone);
       setEmail(reservation.email || "");
-      setWaterTemperature(reservation.water_temperature.toString());
       setTimeSlot(reservation.time_slot);
       setDate(reservation.date);
       setTotalPrice(reservation.total_price);
+      setOptionsLoaded(false);
+      setOptionsDirty(false);
+      setPriceDirty(false);
       fetchReservationOptions(reservation.id);
     }
   }, [reservation]);
@@ -124,6 +130,7 @@ export const AdminReservationDetailsDialog = ({
         console.log("No options found for this reservation");
         console.log("Base price set to total:", reservation?.total_price);
       }
+      setOptionsLoaded(true);
     } catch (error) {
       console.error("Error in fetchReservationOptions:", error);
     }
@@ -179,17 +186,19 @@ export const AdminReservationDetailsDialog = ({
     }, 0);
   };
 
-  // Update total price when base price or options change
+  // Update total price when base price or options change.
+  // オプション読込完了前は basePrice=0 のため再計算しない(DB 由来の totalPrice を保持)
   useEffect(() => {
+    if (!optionsLoaded) return;
     const newTotal = basePrice + calculateOptionsTotal();
     setTotalPrice(newTotal);
-  }, [basePrice, reservationOptions]);
+  }, [optionsLoaded, basePrice, reservationOptions]);
 
   // Handle base price change
   const handleBasePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newBasePrice = parseInt(e.target.value) || 0;
     setBasePrice(newBasePrice);
-    setIsDirty(true);
+    setPriceDirty(true);
   };
 
   // Handle adding an option
@@ -203,7 +212,7 @@ export const AdminReservationDetailsDialog = ({
     };
     
     setReservationOptions([...reservationOptions, newOption]);
-    setIsDirty(true);
+    setOptionsDirty(true);
   };
 
   // Handle removing an option
@@ -211,22 +220,24 @@ export const AdminReservationDetailsDialog = ({
     const updatedOptions = [...reservationOptions];
     updatedOptions.splice(index, 1);
     setReservationOptions(updatedOptions);
-    setIsDirty(true);
+    setOptionsDirty(true);
   };
 
   // Handle changing an option
   const handleOptionChange = (index: number, optionId: string) => {
     const option = availableOptions?.find(opt => opt.id === optionId);
     if (!option) return;
-    
+
     const updatedOptions = [...reservationOptions];
     updatedOptions[index] = {
       ...updatedOptions[index],
-      option
+      option,
+      // 変更前オプションの保存済み金額は無効なので破棄し、再計算させる
+      total_price: undefined
     };
-    
+
     setReservationOptions(updatedOptions);
-    setIsDirty(true);
+    setOptionsDirty(true);
   };
 
   // Handle changing quantity
@@ -241,11 +252,13 @@ export const AdminReservationDetailsDialog = ({
     
     updatedOptions[index] = {
       ...currentOption,
-      quantity: Math.min(newQuantity, maxQuantity)
+      quantity: Math.min(newQuantity, maxQuantity),
+      // 数量変更前の保存済み金額は無効なので破棄し、再計算させる
+      total_price: undefined
     };
-    
+
     setReservationOptions(updatedOptions);
-    setIsDirty(true);
+    setOptionsDirty(true);
   };
 
   const generateUserKey = (phone: string) => {
@@ -264,45 +277,55 @@ export const AdminReservationDetailsDialog = ({
 
   const handleSave = async () => {
     try {
+      // オプション読込に失敗したまま料金を保存すると誤った金額で上書きするため拒否
+      if ((priceDirty || optionsDirty) && !optionsLoaded) {
+        toast.error("オプション情報の読み込みに失敗しているため料金を保存できません。ダイアログを開き直してください。");
+        return;
+      }
+
+      // 変更されたフィールドだけを更新する。編集していない項目まで画面の
+      // state で全上書きすると、読込途中の値(料金 0 円等)で DB を壊すため
+      const updates: Record<string, unknown> = {};
+      if (guestName !== reservation.guest_name) updates.guest_name = guestName;
+      if (parseInt(guestCount) !== reservation.guest_count) updates.guest_count = parseInt(guestCount);
+      if (phone !== reservation.phone) updates.phone = phone;
+      if ((email || null) !== (reservation.email || null)) updates.email = email || null;
+      if (timeSlot !== reservation.time_slot) updates.time_slot = timeSlot;
+      if (date !== reservation.date) updates.date = date;
+      // 料金は明示的に編集された時だけ書く
+      if ((priceDirty || optionsDirty) && totalPrice !== reservation.total_price) {
+        updates.total_price = totalPrice;
+      }
+
+      if (Object.keys(updates).length === 0 && !optionsDirty) {
+        toast.info("変更はありません");
+        setIsEditing(false);
+        return;
+      }
+
       // 支払い済み予約の金額変更は Square 決済額と乖離する(差額の自動調整はしない)
-      if (reservation.payment_status === "paid" && totalPrice !== reservation.total_price) {
+      if (reservation.payment_status === "paid" && updates.total_price !== undefined) {
         toast.warning(
           "事前決済済みの予約です。金額の変更は自動では返金/追加請求されません。差額は Square ダッシュボード等で手動対応してください。",
         );
       }
 
-      console.log("Updating reservation with data:", {
-        guest_name: guestName,
-        guest_count: parseInt(guestCount),
-        phone: phone,
-        email: email || null,
-        water_temperature: 15,
-        time_slot: timeSlot,
-        date: date,
-        total_price: totalPrice,
-      });
+      console.log("Updating reservation with data:", updates);
 
-      const { error } = await supabase
-        .from("reservations")
-        .update({
-          guest_name: guestName,
-          guest_count: parseInt(guestCount),
-          phone: phone,
-          email: email || null,
-          water_temperature: 15,
-          time_slot: timeSlot,
-          date: date,
-          total_price: totalPrice, // Save the updated total price
-        })
-        .eq("id", reservation.id);
+      if (Object.keys(updates).length > 0) {
+        const { error } = await supabase
+          .from("reservations")
+          .update(updates)
+          .eq("id", reservation.id);
 
-      if (error) {
-        console.error("Error updating reservation:", error);
-        throw error;
+        if (error) {
+          console.error("Error updating reservation:", error);
+          throw error;
+        }
       }
 
       // If options have been modified, update them too
-      if (isDirty) {
+      if (optionsDirty) {
         // First delete all existing options
         const { error: deleteError } = await supabase
           .from("reservation_options")
@@ -348,13 +371,6 @@ export const AdminReservationDetailsDialog = ({
         "send-update-notification",
         {
           body: {
-            date: date,
-            timeSlot: timeSlot,
-            guestName: guestName,
-            guestCount: parseInt(guestCount),
-            email: email || null,
-            phone: phone,
-            waterTemperature: 15,
             reservationCode: reservation.reservation_code,
           },
         }
@@ -368,12 +384,13 @@ export const AdminReservationDetailsDialog = ({
       }
 
       await queryClient.invalidateQueries({ queryKey: ["reservations"] });
-      await queryClient.invalidateQueries({ 
-        queryKey: ["reservation", reservation.reservation_code] 
+      await queryClient.invalidateQueries({
+        queryKey: ["reservation", reservation.reservation_code]
       });
-      
+
       setIsEditing(false);
-      setIsDirty(false);
+      setOptionsDirty(false);
+      setPriceDirty(false);
     } catch (error) {
       console.error("Error updating reservation:", error);
       toast.error("予約情報の更新に失敗しました");
@@ -509,27 +526,6 @@ export const AdminReservationDetailsDialog = ({
                 <Input value={email} onChange={(e) => setEmail(e.target.value)} />
               ) : (
                 reservation.email || "-"
-              )}
-            </div>
-
-            <div className="text-muted-foreground">水風呂温度:</div>
-            <div>
-              {isEditing ? (
-                <>
-                  <div className="text-sm text-muted-foreground mb-2 text-amber-600 font-medium">
-                    ※ 水温選択は2025年9月より導入予定です
-                  </div>
-                  <Select value="15" onValueChange={setWaterTemperature} disabled>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="15">15°C</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </>
-              ) : (
-                `${reservation.water_temperature}°C`
               )}
             </div>
 

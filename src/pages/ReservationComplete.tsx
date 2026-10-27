@@ -1,6 +1,9 @@
 
 import { useLocation, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
+import { SiteShell } from "@/components/site/SiteShell";
+import { StatusTicket, TicketNote, TicketRow } from "@/components/site/StatusTicket";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Option } from "@/types/option";
@@ -101,70 +104,52 @@ export default function ReservationComplete() {
 
   if (!reservationCode) return null;
 
+  const detailUrl = `/reservation/${reservationCode}${accessToken ? `?t=${accessToken}` : ""}`;
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sauna-wood to-sauna-stone/10">
-      <div className="glass-card p-8 max-w-2xl w-full mx-4">
-        <div className="text-center space-y-6">
-          <h1 className="text-3xl font-bold text-gradient">ご予約ありがとうございます</h1>
-          
-          <div className="space-y-4">
-            <p className="text-lg">予約コード</p>
-            <p className="text-2xl font-bold">{reservationCode}</p>
-          </div>
-
-          {error && (
-            <div className="bg-red-50 text-red-600 p-4 rounded-md">
-              {error}
-            </div>
-          )}
-
-          {!isLoading && details && (
-            <div className="space-y-2">
-              <p className="text-lg">料金</p>
-              <p className="text-2xl font-bold">{formatPrice(details.total_price)}</p>
-              
-              {details.options && details.options.length > 0 && (
-                <div className="mt-2 text-sm">
-                  <p className="font-medium mb-1">選択オプション:</p>
-                  <ul className="space-y-1">
-                    {details.options.map((item, index) => (
-                      <li key={index} className="flex justify-between">
-                        <span>{item.option.name}</span>
-                        <span>{formatPrice(item.option.price_per_person)} × {item.quantity}名様</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="space-y-4 text-sauna-stone">
-            <p>予約内容の確認メールをお送りしました。</p>
-            <p>当日は予約コードをご提示ください。</p>
-            <p className="font-medium">受付開始時間は、ご予約時間の10分前からとなります。</p>
-          </div>
-
-          <div className="space-y-4 pt-6">
-            <Button 
-              onClick={() => navigate(`/reservation/${reservationCode}${accessToken ? `?t=${accessToken}` : ''}`)}
-              className="w-full sm:w-auto"
-            >
+    <SiteShell minimalFooter>
+      <StatusTicket
+        state="done"
+        latin="Thank you"
+        title="ご予約ありがとうございます"
+        lead="ご予約が確定しました。確認のご連絡をお送りしています。当日は予約コードをご提示ください"
+        code={reservationCode}
+        actions={
+          <>
+            <Link to={detailUrl} className="u-btn u-btn-primary">
               予約詳細を確認
-            </Button>
-            
-            <div>
-              <Button 
-                variant="outline" 
-                onClick={() => navigate('/')}
-                className="w-full sm:w-auto"
-              >
-                トップページに戻る
-              </Button>
-            </div>
+              <ArrowRight className="u-btn-arrow h-4 w-4" strokeWidth={1.5} />
+            </Link>
+            <Link to="/" className="u-btn u-btn-ghost">
+              トップページに戻る
+            </Link>
+          </>
+        }
+      >
+        {error && <TicketNote tone="warn">{error}</TicketNote>}
+        {isLoading ? (
+          <div className="space-y-3">
+            <div className="h-5 animate-pulse rounded bg-u-ink/[0.06]" />
+            <div className="h-5 w-2/3 animate-pulse rounded bg-u-ink/[0.06]" />
           </div>
-        </div>
-      </div>
-    </div>
+        ) : (
+          details && (
+            <>
+              {details.options?.map((item, index) => (
+                <TicketRow key={index} label={item.option.name}>
+                  <span className="u-num">
+                    {formatPrice(item.option.price_per_person)} × {item.quantity}名様
+                  </span>
+                </TicketRow>
+              ))}
+              <TicketRow label="料金">
+                <span className="u-num text-2xl font-light">{formatPrice(details.total_price)}</span>
+              </TicketRow>
+            </>
+          )
+        )}
+        <TicketNote>受付は、ご予約時間の10分前から開始します</TicketNote>
+      </StatusTicket>
+    </SiteShell>
   );
 }

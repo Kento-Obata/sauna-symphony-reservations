@@ -35,8 +35,6 @@ export const AdminReservationDialog = ({
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [people, setPeople] = useState("");
-  // 水温は常に15°Cに固定
-  const [temperature, setTemperature] = useState("15");
   const [selectedOptions, setSelectedOptions] = useState<ReservationOption[]>([]);
   const [timeSlotReservations, setTimeSlotReservations] = useState<Record<TimeSlot, number>>({
     morning: 0,
@@ -99,7 +97,6 @@ export const AdminReservationDialog = ({
       phone,
       email,
       people,
-      temperature: "15", // 常に15°Cに固定
       selectedOptions
     });
 
@@ -124,7 +121,7 @@ export const AdminReservationDialog = ({
     try {
       // 料金計算
       const guestCount = parseInt(people);
-      const totalPrice = await getTotalPrice(guestCount, temperature, date, selectedOptions);
+      const totalPrice = await getTotalPrice(guestCount, date, selectedOptions);
 
       // エラーの詳細をログに出力
       console.log('Attempting to insert reservation with:', {
@@ -252,7 +249,6 @@ export const AdminReservationDialog = ({
     setEmail("");
     setPhone("");
     setPeople("");
-    setTemperature("15"); // リセット時も15°Cに固定
     setSelectedOptions([]);
   };
 
@@ -284,8 +280,6 @@ export const AdminReservationDialog = ({
             setPhone={setPhone}
             people={people}
             setPeople={setPeople}
-            temperature={temperature}
-            setTemperature={setTemperature}
             date={date}
             setDate={setDate}
             timeSlotReservations={timeSlotReservations}

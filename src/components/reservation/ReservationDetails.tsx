@@ -1,5 +1,4 @@
 
-import React from "react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TimeSlot } from "@/types/reservation";
@@ -20,8 +19,6 @@ interface ReservationDetailsProps {
   setPhone: (value: string) => void;
   people: string;
   setPeople: (value: string) => void;
-  temperature: string;
-  setTemperature: (value: string) => void;
   date: Date | undefined;
   setDate: (date: Date | undefined) => void;
   timeSlotReservations: Record<TimeSlot, number>;
@@ -38,8 +35,6 @@ export const ReservationDetails = ({
   setPhone,
   people,
   setPeople,
-  temperature,
-  setTemperature,
   date,
   setDate,
   timeSlotReservations
@@ -77,11 +72,6 @@ export const ReservationDetails = ({
       console.error("Error selecting date:", error);
     }
   };
-
-  // 水温は常に15度に固定
-  React.useEffect(() => {
-    setTemperature("15");
-  }, [timeSlot, date, setTemperature]);
 
   return (
     <div className="space-y-4">
@@ -152,8 +142,6 @@ export const ReservationDetails = ({
           ※ 1名様でも2名様料金でご利用いただけます。
         </p>
       </div>
-
-      {/* 水風呂温度フォームを非表示にする（値は内部的には15度で固定） */}
     </div>
   );
 };
