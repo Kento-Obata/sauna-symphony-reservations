@@ -144,8 +144,8 @@ export default function ReservationPending() {
           )
         )}
         <TicketNote tone="warn">
-          <strong className="font-medium text-u-copper-deep">まだ予約は確定していません</strong>
-          2時間を過ぎると、仮予約は自動的にキャンセルされます。リンクが届かない場合は迷惑メールフォルダもご確認ください
+          <strong className="font-medium text-u-wood">まだ予約は確定していません</strong>
+          2時間を過ぎると、仮予約は自動的にキャンセルされます<br />リンクが届かない場合は迷惑メールフォルダもご確認ください
         </TicketNote>
       </StatusTicket>
     </SiteShell>

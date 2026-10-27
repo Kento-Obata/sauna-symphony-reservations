@@ -58,7 +58,7 @@ export const Hero = () => {
         className="pointer-events-none absolute inset-0 -z-10"
         style={{
           background:
-            "radial-gradient(60% 50% at 70% 62%, rgba(242,241,235,0.38), transparent 70%), radial-gradient(40% 40% at 72% 80%, rgba(211,130,72,0.14), transparent 70%)",
+            "radial-gradient(60% 50% at 70% 62%, rgba(243,243,238,0.4), transparent 70%), radial-gradient(40% 40% at 72% 80%, rgba(226,142,56,0.1), transparent 70%)",
         }}
       />
 
@@ -77,7 +77,7 @@ export const Hero = () => {
                   {STEAM.map((s, i) => (
                     <span
                       key={i}
-                      className="absolute bottom-0 rounded-full bg-[#f7f6f1] blur-[48px] mix-blend-screen"
+                      className="absolute bottom-0 rounded-full bg-[#f7f7f3] blur-[48px] mix-blend-screen"
                       style={
                         {
                           left: s.left,
@@ -99,7 +99,7 @@ export const Hero = () => {
                   width={986}
                   height={555}
                   {...{ fetchpriority: "high" }}
-                  className="relative w-full select-none drop-shadow-[0_40px_40px_rgba(27,28,25,0.18)]"
+                  className="relative w-full select-none drop-shadow-[0_40px_40px_rgba(35,31,32,0.18)]"
                   style={{ animation: "u-fade-up 1.6s var(--u-ease) 0.5s both, u-float 9s ease-in-out 2.1s infinite" }}
                   draggable={false}
                 />
@@ -120,7 +120,7 @@ export const Hero = () => {
             </p>
             <h1
               id="hero-title"
-              className="u-mincho mt-6 whitespace-nowrap text-[clamp(2rem,4.4vw,3.75rem)] leading-[1.5] tracking-[0.08em]"
+              className="u-display mt-6 whitespace-nowrap text-[clamp(2rem,4.4vw,3.75rem)] leading-[1.5] tracking-[0.08em]"
             >
               <span className="block overflow-hidden">
                 <span className="block" style={{ animation: "u-rise 1.4s var(--u-ease) 0.55s both" }}>

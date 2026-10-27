@@ -70,7 +70,7 @@ export const SlotPicker = ({ date, value, onChange, slotReservations, dailyTimeS
             style={{ animation: `u-fade-up .7s var(--u-ease) ${i * 60}ms both` }}
           >
             <span className="flex w-full items-baseline justify-between gap-2">
-              <span className="u-mincho text-lg tracking-[0.12em]">{SLOT_LABELS[slot]}</span>
+              <span className="u-display text-lg tracking-[0.12em]">{SLOT_LABELS[slot]}</span>
               <span className={cn("u-latin text-xs italic", selected ? "text-u-paper/60" : "text-u-ink/65")}>
                 {SLOT_LATIN[slot]}
               </span>
@@ -83,7 +83,7 @@ export const SlotPicker = ({ date, value, onChange, slotReservations, dailyTimeS
             <span
               className={cn(
                 "mt-3 text-[0.6875rem] tracking-[0.16em]",
-                selected ? "text-u-copper" : disabled ? "text-u-ink/40" : "text-u-ink/70"
+                selected ? "text-u-amber" : disabled ? "text-u-ink/40" : "text-u-ink/70"
               )}
             >
               {booked ? "予約済み" : tooLate ? "受付終了" : selected ? "選択中" : "空きあり"}

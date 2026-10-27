@@ -48,7 +48,7 @@ export const SiteNav = ({ solid = false }: SiteNavProps) => {
       <header
         className={cn(
           "fixed inset-x-0 top-0 z-50 transition-[background-color,box-shadow,backdrop-filter] duration-500",
-          filled && !open && "bg-u-sage/80 shadow-[0_1px_0_rgba(27,28,25,0.1)] backdrop-blur-xl backdrop-saturate-150"
+          filled && !open && "bg-u-mist/80 shadow-[0_1px_0_rgba(35,31,32,0.1)] backdrop-blur-xl backdrop-saturate-150"
         )}
       >
         <div className="u-container flex h-16 items-center justify-between md:h-[4.5rem]">
@@ -105,7 +105,7 @@ export const SiteNav = ({ solid = false }: SiteNavProps) => {
       {/* モバイル: 全画面メニュー */}
       <div
         className={cn(
-          "fixed inset-0 z-[45] bg-u-sage transition-[clip-path] duration-700 [transition-timing-function:var(--u-ease)] lg:hidden",
+          "fixed inset-0 z-[45] bg-u-mist transition-[clip-path] duration-700 [transition-timing-function:var(--u-ease)] lg:hidden",
           open ? "[clip-path:inset(0_0_0_0)]" : "pointer-events-none [clip-path:inset(0_0_100%_0)]"
         )}
         aria-hidden={!open}
@@ -115,7 +115,7 @@ export const SiteNav = ({ solid = false }: SiteNavProps) => {
             {NAV_ITEMS.map((item, i) => {
               const inner = (
                 <span className="flex items-baseline justify-between border-b border-u-ink/15 py-4">
-                  <span className="u-mincho text-2xl tracking-[0.1em]">{item.label}</span>
+                  <span className="u-display text-2xl tracking-[0.1em]">{item.label}</span>
                   <span className="u-latin text-lg italic text-u-ink/80">{item.latin}</span>
                 </span>
               );

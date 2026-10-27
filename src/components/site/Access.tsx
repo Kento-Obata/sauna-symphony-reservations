@@ -10,7 +10,7 @@ export const Access = () => (
     <div className="u-container">
       <SectionHeading index="06" latin="Access" title={<span id="access-title">アクセス</span>} />
       <div className="mt-14 grid gap-10 md:mt-20 lg:grid-cols-12 lg:gap-12">
-        <Reveal className="relative overflow-hidden rounded-[1.5rem] bg-u-sage-deep lg:col-span-7">
+        <Reveal className="relative overflow-hidden rounded-[1.5rem] bg-u-mist-deep lg:col-span-7">
           <iframe
             title="U sauna の地図"
             src={EMBED_URL}
@@ -25,7 +25,7 @@ export const Access = () => (
             <p className="u-latin text-sm italic text-u-ink/80">Address</p>
             <address className="mt-2 not-italic">
               <span className="u-num text-sm text-u-ink/80">〒811-2127</span>
-              <span className="u-mincho mt-1 block text-[1.375rem] leading-[1.7] tracking-[0.08em]">
+              <span className="u-display mt-1 block text-[1.375rem] leading-[1.7] tracking-[0.08em]">
                 福岡県糟屋郡宇美町
                 <br />
                 障子岳6-8-4
@@ -38,7 +38,7 @@ export const Access = () => (
           </Reveal>
           <dl className="mt-12 space-y-0">
             {[
-              { k: "Car", t: "お車で", v: "福岡空港から約30分。交通状況によってはそれ以上かかることがあります" },
+              { k: "Car", t: "お車で", v: "福岡空港から約30分\n交通状況によってはそれ以上かかることがあります" },
               { k: "Train & Bus", t: "電車・バスで", v: "JR香椎線「宇美駅」からバスで約20分" },
             ].map((r, i) => (
               <Reveal key={r.k} delay={120 + i * 80} className="grid grid-cols-[6.5rem_1fr] gap-4 border-t border-u-ink/15 py-5">

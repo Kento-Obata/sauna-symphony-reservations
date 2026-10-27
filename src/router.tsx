@@ -44,7 +44,7 @@ const EventReservationComplete = lazy(() => import("./pages/EventReservationComp
 const EventReservationDetail = lazy(() => import("./pages/EventReservationDetail"));
 
 const PageFallback = () => (
-  <div className="flex min-h-screen items-center justify-center bg-[#a4a99d]" aria-busy="true">
+  <div className="flex min-h-screen items-center justify-center bg-u-mist" aria-busy="true">
     <span className="h-6 w-6 animate-spin rounded-full border border-black/20 border-t-black/70" />
   </div>
 );

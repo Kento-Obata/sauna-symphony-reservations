@@ -43,6 +43,8 @@ const mutationErrorMessage = (error: unknown, fallback: string): string => {
   if (code === "42501") return "管理者権限がありません";
   if (code === "23505") return "同じ値が既に存在します（slug または同一日時の枠の重複）";
   if (code === "23503") return "予約が存在するため削除できません";
+  // トリガーが投げる日本語メッセージ(1日1イベントの制約など)
+  if (code === "P0001") return (error as { message?: string }).message || fallback;
   if (code === "23514") return "入力値が制約に違反しています（slug の形式や定員の範囲を確認してください）";
   // edge function 経由の mutation が投げた日本語メッセージはそのまま表示する
   // （PostgrestError は Error インスタンスではないためここには入らない）
@@ -99,6 +101,8 @@ const useEventMutation = <TVariables,>(
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ADMIN_EVENTS_KEY });
       queryClient.invalidateQueries({ queryKey: ["events"] });
+      // イベント枠の追加・削除で、その日の休業日(パブリックイベント日)がトリガーで変わる
+      queryClient.invalidateQueries({ queryKey: ["shop-closures"] });
       toast.success(successMessage);
     },
     onError: (error) => {

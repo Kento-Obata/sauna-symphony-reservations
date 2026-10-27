@@ -139,7 +139,7 @@ export const ReservationDetails = ({
           </SelectContent>
         </Select>
         <p className="text-sm text-muted-foreground mt-1">
-          ※ 1名様でも2名様料金でご利用いただけます。
+          ※ 1名様でも2名様料金でご利用いただけます
         </p>
       </div>
     </div>

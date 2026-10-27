@@ -28,7 +28,7 @@ export const BookingSummary = ({ lines, base, optionTotal, discount, total, miss
   const shownTotal = useTweenNumber(total);
   return (
     <aside
-      className="relative overflow-hidden rounded-[1.75rem] bg-u-ink text-u-paper shadow-[0_40px_80px_-40px_rgba(27,28,25,0.7)]"
+      className="relative overflow-hidden rounded-[1.75rem] bg-u-ink text-u-paper shadow-[0_40px_80px_-40px_rgba(35,31,32,0.7)]"
       aria-label="ご予約内容"
     >
       {/* ロゴを大きく敷いて質感を出す */}
@@ -72,7 +72,7 @@ export const BookingSummary = ({ lines, base, optionTotal, discount, total, miss
             </div>
           )}
           {discount > 0 && (
-            <div className="flex justify-between text-u-copper">
+            <div className="flex justify-between text-u-amber">
               <span>事前決済割引（{PREPAY_DISCOUNT_PERCENT}%）</span>
               <span className="u-num text-sm">−{yen(discount)}</span>
             </div>

@@ -49,7 +49,7 @@ export default function ReservationConfirm() {
               // JSON でないレスポンスは無視
             }
           }
-          toast.error(serverMessage || "予約の確定に失敗しました。リンクが無効か、有効期限が切れている可能性があります");
+          toast.error(serverMessage || "予約の確定に失敗しました　リンクが無効か、有効期限が切れている可能性があります");
           navigate("/");
           return;
         }
@@ -92,7 +92,7 @@ export default function ReservationConfirm() {
             <span className="u-mark w-10 text-u-ink" style={{ animation: "u-rise 1.4s var(--u-ease) infinite alternate" }} aria-hidden />
           </span>
           <p className="u-latin mt-8 text-xl italic text-u-ink/80">Confirming</p>
-          <p className="u-mincho mt-2 text-xl tracking-[0.12em]">予約を確定しています…</p>
+          <p className="u-display mt-2 text-xl tracking-[0.12em]">予約を確定しています…</p>
         </div>
       </SiteShell>
     );

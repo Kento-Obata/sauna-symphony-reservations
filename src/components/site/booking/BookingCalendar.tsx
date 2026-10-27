@@ -16,12 +16,14 @@ import { getMaxSlotsForDate } from "@/utils/timeSlotRules";
 import { isHoliday } from "@/utils/holidayUtils";
 import type { Reservation } from "@/types/reservation";
 import { cn } from "@/lib/utils";
+import { EventDayDialog, type EventDay } from "./EventDayDialog";
 
 type Availability = Pick<Reservation, "date" | "time_slot" | "status">;
 type DayState =
   | { kind: "past" }
   | { kind: "out" }
   | { kind: "closed" }
+  | { kind: "event"; slug: string; title: string }
   | { kind: "full" }
   | { kind: "open"; remaining: number; max: number };
 
@@ -30,12 +32,15 @@ interface BookingCalendarProps {
   onChange: (date: Date) => void;
   reservations: Availability[] | undefined;
   closedDates: Set<string>;
+  /** パブリックイベント日(公開中のイベントが紐づく休業日) */
+  eventDays?: Map<string, { slug: string; title: string }>;
   dailyTimeSlots: Parameters<typeof getMaxSlotsForDate>[1];
 }
 
 const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
 
-export const BookingCalendar = ({ value, onChange, reservations, closedDates, dailyTimeSlots }: BookingCalendarProps) => {
+export const BookingCalendar = ({ value, onChange, reservations, closedDates, eventDays, dailyTimeSlots }: BookingCalendarProps) => {
+  const [eventDay, setEventDay] = useState<EventDay | null>(null);
   const today = useMemo(() => new Date(), []);
   // 予約受付は3か月先まで(既存仕様)
   const limit = useMemo(() => addMonths(today, 3), [today]);
@@ -55,6 +60,8 @@ export const BookingCalendar = ({ value, onChange, reservations, closedDates, da
     // 当日以前はフォームでは受け付けない(当日予約は Instagram DM)
     if (ymd <= todayYmd) return { kind: "past" };
     if (isAfter(day, limit)) return { kind: "out" };
+    const event = eventDays?.get(ymd);
+    if (event) return { kind: "event", ...event };
     if (closedDates.has(ymd)) return { kind: "closed" };
     const max = getMaxSlotsForDate(day, dailyTimeSlots ?? []);
     const count = countByDate.get(ymd) ?? 0;
@@ -104,7 +111,7 @@ export const BookingCalendar = ({ value, onChange, reservations, closedDates, da
           {WEEKDAYS.map((w, i) => (
             <div
               key={w}
-              className={cn("text-center text-[0.6875rem] tracking-[0.2em] text-u-ink/65", i === 0 && "text-u-copper-deep")}
+              className={cn("text-center text-[0.6875rem] tracking-[0.2em] text-u-ink/65", i === 0 && "text-u-wood")}
             >
               {w}
             </div>
@@ -126,6 +133,8 @@ export const BookingCalendar = ({ value, onChange, reservations, closedDates, da
                 ? "満席"
                 : state.kind === "closed"
                 ? "休業日"
+                : state.kind === "event"
+                ? `パブリックイベント「${state.title}」開催日`
                 : "予約受付外"
             }`;
             return (
@@ -134,20 +143,24 @@ export const BookingCalendar = ({ value, onChange, reservations, closedDates, da
                 type="button"
                 aria-pressed={selected}
                 aria-label={label}
-                disabled={!selectable}
-                onClick={() => onChange(day)}
+                disabled={!selectable && state.kind !== "event"}
+                onClick={() =>
+                  state.kind === "event" ? setEventDay({ date: day, slug: state.slug, title: state.title }) : onChange(day)
+                }
                 className={cn(
                   "group relative flex h-[3.25rem] flex-col items-center justify-center rounded-xl transition-all duration-300 sm:h-16",
                   selectable && !selected && "hover:bg-u-ink/[0.06]",
-                  selected && "bg-u-ink text-u-paper shadow-[0_10px_30px_-10px_rgba(27,28,25,0.6)]",
-                  !selectable && "cursor-default"
+                  state.kind === "event" && "hover:bg-u-green/10",
+                  selected && "bg-u-ink text-u-paper shadow-[0_10px_30px_-10px_rgba(35,31,32,0.6)]",
+                  !selectable && state.kind !== "event" && "cursor-default"
                 )}
               >
                 <span
                   className={cn(
                     "u-num text-[1.0625rem] leading-none sm:text-xl",
-                    !selectable && "text-u-ink/25",
-                    selectable && red && !selected && "text-u-copper-deep"
+                    !selectable && state.kind !== "event" && "text-u-ink/25",
+                    state.kind === "event" && "text-u-green",
+                    selectable && red && !selected && "text-u-wood"
                   )}
                 >
                   {format(day, "d")}
@@ -156,14 +169,15 @@ export const BookingCalendar = ({ value, onChange, reservations, closedDates, da
                   {state.kind === "open" &&
                     (state.remaining === state.max ? (
                       <span
-                        className={cn("inline-block h-1.5 w-1.5 rounded-full", selected ? "bg-u-copper" : "bg-u-ink/70")}
+                        className={cn("inline-block h-1.5 w-1.5 rounded-full", selected ? "bg-u-amber" : "bg-u-ink/70")}
                         aria-hidden
                       />
                     ) : (
-                      <span className={cn(selected ? "text-u-paper/80" : "text-u-copper-deep")}>残{state.remaining}</span>
+                      <span className={cn(selected ? "text-u-paper/80" : "text-u-wood")}>残{state.remaining}</span>
                     ))}
                   {state.kind === "full" && <span className="text-u-ink/35">満</span>}
                   {state.kind === "closed" && <span className="text-u-ink/35">休</span>}
+                  {state.kind === "event" && <span className="u-latin text-[0.6875rem] italic text-u-green">Event</span>}
                 </span>
               </button>
             );
@@ -177,11 +191,17 @@ export const BookingCalendar = ({ value, onChange, reservations, closedDates, da
           空きあり
         </li>
         <li className="flex items-center gap-1.5">
-          <span className="text-u-copper-deep">残2</span>残り枠数
+          <span className="text-u-wood">残2</span>残り枠数
         </li>
         <li>満 満席</li>
         <li>休 休業日</li>
+        {eventDays && eventDays.size > 0 && (
+          <li>
+            <span className="u-latin italic text-u-green">Event</span> パブリックイベント開催日
+          </li>
+        )}
       </ul>
+      <EventDayDialog eventDay={eventDay} onClose={() => setEventDay(null)} />
     </div>
   );
 };

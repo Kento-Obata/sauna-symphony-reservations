@@ -29,7 +29,7 @@ export const Step = ({ id, index, title, hint, done, optional, children }: StepP
           )}
         </span>
         <div className="flex flex-1 flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-          <h3 id={`${id}-title`} className="u-mincho text-lg tracking-[0.12em] sm:text-xl">
+          <h3 id={`${id}-title`} className="u-display text-lg tracking-[0.12em] sm:text-xl">
             {title}
             {optional && <span className="ml-2 align-middle text-[0.6875rem] font-normal tracking-[0.16em] text-u-ink/65">任意</span>}
           </h3>

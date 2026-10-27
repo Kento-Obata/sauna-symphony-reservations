@@ -36,7 +36,7 @@ export const PageHero = ({ latin, title, lead, children }: PageHeroProps) => (
       {latin}
     </p>
     <h1
-      className="u-mincho mt-5 text-[clamp(1.375rem,2.6vw,2rem)] leading-[1.6] tracking-[0.1em]"
+      className="u-display mt-5 text-[clamp(1.375rem,2.6vw,2rem)] leading-[1.6] tracking-[0.1em]"
       style={{ animation: "u-fade-up 1s var(--u-ease) .1s both" }}
     >
       {title}

@@ -152,11 +152,11 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
             isInactive
               ? "border border-u-paper/30 text-u-paper/70"
               : isPending
-              ? "border border-dashed border-u-copper text-u-copper"
-              : "bg-u-copper text-u-ink"
+              ? "border border-dashed border-u-amber text-u-amber"
+              : "bg-u-mist text-u-ink"
           }`}
         >
-          <span className={`h-1.5 w-1.5 rounded-full ${isInactive ? "bg-u-paper/50" : isPending ? "animate-pulse bg-u-copper" : "bg-u-ink"}`} />
+          <span className={`h-1.5 w-1.5 rounded-full ${isInactive ? "bg-u-paper/50" : isPending ? "animate-pulse bg-u-amber" : "bg-u-green"}`} />
           {getStatusDisplay(reservation.status)}
         </span>
         <div className="relative mt-6 flex items-end justify-between gap-4">

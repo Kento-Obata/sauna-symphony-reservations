@@ -7,10 +7,10 @@ export const SiteFooter = ({ minimal = false }: { minimal?: boolean }) => (
     <div className={minimal ? "u-container pb-10 pt-14" : "u-container pb-10 pt-20 md:pt-28"}>
       <div className="grid gap-12 md:grid-cols-12">
         <div className="md:col-span-6">
-          <span className="u-mark w-14 text-u-copper" aria-hidden />
+          <span className="u-mark w-14 text-u-mist" aria-hidden />
           {!minimal && (
             <>
-          <p className="u-mincho mt-8 text-[clamp(1.5rem,3vw,2.25rem)] leading-[1.6] tracking-[0.1em]">
+          <p className="u-display mt-8 text-[clamp(1.5rem,3vw,2.25rem)] leading-[1.6] tracking-[0.1em]">
             圧倒的な
             <br />
             蒸気浴体験を

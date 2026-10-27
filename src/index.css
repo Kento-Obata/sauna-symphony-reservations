@@ -63,19 +63,26 @@
    ========================================================================== */
 
 :root {
-  --u-sage: #a4a99d;
-  --u-sage-deep: #959a8d;
-  --u-sage-light: #b4b8ad;
-  --u-paper: #f2f1eb;
-  --u-paper-2: #e8e7df;
-  --u-ink: #1b1c19;
-  --u-ink-2: #2b2d28;
-  --u-ink-soft: rgba(27, 28, 25, 0.66);
-  --u-ink-faint: rgba(27, 28, 25, 0.42);
-  --u-line: rgba(27, 28, 25, 0.14);
-  --u-line-strong: rgba(27, 28, 25, 0.28);
-  --u-copper: #d38248;
-  --u-copper-deep: #a95d27;
+  /* U_LogoGuideline2025 準拠。メインは U GREEN / U MIST、サブカラーはアクセントに少量だけ */
+  --u-green: #52664e;
+  --u-green-deep: #435440;
+  --u-mist: #bac0ad;
+  --u-mist-deep: #abb29d;
+  --u-mist-light: #c9cebe;
+  --u-paper: #f3f3ee;
+  --u-paper-2: #e7e9e0;
+  --u-ink: #231f20;
+  --u-ink-2: #2f2b2b;
+  --u-ink-soft: rgba(35, 31, 32, 0.66);
+  --u-ink-faint: rgba(35, 31, 32, 0.42);
+  --u-line: rgba(35, 31, 32, 0.14);
+  --u-line-strong: rgba(35, 31, 32, 0.28);
+  --u-amber: #e28e38;
+  --u-wood: #844327;
+  /* 書体はガイドライン(ゴシックのみ)より明朝見出しの方が合うため、明朝 + Cormorant を使う */
+  --u-font-ja: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", sans-serif;
+  --u-font-display: "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --u-font-latin: "Cormorant Garamond", "Times New Roman", serif;
   --u-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --u-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --u-gutter: clamp(1.25rem, 4vw, 3.5rem);
@@ -91,34 +98,36 @@
   .u-site {
     /* サイト配下の shadcn コンポーネントもブランドの色に揃える */
     --background: 51 19% 93%;
-    --foreground: 80 6% 10%;
+    --foreground: 345 6% 13%;
     --card: 51 19% 93%;
-    --card-foreground: 80 6% 10%;
+    --card-foreground: 345 6% 13%;
     --popover: 51 19% 93%;
-    --popover-foreground: 80 6% 10%;
-    --primary: 80 6% 10%;
+    --popover-foreground: 345 6% 13%;
+    --primary: 345 6% 13%;
     --primary-foreground: 51 19% 93%;
     --secondary: 53 12% 89%;
-    --secondary-foreground: 80 6% 10%;
+    --secondary-foreground: 345 6% 13%;
     --muted: 53 12% 89%;
     --muted-foreground: 80 3% 36%;
     --accent: 53 12% 86%;
-    --accent-foreground: 80 6% 10%;
+    --accent-foreground: 345 6% 13%;
     --destructive: 4 62% 42%;
     --destructive-foreground: 51 19% 93%;
     --border: 60 6% 78%;
     --input: 60 6% 74%;
-    --ring: 80 6% 10%;
+    --ring: 345 6% 13%;
     --radius: 0.875rem;
-    font-family: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", sans-serif;
+    font-family: var(--u-font-ja);
     font-weight: 400;
     color: var(--u-ink);
-    background: var(--u-sage);
+    background: var(--u-mist);
     -webkit-font-smoothing: antialiased;
     font-feature-settings: "palt" 1;
     letter-spacing: 0.04em;
     line-height: 1.85;
     text-rendering: optimizeLegibility;
+    /* 文中の句点を使わず、文の区切りは文字列中の改行で表す */
+    white-space: pre-line;
   }
   .u-site ::selection {
     background: var(--u-ink);
@@ -130,18 +139,18 @@
     border-radius: 4px;
   }
 
-  .u-mincho {
-    font-family: "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  .u-display {
+    font-family: var(--u-font-display);
     font-weight: 500;
     font-feature-settings: "palt" 1;
   }
   .u-latin {
-    font-family: "Cormorant Garamond", "Times New Roman", serif;
+    font-family: var(--u-font-latin);
     letter-spacing: 0.02em;
     font-feature-settings: "lnum" 1;
   }
   .u-num {
-    font-family: "Cormorant Garamond", serif;
+    font-family: var(--u-font-latin);
     font-variant-numeric: lining-nums tabular-nums;
     font-feature-settings: "lnum" 1, "tnum" 1;
     letter-spacing: 0;
@@ -153,7 +162,7 @@
     font-size: 0.6875rem;
     letter-spacing: 0.32em;
     text-transform: uppercase;
-    color: rgba(27, 28, 25, 0.8);
+    color: rgba(35, 31, 32, 0.8);
   }
   .u-eyebrow::before {
     content: "";
@@ -172,10 +181,10 @@
 
   .u-site .glass-card {
     background: rgba(242, 241, 235, 0.72);
-    border: 1px solid rgba(27, 28, 25, 0.08);
+    border: 1px solid rgba(35, 31, 32, 0.08);
     border-radius: 1.5rem;
     backdrop-filter: blur(12px);
-    box-shadow: 0 30px 60px -40px rgba(27, 28, 25, 0.35);
+    box-shadow: 0 30px 60px -40px rgba(35, 31, 32, 0.35);
   }
   .u-site .text-gradient {
     background: none;
@@ -220,15 +229,15 @@
     pointer-events: none;
   }
   .u-btn-primary {
-    background: var(--u-ink);
-    color: var(--u-paper);
+    background: var(--u-green);
+    color: #fff;
   }
   .u-btn-primary::after {
     content: "";
     position: absolute;
     inset: 0;
     z-index: -1;
-    background: var(--u-copper-deep);
+    background: var(--u-green-deep);
     transform: translateY(101%);
     border-radius: inherit;
     transition: transform 0.55s var(--u-ease);
@@ -242,7 +251,7 @@
       color: var(--u-paper);
     }
     .u-btn-light:hover {
-      background: var(--u-copper);
+      background: var(--u-mist);
       color: var(--u-ink);
     }
   }
@@ -302,7 +311,7 @@
   .u-input:focus {
     border-color: var(--u-ink);
     background: #fff;
-    box-shadow: 0 0 0 4px rgba(27, 28, 25, 0.06);
+    box-shadow: 0 0 0 4px rgba(35, 31, 32, 0.06);
   }
   .u-field-label {
     position: absolute;
@@ -414,7 +423,7 @@
 
   /* トースト */
   .u-toast {
-    font-family: "Zen Kaku Gothic New", sans-serif !important;
+    font-family: var(--u-font-ja) !important;
     border-radius: 999px !important;
     background: var(--u-ink) !important;
     color: var(--u-paper) !important;

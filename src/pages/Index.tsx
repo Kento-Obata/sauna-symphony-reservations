@@ -61,7 +61,7 @@ const Index = () => {
             <div className="u-container flex flex-col items-start justify-between gap-6 py-16 md:flex-row md:items-center md:py-24">
               <div>
                 <p className="u-eyebrow">Public sauna event</p>
-                <p className="u-mincho mt-4 text-[clamp(1.5rem,3.4vw,2.5rem)] leading-[1.5] tracking-[0.08em]">
+                <p className="u-display mt-4 text-[clamp(1.5rem,3.4vw,2.5rem)] leading-[1.5] tracking-[0.08em]">
                   パブリックサウナイベントの
                   <br className="sm:hidden" />
                   ご予約はこちら

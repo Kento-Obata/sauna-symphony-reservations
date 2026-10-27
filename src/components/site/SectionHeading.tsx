@@ -26,7 +26,7 @@ export const SectionHeading = ({ index, latin, title, lead, className, tone = "d
       <Reveal delay={120}>
         <h2
           className={cn(
-            "u-mincho text-[clamp(1.375rem,2.6vw,2rem)] leading-[1.6] tracking-[0.08em]",
+            "u-display text-[clamp(1.375rem,2.6vw,2rem)] leading-[1.6] tracking-[0.08em]",
             tone === "light" ? "text-u-paper" : ""
           )}
         >

@@ -66,6 +66,14 @@ const ReservationForm = () => {
   const { data: prices } = usePriceSettings();
 
   const closedDates = useMemo(() => new Set((closures ?? []).map((c) => c.date)), [closures]);
+  // 休業日のうち、公開中のイベントが紐づく日はカレンダーでイベントへの導線を出す
+  const eventDays = useMemo(() => {
+    const m = new Map<string, { slug: string; title: string }>();
+    closures?.forEach((c) => {
+      if (c.event?.status === "published") m.set(c.date, { slug: c.event.slug, title: c.event.title });
+    });
+    return m;
+  }, [closures]);
 
   // 予約フォームが画面内にある間だけ、モバイル下部の合計バーを出す
   useEffect(() => {
@@ -213,6 +221,7 @@ const ReservationForm = () => {
               onChange={handleDateChange}
               reservations={reservations}
               closedDates={closedDates}
+              eventDays={eventDays}
               dailyTimeSlots={dailyTimeSlots}
             />
           )}
@@ -232,7 +241,7 @@ const ReservationForm = () => {
             slotReservations={slotReservations}
             dailyTimeSlots={dailyTimeSlots}
           />
-          <p className="mt-3 text-xs text-u-ink/65">受付は開始時刻の10分前から。各回のあいだに清掃・入替のお時間をいただきます</p>
+          <p className="mt-3 text-xs text-u-ink/65">受付は開始時刻の10分前から<br />各回のあいだに清掃・入替のお時間をいただきます</p>
         </Step>
 
         <Step id="step-guests" index={idx()} title="人数" done={!!people}>
@@ -325,7 +334,7 @@ const ReservationForm = () => {
               <span
                 className={cn(
                   "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border",
-                  termsAccepted ? "border-u-copper bg-u-copper text-u-ink" : "border-u-ink/30"
+                  termsAccepted ? "border-u-green bg-u-green text-white" : "border-u-ink/30"
                 )}
               >
                 {termsAccepted && <Check className="h-3 w-3" strokeWidth={2.5} />}
@@ -363,7 +372,7 @@ const ReservationForm = () => {
         aria-hidden={!barVisible}
         {...(!barVisible ? { inert: "" } : {})}
       >
-        <div className="flex items-center gap-3 rounded-full bg-u-ink py-2 pl-5 pr-2 text-u-paper shadow-[0_20px_40px_-12px_rgba(27,28,25,0.6)]">
+        <div className="flex items-center gap-3 rounded-full bg-u-ink py-2 pl-5 pr-2 text-u-paper shadow-[0_20px_40px_-12px_rgba(35,31,32,0.6)]">
           <div className="min-w-0 flex-1 leading-tight">
             <div className="truncate text-[0.6875rem] text-u-paper/60">
               {date ? format(date, "M/d（E）", { locale: ja }) : "日付未選択"}

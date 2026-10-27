@@ -62,7 +62,7 @@ export const OptionPicker = ({ options, selected, onChange, guestCount }: Option
               <span
                 className={cn(
                   "mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors",
-                  isOn ? "border-u-copper bg-u-copper text-u-ink" : "border-u-ink/30"
+                  isOn ? "border-u-green bg-u-green text-white" : "border-u-ink/30"
                 )}
               >
                 {isOn && <Check className="h-3 w-3" strokeWidth={2.5} />}
@@ -111,7 +111,7 @@ export const OptionPicker = ({ options, selected, onChange, guestCount }: Option
                     {o.pricing_type === "per_guest" ? `ご予約人数（${guestCount}名）分を適用` : "1回あたりの料金"}
                   </span>
                 )}
-                <span className="u-num text-base text-u-copper">
+                <span className="u-num text-base text-u-amber">
                   {formatPrice(calculateOptionTotalPrice(o, sel.quantity, guestCount))}
                 </span>
               </div>

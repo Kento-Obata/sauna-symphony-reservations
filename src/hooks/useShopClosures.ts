@@ -2,10 +2,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-interface ShopClosure {
+export interface ShopClosure {
   id: string;
   date: string;
   reason: string | null;
+  /** パブリックイベント日のときのイベント。一般の閲覧者には公開中のイベントしか見えない(RLS)ため、下書きなどは null になる */
+  event_id: string | null;
+  event: { slug: string; title: string; status: string } | null;
   created_at: string;
   updated_at: string;
 }
@@ -18,11 +21,11 @@ export const useShopClosures = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("shop_closures")
-        .select("*")
+        .select("*, event:events(slug, title, status)")
         .order("date", { ascending: true });
 
       if (error) throw error;
-      return data as ShopClosure[];
+      return data as unknown as ShopClosure[];
     },
   });
 
