@@ -851,6 +851,47 @@ export type Database = {
           },
         ]
       }
+      staff_hourly_rate_periods: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          note: string | null
+          staff_id: string
+          start_date: string
+          weekday_rate: number
+          weekend_rate: number
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          note?: string | null
+          staff_id: string
+          start_date: string
+          weekday_rate: number
+          weekend_rate: number
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          note?: string | null
+          staff_id?: string
+          start_date?: string
+          weekday_rate?: number
+          weekend_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_hourly_rate_periods_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       time_slot_patterns: {
         Row: {
           afternoon_end: string
