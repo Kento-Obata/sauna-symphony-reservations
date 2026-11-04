@@ -71,6 +71,13 @@ verify_jwt = true
 [functions.admin-cancel-reservation]
 verify_jwt = true
 
+# 一斉メール送信・顧客CSVインポート。管理者トークン or service role キーを関数内で検証(_shared/admin-auth.ts)
+[functions.send-bulk-email]
+verify_jwt = false
+
+[functions.import-customers]
+verify_jwt = false
+
 # pg_cron から CRON_SHARED_SECRET の Bearer で呼ばれる(関数内で定数時間比較)
 [functions.line-staff-daily-push]
 verify_jwt = false
