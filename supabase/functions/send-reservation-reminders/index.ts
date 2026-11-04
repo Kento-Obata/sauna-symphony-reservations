@@ -155,6 +155,7 @@ const handler = async (req: Request): Promise<Response> => {
     // 明日の予約を取得。リマインド対象は確定済みのみ
     // (旧実装の neq('status','cancelled') は pending / 決済待ち / expired も
     //  含んでしまっていたため、confirmed に絞る)
+    // 「休枠」は管理カレンダーで枠を止めるための仮の予約(電話番号 00000000000)なので送らない
     const reservations = await sql`
       select id::text, reservation_code, guest_name, guest_count, water_temperature,
              email, phone, status, date::text, time_slot::text,
@@ -163,6 +164,7 @@ const handler = async (req: Request): Promise<Response> => {
       from public.reservations
       where date = ${tomorrowStr}::date
         and status = 'confirmed'
+        and guest_name <> '休枠'
     `;
 
     console.log(`明日の有効な予約数: ${reservations.length}`);

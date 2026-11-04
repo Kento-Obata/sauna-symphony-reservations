@@ -1,5 +1,6 @@
 
 // 管理画面からの予約変更・キャンセル時の顧客通知(SMS + email)。
+// 呼べるのはログイン中の管理者だけ(以前は公開キーと予約コードがあれば誰でもお客様に通知を送れた)。
 //
 // DB アクセスは直接 Postgres(POSTGRES_URL)を使う。旧実装は ANON キーの
 // supabase-js で reservations を読んでいたが、RLS 強化(公開 SELECT 廃止)以降は
@@ -8,6 +9,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import postgres from "https://deno.land/x/postgresjs@v3.4.5/mod.js";
 import { corsHeaders } from "../_shared/cors.ts";
+import { requireAdminSession } from "../_shared/admin-auth.ts";
 import { sendSMS } from "../_shared/twilio.ts";
 import { sendEmail } from "../_shared/email.ts";
 
@@ -33,6 +35,14 @@ const handler = async (req: Request): Promise<Response> => {
   const sql = getDb();
 
   try {
+    const auth = await requireAdminSession(req, sql);
+    if (!auth.ok) {
+      return new Response(JSON.stringify({ error: auth.error }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: auth.status,
+      });
+    }
+
     const { reservationCode } = await req.json();
 
     if (typeof reservationCode !== 'string' || !/^[A-Z0-9]{8}$/.test(reservationCode)) {
