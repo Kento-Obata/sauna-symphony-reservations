@@ -14,6 +14,8 @@
 - `_shared/agent/registry.ts` … 権限の確認・入力の検証・実行前の確認・操作ログ
 - `_shared/agent/mcp.ts` … MCP の JSON-RPC（initialize / ping / tools/list / tools/call）。セッションを持たない Streamable HTTP
 - `_shared/agent/auth.ts` … OAuth のアクセストークン / API キーから呼び出した人を特定（`profiles.role` が admin / staff の人だけ）
+- `_shared/agent/oauth-proxy.ts` … OAuth の入口の中継（下記）
+- `_shared/supabase-keys.ts` … Edge Function から Supabase の Auth・Storage を呼ぶときの公開キー
 - `_shared/agent/claude-chat.ts` … LINE 用の Claude（Messages API + tool use）のループ
 - DB: `agent_api_keys` / `agent_pending_actions` / `agent_action_logs` / `agent_line_conversations` / `agent_line_photos`（migration `20261104000000_agent_api.sql`）
 
@@ -25,6 +27,20 @@
 - **操作ログ**: すべての呼び出しを `agent_action_logs` に残す（管理画面 → 設定 → AI連携 で直近50件を見られる）
 - **ブラウザ側だけの決まり**: 管理画面ではブラウザでしか確かめていない決まり（休業日・その日に開いている枠・同じ枠の予約・料金）を、道具ではサーバー側で確かめる。枠の判定は `_shared/slot-rules.ts`（フロントの `src/utils/timeSlotRules.ts` と同じルール。変えるときは両方）
 
+## OAuth の中継
+
+本番の API ゲートウェイは、Supabase Auth の OAuth の入口（メタデータ・authorize・token・クライアント登録）でも apikey の無いリクエストを拒む。
+MCP クライアントは apikey を知らないので、agent-mcp を認可サーバーとして見せ、各入口を公開キー付きで Supabase Auth へ中継する。
+
+| クライアントが使う URL | 中継先 |
+| --- | --- |
+| `agent-mcp/.well-known/oauth-protected-resource` | （agent-mcp が返す。authorization_servers は agent-mcp 自身） |
+| `agent-mcp/.well-known/openid-configuration`・`.../oauth-authorization-server` | Supabase の認可サーバーのメタデータ（入口を agent-mcp に差し替え、openid は外す） |
+| `agent-mcp/oauth/authorize` | `auth/v1/oauth/authorize?...&apikey=`（302） |
+| `agent-mcp/oauth/token` / `oauth/register` | `auth/v1/oauth/token` / `oauth/clients/register` |
+
+また本番では、自動注入の `SUPABASE_ANON_KEY` / `SUPABASE_PUBLISHABLE_KEYS` もゲートウェイに拒否される。Edge Function から Auth・Storage を呼ぶときは `publicApiKey()`（サイトと同じ公開キー）を使う。
+
 ## 設定（本番）
 
 1. Supabase ダッシュボード → Authentication → **OAuth Server** を有効にする
@@ -35,6 +51,7 @@
    - 未設定のあいだ、LINE の 1:1 でコマンド以外を送ると「AI はまだ準備中です」と返す
 3. Claude アプリ → 設定 → コネクタ → カスタムコネクタを追加 → URL に
    `https://knjbxqiyngztylnzxzln.supabase.co/functions/v1/agent-mcp` → 管理者アカウントでログイン → 許可
+   （同意画面は Site URL + `/oauth/consent`。Site URL は `https://www.u-sauna-private.com`）
 
 ## LINE の AI
 

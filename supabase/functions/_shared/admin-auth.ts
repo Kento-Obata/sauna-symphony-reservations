@@ -5,6 +5,7 @@
 // auth.getUser(jwt) + profiles.role='admin' をサーバ側で検証すること。
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.47.2";
+import { publicApiKey } from "./supabase-keys.ts";
 
 // deno-lint-ignore-file
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -76,19 +77,18 @@ export const requireAdminOrServiceRole = async (req: Request): Promise<AdminAuth
 
 /**
  * ログイン中の管理者(管理画面から呼ばれる関数)だけを通す。
- * トークンは Supabase Auth に anon key で問い合わせて確かめ、ロールは SQL(postgres.js)で見る。
- * (本番では自動注入の service role キーが PostgREST に拒否されるため、ここでは使わない)
+ * トークンは Supabase Auth に公開キー(_shared/supabase-keys.ts)で問い合わせて確かめ、ロールは SQL(postgres.js)で見る。
+ * (本番では自動注入の service role キーが PostgREST に、anon キーがゲートウェイに拒否されるため使わない)
  */
 export const requireAdminSession = async (req: Request, sql: Sql): Promise<AdminAuthResult> => {
   const jwt = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
-  if (!jwt || !supabaseUrl || !anonKey) {
+  if (!jwt || !supabaseUrl) {
     return { ok: false, status: 401, error: "認証情報がありません" };
   }
 
   const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
-    headers: { apikey: anonKey, Authorization: `Bearer ${jwt}` },
+    headers: { apikey: publicApiKey(), Authorization: `Bearer ${jwt}` },
   });
   const user = res.ok ? await res.json().catch(() => null) : null;
   if (typeof user?.id !== "string") {

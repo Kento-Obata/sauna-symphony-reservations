@@ -3,6 +3,7 @@
 //   - Claude Code・自動実行: 管理画面で発行した API キー(usk_...)
 // どちらも profiles.role が admin / staff の人だけ通す。
 
+import { publicApiKey } from "../supabase-keys.ts";
 import type { AgentCaller, Sql } from "./types.ts";
 
 export const API_KEY_PREFIX = "usk_";
@@ -55,11 +56,10 @@ export async function authenticateBearer(sql: Sql, authorization: string | null)
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
-  if (!supabaseUrl || !anonKey) throw new Error("Missing SUPABASE_URL / SUPABASE_ANON_KEY");
+  if (!supabaseUrl) throw new Error("Missing SUPABASE_URL");
 
   const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
-    headers: { apikey: anonKey, Authorization: `Bearer ${token}` },
+    headers: { apikey: publicApiKey(), Authorization: `Bearer ${token}` },
   });
   if (!res.ok) return UNAUTHORIZED;
   const user = await res.json().catch(() => null);
