@@ -10,6 +10,7 @@ const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER");
 
 import { formatReservationTime } from "../_shared/reservation-time.ts";
 import { formatHerbEmailBlock } from "../_shared/herb.ts";
+import { toE164 } from "../_shared/phone.ts";
 
 // DB アクセスは直接 Postgres(POSTGRES_URL)を使う。本番では自動注入の
 // SUPABASE_SERVICE_ROLE_KEY(legacy キー)が PostgREST に拒否され、
@@ -26,16 +27,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-const formatPhoneNumber = (phone: string): string => {
-  const digits = phone.replace(/\D/g, "");
-  if (digits.startsWith("0")) {
-    return "+81" + digits.slice(1);
-  }
-  if (!digits.startsWith("0")) {
-    return "+" + digits;
-  }
-  return digits;
-};
 
 interface ReminderReservation {
   reservation_code: string;
@@ -103,7 +94,7 @@ const sendSMS = async (phone: string, reservation: ReminderReservation, timeSlot
     if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
       throw new Error("Missing Twilio credentials");
     }
-    const formattedPhone = formatPhoneNumber(phone);
+    const formattedPhone = toE164(phone);
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
     const formData = new URLSearchParams();
     formData.append("To", formattedPhone);

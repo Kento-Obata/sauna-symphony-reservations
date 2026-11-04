@@ -7,16 +7,11 @@
 import { sendAppEmail } from "./lovable-email.ts";
 import { sendLineGroupMessage } from "./line.ts";
 import { buildReservationCancellationNotice, cancelReservationRow } from "./reservation-payment.ts";
+import { toE164 } from "./phone.ts";
 import { sendSMS } from "./twilio.ts";
 
 // deno-lint-ignore no-explicit-any
 type Sql = any; // postgresjs の接続(型パッケージ非導入のため)
-
-// Twilio は E.164 形式(+81...)のみ受け付ける
-export const formatPhoneNumber = (phone: string): string => {
-  const digits = phone.replace(/\D/g, "");
-  return digits.startsWith("0") ? "+81" + digits.slice(1) : digits;
-};
 
 export interface AdminCancelTarget {
   id: string;
@@ -88,7 +83,7 @@ export const adminCancelReservation = async (
       refunded,
     });
     try {
-      await sendSMS(formatPhoneNumber(reservation.phone), notice.sms);
+      await sendSMS(toE164(reservation.phone), notice.sms);
     } catch (error) {
       console.error("Cancellation SMS error:", error);
     }

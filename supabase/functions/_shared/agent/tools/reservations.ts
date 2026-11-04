@@ -3,10 +3,11 @@
 // 管理画面ではブラウザ側でしか確かめていない決まり(休業日・その日に開いている枠・同じ枠の予約・料金)を、
 // ここではサーバー側で確かめてから書き込む。変更・キャンセルはお客様に通知が届くので、実行前に確認を挟む。
 
-import { adminCancelReservation, formatPhoneNumber, loadAdminCancelTarget } from "../../admin-reservation-cancel.ts";
+import { adminCancelReservation, loadAdminCancelTarget } from "../../admin-reservation-cancel.ts";
 import { addJstDays, formatMdWithWeekday } from "../../date-jst.ts";
 import { sendEmail } from "../../email.ts";
 import { formatHerbStaffLine } from "../../herb.ts";
+import { toE164 } from "../../phone.ts";
 import { acquireSlotLock } from "../../reservation-payment.ts";
 import { formatReservationTime } from "../../reservation-time.ts";
 import { applicableSlotsForDate, SLOT_LABELS, type TimeSlot } from "../../slot-rules.ts";
@@ -26,8 +27,11 @@ const PAYMENT_LABELS: Record<string, string> = { onsite: "現地払い", square_
 
 const yen = (n: number) => `¥${Number(n).toLocaleString()}`;
 
-const normalizePhone = (phone: string) =>
-  phone.replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0)).replace(/\D/g, "");
+/** 保存用: 国内の 0 から始まる数字だけの形(+81 付きで言われても 0 に直す) */
+const normalizePhone = (phone: string) => {
+  const e164 = toE164(phone);
+  return e164.startsWith("+81") ? `0${e164.slice(3)}` : e164.replace(/\D/g, "");
+};
 
 // --- 一覧・詳細 ---
 
@@ -515,7 +519,7 @@ const updateReservation: AgentTool<UpdateInput> = {
       const phone = (plan.set.phone as string | undefined) ?? plan.current.phone;
       const email = "email" in plan.set ? (plan.set.email as string | null) : plan.current.email;
       try {
-        await sendSMS(formatPhoneNumber(phone), message);
+        await sendSMS(toE164(phone), message);
       } catch (error) {
         console.error("update notice SMS error:", error);
       }

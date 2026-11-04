@@ -26,11 +26,8 @@ import { formatJstDateLabel, formatTimeRange } from "../_shared/event-format.ts"
 import { sendAppEmail } from "../_shared/lovable-email.ts";
 import { sendLineGroupMessage } from "../_shared/line.ts";
 import { sendSMS } from "../_shared/twilio.ts";
+import { toE164 } from "../_shared/phone.ts";
 
-const formatPhoneNumber = (phone: string): string => {
-  const digits = phone.replace(/\D/g, '');
-  return digits.startsWith('0') ? '+81' + digits.slice(1) : digits;
-};
 
 const getDb = () => {
   // 本番は POSTGRES_URL（プーラ）を使用。未設定環境（staging 等）では
@@ -128,7 +125,7 @@ const handler = async (req: Request): Promise<Response> => {
 
         const notice = buildReservationLateRefundNotice(r);
         try {
-          await sendSMS(formatPhoneNumber(r.phone), notice.sms);
+          await sendSMS(toE164(r.phone), notice.sms);
         } catch (error) {
           console.error("Late refund SMS error:", error);
         }
