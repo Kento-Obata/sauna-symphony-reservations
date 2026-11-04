@@ -43,6 +43,7 @@ const EventPage = lazy(() => import("./pages/EventPage"));
 const EventReservationComplete = lazy(() => import("./pages/EventReservationComplete"));
 const EventReservationDetail = lazy(() => import("./pages/EventReservationDetail"));
 const MyWork = lazy(() => import("./pages/MyWork"));
+const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
 
 const PageFallback = () => (
   <div className="flex min-h-screen items-center justify-center bg-u-mist" aria-busy="true">
@@ -72,6 +73,10 @@ export const router = createBrowserRouter([
   {
     path: "/admin/login",
     element: withSuspense(<AdminLogin />),
+  },
+  {
+    path: "/oauth/consent",
+    element: withSuspense(<OAuthConsent />),
   },
   {
     path: "/shift",

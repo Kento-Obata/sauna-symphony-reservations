@@ -21,6 +21,7 @@ import { TimeSlotPatternManager } from "@/components/admin/TimeSlotPatternManage
 import { EventManager } from "@/components/admin/EventManager";
 import { WorkManagement } from "@/components/work/admin/WorkManagement";
 import { HerbManagement } from "@/components/admin/herbs/HerbManagement";
+import { AgentAccessManager } from "@/components/admin/agent/AgentAccessManager";
 import { useAdminReservations } from "@/hooks/useAdminReservations";
 import { ADMIN_SEARCH_LIMIT, useAdminReservationSearch } from "@/hooks/useAdminReservationSearch";
 
@@ -238,6 +239,7 @@ const Admin = () => {
             <OptionManager />
             <TimeSlotPatternManager />
             <DailyTimeSlotManager />
+            <AgentAccessManager />
           </div>
         </TabsContent>
       </Tabs>
