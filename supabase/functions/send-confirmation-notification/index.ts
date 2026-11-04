@@ -34,11 +34,8 @@ interface ReservationNotification {
 }
 
 import { fetchReservationTimeLabel } from "../_shared/reservation-time.ts";
+import { toE164 } from "../_shared/phone.ts";
 
-const formatPhoneNumber = (phone: string): string => {
-  const digits = phone.replace(/\D/g, '');
-  return digits.startsWith('0') ? '+81' + digits.slice(1) : digits;
-};
 
 const handler = async (req: Request): Promise<Response> => {
   console.log("Confirmation notification function called");
@@ -177,7 +174,7 @@ ${reservationDetailUrl}
     }
 
     try {
-      const formattedPhone = formatPhoneNumber(reservation.phone);
+      const formattedPhone = toE164(reservation.phone);
       console.log("Attempting to send SMS to formatted number:", formattedPhone);
 
       const twilioResponse = await fetch(

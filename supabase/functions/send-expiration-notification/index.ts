@@ -12,6 +12,7 @@ import postgres from "https://deno.land/x/postgresjs@v3.4.5/mod.js";
 import { corsHeaders } from "../_shared/cors.ts";
 import { sendEmail } from "../_shared/email.ts";
 import { sendSMS } from "../_shared/twilio.ts";
+import { toE164 } from "../_shared/phone.ts";
 
 const getDb = () => {
   // 本番は POSTGRES_URL（プーラ）を使用。未設定環境（staging 等）では
@@ -21,11 +22,6 @@ const getDb = () => {
   return postgres(databaseUrl, { max: 1, idle_timeout: 5, connect_timeout: 10 });
 };
 
-// Twilio は E.164 形式(+81...)のみ受け付ける
-const formatPhoneNumber = (phone: string): string => {
-  const digits = phone.replace(/\D/g, '');
-  return digits.startsWith('0') ? '+81' + digits.slice(1) : digits;
-};
 
 serve(async (_req) => {
   if (_req.method === "OPTIONS") {
@@ -79,7 +75,7 @@ serve(async (_req) => {
 
         if (reservation.phone) {
           console.log(`Sending expiration SMS to: ${reservation.phone}`);
-          await sendSMS(formatPhoneNumber(reservation.phone), message);
+          await sendSMS(toE164(reservation.phone), message);
           notifications.push(`SMS sent to ${reservation.phone}`);
         }
       } catch (notificationError) {

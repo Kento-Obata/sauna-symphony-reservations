@@ -12,6 +12,7 @@ import { corsHeaders } from "../_shared/cors.ts";
 import { requireAdminSession } from "../_shared/admin-auth.ts";
 import { sendSMS } from "../_shared/twilio.ts";
 import { sendEmail } from "../_shared/email.ts";
+import { toE164 } from "../_shared/phone.ts";
 
 const getDb = () => {
   // 本番は POSTGRES_URL（プーラ）を使用。未設定環境（staging 等）では
@@ -21,11 +22,6 @@ const getDb = () => {
   return postgres(databaseUrl, { max: 1, idle_timeout: 5, connect_timeout: 10 });
 };
 
-// Twilio は E.164 形式(+81...)のみ受け付ける
-const formatPhoneNumber = (phone: string): string => {
-  const digits = phone.replace(/\D/g, '');
-  return digits.startsWith('0') ? '+81' + digits.slice(1) : digits;
-};
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
@@ -70,7 +66,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send SMS notification
     if (reservation.phone) {
-      await sendSMS(formatPhoneNumber(reservation.phone), message);
+      await sendSMS(toE164(reservation.phone), message);
     }
 
     // Send email notification

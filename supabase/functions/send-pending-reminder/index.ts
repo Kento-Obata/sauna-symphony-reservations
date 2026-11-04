@@ -8,6 +8,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import postgres from "https://deno.land/x/postgresjs@v3.4.5/mod.js";
 import { corsHeaders } from "../_shared/cors.ts";
 import { sendSMS } from "../_shared/twilio.ts";
+import { toE164 } from "../_shared/phone.ts";
 
 const getDb = () => {
   // 本番は POSTGRES_URL（プーラ）を使用。未設定環境（staging 等）では
@@ -61,12 +62,7 @@ serve(async (req) => {
         const message = `【Sauna U リマインド】仮予約（${reservation.reservation_code}）の確認期限が残り約${remainingMinutes}分です。\nまだ本予約が完了しておりません。下記リンクより予約確定をお願いいたします。\n${CONFIRMATION_URL}`;
 
         if (reservation.phone) {
-          const formattedPhone = reservation.phone.replace(/\D/g, '');
-          const internationalPhone = formattedPhone.startsWith('0')
-            ? '+81' + formattedPhone.slice(1)
-            : formattedPhone;
-
-          await sendSMS(internationalPhone, message);
+          await sendSMS(toE164(reservation.phone), message);
           notifications.push(`SMS reminder sent to ${reservation.phone}`);
           console.log(`Reminder SMS sent for reservation ${reservation.reservation_code}`);
         }
