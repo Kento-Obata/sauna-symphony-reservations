@@ -5,9 +5,9 @@ import { formatMdWithWeekday } from "../../date-jst.ts";
 import { toHHMM } from "../../reservation-time.ts";
 import { applicableSlotsForDate, type DailySlotRow, SLOT_LABELS, SLOT_ORDER, type TimeSlot } from "../../slot-rules.ts";
 import { type AgentTool, type Sql, ToolError } from "../types.ts";
-import { assertDateRange, dateSchema } from "./common.ts";
+import { assertDateRange, BLOCK_NAME, dateSchema } from "./common.ts";
 
-export type SlotState = "open" | "booked" | "off" | "closed";
+export type SlotState = "open" | "booked" | "blocked" | "off" | "closed";
 
 export interface DaySlots {
   date: string;
@@ -56,14 +56,25 @@ export const loadDaySlots = async (tx: Sql, from: string, to: string): Promise<D
       slots: SLOT_ORDER.map((slot) => {
         const time = times.find((t: { date: string; time_slot: string }) => t.date === d && t.time_slot === slot);
         const booked = reservations.find((r: { date: string; time_slot: string }) => r.date === d && r.time_slot === slot);
-        const state: SlotState = closure ? "closed" : booked ? "booked" : open.includes(slot) ? "open" : "off";
+        const blockedByPlaceholder = booked?.guest_name === BLOCK_NAME;
+        const state: SlotState = closure
+          ? "closed"
+          : blockedByPlaceholder
+          ? "blocked"
+          : booked
+          ? "booked"
+          : open.includes(slot)
+          ? "open"
+          : "off";
         return {
           time_slot: slot,
           label: SLOT_LABELS[slot],
           start: toHHMM(time?.start_time),
           end: toHHMM(time?.end_time),
           state,
-          ...(booked ? { reservation: { code: booked.reservation_code, guest_name: booked.guest_name, status: booked.status } } : {}),
+          ...(booked && !blockedByPlaceholder
+            ? { reservation: { code: booked.reservation_code, guest_name: booked.guest_name, status: booked.status } }
+            : {}),
         };
       }),
     });
@@ -71,7 +82,7 @@ export const loadDaySlots = async (tx: Sql, from: string, to: string): Promise<D
   return days;
 };
 
-const STATE_LABELS: Record<SlotState, string> = { open: "空き", booked: "予約あり", off: "おやすみ", closed: "休業" };
+const STATE_LABELS: Record<SlotState, string> = { open: "空き", booked: "予約あり", blocked: "休枠(受付停止)", off: "おやすみ", closed: "休業" };
 
 const dayLine = (day: DaySlots) => {
   if (day.closed) return `${formatMdWithWeekday(day.date)}: 休業${day.closed.reason ? `（${day.closed.reason}）` : ""}`;
@@ -85,7 +96,7 @@ const getAvailability: AgentTool<{ date_from: string; date_to?: string }> = {
   name: "get_availability",
   title: "空き状況",
   description:
-    "期間内の各日・各枠(午前/午後/夕方/夜)が 空き・予約あり・おやすみ(その日は営業しない枠)・休業 のどれかを返します。" +
+    "期間内の各日・各枠(午前/午後/夕方/夜)が 空き・予約あり・休枠(店が受付を止めている枠)・おやすみ(その日は営業しない枠)・休業 のどれかを返します。" +
     "枠の時刻も返します。新しい予約を入れる前の確認に使ってください(1回で62日まで)。",
   inputSchema: {
     type: "object",

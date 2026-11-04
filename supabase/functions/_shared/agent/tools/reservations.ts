@@ -13,7 +13,7 @@ import { formatReservationTime } from "../../reservation-time.ts";
 import { applicableSlotsForDate, SLOT_LABELS, type TimeSlot } from "../../slot-rules.ts";
 import { sendSMS } from "../../twilio.ts";
 import { type AgentContext, type AgentTool, type JsonSchema, type Sql, ToolError } from "../types.ts";
-import { ACTIVE_STATUSES, assertDateRange, dateSchema, reservationCodeSchema, STATUS_LABELS } from "./common.ts";
+import { ACTIVE_STATUSES, assertDateRange, BLOCK_NAME, dateSchema, reservationCodeSchema, STATUS_LABELS } from "./common.ts";
 
 const TIME_SLOT_SCHEMA: JsonSchema = {
   type: "string",
@@ -21,7 +21,6 @@ const TIME_SLOT_SCHEMA: JsonSchema = {
   description: "枠: morning=午前 / afternoon=午後 / evening=夕方 / night=夜",
 };
 const PHONE_PATTERN = "^[0-9０-９+\\-‐ー（）() ]{10,20}$";
-const BLOCK_NAME = "休枠"; // 管理カレンダーで枠を止めるための仮の予約(お客様ではない)
 
 const PAYMENT_LABELS: Record<string, string> = { onsite: "現地払い", square_online: "事前決済" };
 
@@ -54,20 +53,18 @@ interface ReservationListRow {
   admin_memo: string | null;
 }
 
-const STAFF_DAYS_AHEAD = 2;
-
 const listReservations: AgentTool<{ date_from?: string; date_to?: string; query?: string; include_cancelled?: boolean }> = {
   name: "list_reservations",
   title: "予約の一覧・検索",
   description:
-    "期間内の予約(既定は今日から14日間)を時刻順に返します。query でお名前・電話番号・予約コードを絞り込めます。" +
-    "キャンセル・失効した予約は include_cancelled=true のときだけ含めます。" +
-    "スタッフは今日から2日先までで、電話番号・金額・メモは返しません。",
+    "期間内の予約(既定は今日から14日間、1回で92日まで)を時刻順に返します。query でお名前・電話番号・予約コードを絞り込めます。" +
+    "キャンセル・失効した予約は include_cancelled=true のときだけ含めます。「休枠」はお客様の予約ではなく、受付を止めている枠です。" +
+    "スタッフには電話番号・金額・メモは返しません。",
   inputSchema: {
     type: "object",
     properties: {
       date_from: dateSchema("開始日(省略すると今日)"),
-      date_to: dateSchema("終了日(省略すると開始日から14日間。スタッフは開始日の2日後まで)"),
+      date_to: dateSchema("終了日(省略すると開始日から14日間)"),
       query: { type: "string", maxLength: 50, description: "お名前の一部・電話番号の一部(4桁以上)・予約コード" },
       include_cancelled: { type: "boolean", default: false },
     },
@@ -78,11 +75,8 @@ const listReservations: AgentTool<{ date_from?: string; date_to?: string; query?
   async run(ctx, { date_from, date_to, query, include_cancelled }) {
     const isAdmin = ctx.caller.role === "admin";
     const from = date_from ?? ctx.todayYmd;
-    const to = date_to ?? addJstDays(from, isAdmin ? 13 : STAFF_DAYS_AHEAD);
-    assertDateRange(from, to, isAdmin ? 92 : 3);
-    if (!isAdmin && (from < ctx.todayYmd || to > addJstDays(ctx.todayYmd, STAFF_DAYS_AHEAD))) {
-      throw new ToolError("スタッフが確認できるのは、今日から2日先までの予約です");
-    }
+    const to = date_to ?? addJstDays(from, 13);
+    assertDateRange(from, to, 92);
 
     const q = query?.trim() ?? "";
     const digits = normalizePhone(q);
@@ -102,7 +96,11 @@ const listReservations: AgentTool<{ date_from?: string; date_to?: string; query?
       limit 200
     `);
 
+    const blocks = rows.filter((r) => r.guest_name === BLOCK_NAME);
     const lines = rows.map((r) => {
+      if (r.guest_name === BLOCK_NAME) {
+        return `${r.reservation_code} ${formatMdWithWeekday(r.date)} ${formatReservationTime(r)} 休枠（受付を止めている枠・お客様の予約ではありません）`;
+      }
       const status = r.status === "confirmed" ? "" : `【${STATUS_LABELS[r.status] ?? r.status}】`;
       const herb = formatHerbStaffLine(r.herb_choice, r.herb_selection)?.replace(/^🌿 /, "ハーブ: ") ?? "";
       const money = isAdmin ? ` ${yen(r.total_price)} ${PAYMENT_LABELS[r.payment_method] ?? r.payment_method}${r.payment_status === "paid" ? "(支払済)" : ""}` : "";
@@ -117,13 +115,14 @@ const listReservations: AgentTool<{ date_from?: string; date_to?: string; query?
       guest_count: r.guest_count,
       status: r.status,
       herb: formatHerbStaffLine(r.herb_choice, r.herb_selection),
+      is_block: r.guest_name === BLOCK_NAME,
       ...(isAdmin
         ? { phone: r.phone, email: r.email, total_price: r.total_price, payment_method: r.payment_method, payment_status: r.payment_status, memo: r.admin_memo }
         : {}),
     }));
     return {
       text: rows.length
-        ? `${formatMdWithWeekday(from)}〜${formatMdWithWeekday(to)} の予約 ${rows.length}件${rows.length === 200 ? "(200件で打ち切り)" : ""}\n${lines.join("\n")}`
+        ? `${formatMdWithWeekday(from)}〜${formatMdWithWeekday(to)} の予約 ${rows.length - blocks.length}件${blocks.length ? `（ほかに休枠 ${blocks.length}件）` : ""}${rows.length === 200 ? "(200件で打ち切り)" : ""}\n${lines.join("\n")}`
         : `${formatMdWithWeekday(from)}〜${formatMdWithWeekday(to)} に該当する予約はありません`,
       data,
     };

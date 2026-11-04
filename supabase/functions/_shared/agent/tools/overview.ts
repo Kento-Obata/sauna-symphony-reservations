@@ -2,6 +2,7 @@
 
 import { addJstDays, formatYmdWithWeekday } from "../../date-jst.ts";
 import type { AgentTool } from "../types.ts";
+import { BLOCK_NAME } from "./common.ts";
 
 const ACTIVE_STATUSES = ["confirmed", "pending", "pending_payment"];
 
@@ -27,6 +28,7 @@ const getOverview: AgentTool = {
       from public.reservations
       where date in (${ctx.todayYmd}::date, ${tomorrow}::date)
         and status = any(${ACTIVE_STATUSES})
+        and guest_name <> ${BLOCK_NAME}
       group by date
     `);
     const byDate = new Map(rows.map((r) => [r.date, r]));
