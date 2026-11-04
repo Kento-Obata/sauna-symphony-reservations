@@ -73,3 +73,31 @@ export const requireAdminOrServiceRole = async (req: Request): Promise<AdminAuth
   }
   return { ok: true, userId: userData.user.id };
 };
+
+/**
+ * ログイン中の管理者(管理画面から呼ばれる関数)だけを通す。
+ * トークンは Supabase Auth に anon key で問い合わせて確かめ、ロールは SQL(postgres.js)で見る。
+ * (本番では自動注入の service role キーが PostgREST に拒否されるため、ここでは使わない)
+ */
+export const requireAdminSession = async (req: Request, sql: Sql): Promise<AdminAuthResult> => {
+  const jwt = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  if (!jwt || !supabaseUrl || !anonKey) {
+    return { ok: false, status: 401, error: "認証情報がありません" };
+  }
+
+  const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
+    headers: { apikey: anonKey, Authorization: `Bearer ${jwt}` },
+  });
+  const user = res.ok ? await res.json().catch(() => null) : null;
+  if (typeof user?.id !== "string") {
+    return { ok: false, status: 401, error: "認証に失敗しました" };
+  }
+
+  const rows = await sql`select role from public.profiles where id = ${user.id}::uuid limit 1`;
+  if (rows[0]?.role !== "admin") {
+    return { ok: false, status: 403, error: "管理者権限がありません" };
+  }
+  return { ok: true, userId: user.id };
+};
