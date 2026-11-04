@@ -73,7 +73,8 @@ const handler = async (req: Request): Promise<Response> => {
       select id::text, date::text, time_slot::text, guest_name, guest_count, email, phone, water_temperature,
              created_at, reservation_code, status, is_confirmed, expires_at, total_price, access_token,
              payment_method, payment_status, square_order_id,
-             start_time::text, end_time::text
+             start_time::text, end_time::text,
+             herb_choice, herb_selection
       from public.reservations
       where reservation_code = ${reservationCode}
       limit 1
@@ -150,8 +151,37 @@ const handler = async (req: Request): Promise<Response> => {
       ...safeReservation
     } = reservation as Record<string, unknown>;
 
+    // オプションもここで返す。reservation_options は RLS で管理者・スタッフしか読めないため、
+    // 以前のようにお客様の画面から直接読むと本番では常に空になっていた
+    const optionRows = await sql`
+      select ro.quantity, ro.total_price,
+             o.id::text as id, o.name, o.description, o.price_per_person,
+             o.pricing_type::text as pricing_type, o.flat_price, o.is_active
+      from public.reservation_options ro
+      join public.options o on o.id = ro.option_id
+      where ro.reservation_id = ${reservation.id}::uuid
+      order by o.name
+    `;
+    const options = optionRows.map((row: Record<string, unknown>) => ({
+      quantity: Number(row.quantity),
+      total_price: row.total_price === null ? null : Number(row.total_price),
+      option: {
+        id: row.id,
+        name: row.name,
+        description: row.description,
+        price_per_person: Number(row.price_per_person),
+        pricing_type: row.pricing_type,
+        flat_price: row.flat_price === null ? null : Number(row.flat_price),
+        is_active: row.is_active,
+      },
+    }));
+
     return new Response(
-      JSON.stringify({ reservation: safeReservation }),
+      // total_price は numeric 列のため postgres.js が文字列で返す。画面の金額表示(toLocaleString)が
+      // 効かず「¥19000」になっていたので数値にして返す
+      JSON.stringify({
+        reservation: { ...safeReservation, total_price: Number(safeReservation.total_price), options },
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   } catch (error) {

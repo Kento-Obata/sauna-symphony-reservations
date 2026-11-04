@@ -148,7 +148,11 @@ export const AdminReservationDialog = ({
         water_temperature: 15, // 常に15°Cに固定
         status: 'confirmed', // 管理者からの予約は直接confirmedになる
         is_confirmed: true, // 重要：管理者作成の予約は最初からis_confirmedをtrueに設定
-        total_price: totalPrice
+        total_price: totalPrice,
+        // 電話・DM で受けた予約のハーブは受付で相談。決まっていれば予約詳細から入力する
+        herb_choice: 'consult',
+        herb_updated_at: new Date().toISOString(),
+        herb_updated_by: 'staff',
       }).select().single();
 
       if (error) {

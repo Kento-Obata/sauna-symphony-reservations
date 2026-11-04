@@ -4,8 +4,8 @@ import { ja } from "date-fns/locale";
 import { Reservation } from "@/types/reservation";
 import { getTotalPrice, formatPrice } from "@/utils/priceCalculations";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Option } from "@/types/option";
+import { HerbSelectionView } from "./HerbSelectionView";
+import { describeSavedHerbChoice } from "@/utils/herbs";
 import { formatReservationTime } from "@/utils/reservationTime";
 
 interface ReservationInfoProps {
@@ -14,56 +14,8 @@ interface ReservationInfoProps {
 
 export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
   const [totalPrice, setTotalPrice] = useState<number>(0);
-  const [options, setOptions] = useState<{option: Option, quantity: number, total_price?: number}[]>([]);
-
-  // オプション情報を取得
-  useEffect(() => {
-    const fetchReservationOptions = async () => {
-      try {
-        console.log("Fetching options for reservation ID:", reservation.id);
-        
-        if (!reservation.id) {
-          console.log("No reservation ID provided");
-          return;
-        }
-        
-        const { data: reservationOptions, error } = await supabase
-          .from("reservation_options")
-          .select(`
-            quantity,
-            total_price,
-            options:option_id (
-              id, name, description, price_per_person, pricing_type, flat_price
-            )
-          `)
-          .eq("reservation_id", reservation.id);
-
-        if (error) {
-          console.error("オプション情報の取得に失敗しました:", error);
-          return;
-        }
-
-        // オプション情報を整形
-        if (reservationOptions && reservationOptions.length > 0) {
-          console.log("Found reservation options:", reservationOptions);
-          const formattedOptions = reservationOptions.map(item => ({
-            option: item.options as unknown as Option, // Cast to unknown first, then to Option
-            quantity: item.quantity,
-            total_price: item.total_price // Include stored total_price
-          }));
-          setOptions(formattedOptions);
-        } else {
-          console.log("No options found for this reservation");
-        }
-      } catch (error) {
-        console.error("オプション情報の取得中にエラーが発生しました:", error);
-      }
-    };
-
-    if (reservation.id) {
-      fetchReservationOptions();
-    }
-  }, [reservation.id]);
+  // オプションは get-reservation-by-code が返す(reservation_options は RLS でお客様の画面から読めない)
+  const options = reservation.options ?? [];
 
   useEffect(() => {
     const calculatePrice = async () => {
@@ -140,6 +92,9 @@ export const ReservationInfo = ({ reservation }: ReservationInfoProps) => {
     { label: "人数", value: `${reservation.guest_count}名様` },
     { label: "電話番号", value: reservation.phone },
     ...(reservation.email ? [{ label: "メール", value: <span className="break-all">{reservation.email}</span> }] : []),
+    ...(describeSavedHerbChoice(reservation.herb_choice, reservation.herb_selection)
+      ? [{ label: "ハーブ蒸し", value: <HerbSelectionView choice={reservation.herb_choice} selection={reservation.herb_selection} /> }]
+      : []),
     { label: "お支払い", value: getPaymentDisplay() },
   ];
 

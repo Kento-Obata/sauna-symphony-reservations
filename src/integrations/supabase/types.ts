@@ -390,6 +390,147 @@ export type Database = {
         }
         Relationships: []
       }
+      herb_blend_herbs: {
+        Row: {
+          blend_id: string
+          herb_id: string
+          sort_order: number
+        }
+        Insert: {
+          blend_id: string
+          herb_id: string
+          sort_order?: number
+        }
+        Update: {
+          blend_id?: string
+          herb_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "herb_blend_herbs_blend_id_fkey"
+            columns: ["blend_id"]
+            isOneToOne: false
+            referencedRelation: "herb_blends"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "herb_blend_herbs_herb_id_fkey"
+            columns: ["herb_id"]
+            isOneToOne: false
+            referencedRelation: "herbs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      herb_blends: {
+        Row: {
+          active: boolean
+          caution: string | null
+          code: string
+          created_at: string
+          description: string | null
+          id: string
+          is_original: boolean
+          needs_prep: boolean
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          caution?: string | null
+          code: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_original?: boolean
+          needs_prep?: boolean
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          caution?: string | null
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_original?: boolean
+          needs_prep?: boolean
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      herb_settings: {
+        Row: {
+          id: boolean
+          recommended_tier1_blend_id: string | null
+          recommended_tier2_blend_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: boolean
+          recommended_tier1_blend_id?: string | null
+          recommended_tier2_blend_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: boolean
+          recommended_tier1_blend_id?: string | null
+          recommended_tier2_blend_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "herb_settings_recommended_tier1_blend_id_fkey"
+            columns: ["recommended_tier1_blend_id"]
+            isOneToOne: false
+            referencedRelation: "herb_blends"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "herb_settings_recommended_tier2_blend_id_fkey"
+            columns: ["recommended_tier2_blend_id"]
+            isOneToOne: false
+            referencedRelation: "herb_blends"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      herbs: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+          note: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name: string
+          note: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          note?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       options: {
         Row: {
           created_at: string
@@ -537,6 +678,10 @@ export type Database = {
           expires_at: string | null
           guest_count: number
           guest_name: string
+          herb_choice: string | null
+          herb_selection: Json | null
+          herb_updated_at: string | null
+          herb_updated_by: string | null
           id: string
           is_confirmed: boolean | null
           payment_method: string
@@ -565,6 +710,10 @@ export type Database = {
           expires_at?: string | null
           guest_count: number
           guest_name: string
+          herb_choice?: string | null
+          herb_selection?: Json | null
+          herb_updated_at?: string | null
+          herb_updated_by?: string | null
           id?: string
           is_confirmed?: boolean | null
           payment_method?: string
@@ -593,6 +742,10 @@ export type Database = {
           expires_at?: string | null
           guest_count?: number
           guest_name?: string
+          herb_choice?: string | null
+          herb_selection?: Json | null
+          herb_updated_at?: string | null
+          herb_updated_by?: string | null
           id?: string
           is_confirmed?: boolean | null
           payment_method?: string
@@ -1261,6 +1414,25 @@ export type Database = {
       }
     }
     Views: {
+      herb_affected_reservations: {
+        Row: {
+          blend_code: string | null
+          blend_inactive: boolean | null
+          blend_title: string | null
+          date: string | null
+          guest_count: number | null
+          guest_name: string | null
+          herb_choice: string | null
+          id: string | null
+          phone: string | null
+          reservation_code: string | null
+          start_time: string | null
+          status: string | null
+          tier: number | null
+          unavailable_herbs: string | null
+        }
+        Relationships: []
+      }
       customer_search: {
         Row: {
           admin_memo: string | null
@@ -1354,9 +1526,14 @@ export type Database = {
       }
     }
     Functions: {
+      admin_set_reservation_herbs: {
+        Args: { p_choice: string; p_reservation_id: string; p_tiers: Json }
+        Returns: Json
+      }
       cleanup_expired_reservations: { Args: never; Returns: undefined }
       ensure_admin_role: { Args: never; Returns: undefined }
       generate_reservation_code: { Args: never; Returns: string }
+      get_herb_catalog: { Args: never; Returns: Json }
       staff_id_for_token: { Args: { p_token: string }; Returns: string }
       staff_work_get: { Args: { p_token: string }; Returns: Json }
       staff_work_log_create: {

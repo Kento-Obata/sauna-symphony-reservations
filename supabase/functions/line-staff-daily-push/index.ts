@@ -5,6 +5,7 @@ import { formatReservationTime } from "../_shared/reservation-time.ts";
 import { pushLineMessage } from "../_shared/line.ts";
 import { listShifts } from "../_shared/shift-service.ts";
 import { formatDailyShiftBlock } from "../_shared/shift-bot.ts";
+import { formatHerbStaffLine } from "../_shared/herb.ts";
 
 // pg_cron から毎朝 08:00 JST (cron: 0 23 * * * UTC) に呼ばれる前提。
 // LINE webhook ではないので署名検証ではなく CRON_SHARED_SECRET による Bearer 認証を行う。
@@ -38,6 +39,8 @@ type Reservation = {
   reservation_code: string;
   start_time: string | null;
   end_time: string | null;
+  herb_choice: string | null;
+  herb_selection: unknown;
 };
 
 // 予約行に保存された実時刻（作成時に DB トリガーが確定）をそのまま表示する。
@@ -45,10 +48,13 @@ type Reservation = {
 const formatSlotTime = (r: Reservation): string => formatReservationTime(r) || r.time_slot;
 
 function formatReservationLine(r: Reservation): string {
+  // ハーブ蒸しの仕込み内容(06・07 は ⚠仕込み、当日の組は受付で相談)。機能導入前の予約は出さない
+  const herb = formatHerbStaffLine(r.herb_choice, r.herb_selection);
   return [
     `🕐 ${formatSlotTime(r)}｜${r.guest_name} 様 ${r.guest_count}名`,
     `  📞 ${r.phone ?? "-"}`,
     `  💧 ${r.water_temperature ?? "-"}℃ ¥${(r.total_price ?? 0).toLocaleString()}`,
+    ...(herb ? [`  ${herb}`] : []),
     `  🔖 R-${r.reservation_code}`,
   ].join("\n");
 }
@@ -115,7 +121,8 @@ const handler = async (req: Request): Promise<Response> => {
     const rows = await sql<Reservation[]>`
       select r.date::text, r.time_slot::text, r.guest_name, r.guest_count, r.phone,
              r.water_temperature, r.total_price, r.reservation_code,
-             r.start_time::text, r.end_time::text
+             r.start_time::text, r.end_time::text,
+             r.herb_choice, r.herb_selection
       from public.reservations r
       where r.date = ${today}
         and r.status in ('confirmed', 'pending', 'pending_payment')

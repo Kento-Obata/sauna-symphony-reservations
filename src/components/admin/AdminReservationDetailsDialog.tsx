@@ -11,6 +11,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ReservationDateSelect } from "./reservation-details/ReservationDateSelect";
 import { ReservationTimeSelect } from "./reservation-details/ReservationTimeSelect";
 import { ReservationMemoEditor } from "./ReservationMemoEditor";
+import { AdminHerbEditor } from "./herbs/AdminHerbEditor";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { XCircle, List, Plus, Minus, Trash, User, MessageSquare } from "lucide-react";
 import { formatPrice } from "@/utils/priceCalculations";
@@ -716,6 +717,20 @@ export const AdminReservationDetailsDialog = ({
               )}
             </div>
           </div>
+
+          {/* ハーブ蒸し: 受付での代理入力・変更（予約内容の「編集」とは別に保存する） */}
+          {!isEditing && (
+            <div className="mt-6 space-y-2">
+              <h3 className="text-sm font-medium">ハーブ蒸し</h3>
+              <AdminHerbEditor
+                reservationId={reservation.id}
+                choice={reservation.herb_choice}
+                selection={reservation.herb_selection}
+                updatedAt={reservation.herb_updated_at}
+                updatedBy={reservation.herb_updated_by}
+              />
+            </div>
+          )}
 
           {/* 管理者メモセクション */}
           {!isEditing && (

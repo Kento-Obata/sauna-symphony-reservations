@@ -1,4 +1,13 @@
+import type { Option } from "./option";
+
 export type TimeSlot = "morning" | "afternoon" | "evening" | "night";
+
+/** お客様向け API(get-reservation-by-code)が返すオプションの明細 */
+export interface ReservationOptionLine {
+  option: Option;
+  quantity: number;
+  total_price?: number | null;
+}
 
 export interface Reservation {
   id: string;
@@ -25,6 +34,13 @@ export interface Reservation {
   admin_memo?: string | null;
   admin_memo_updated_at?: string | null;
   admin_memo_updated_by?: string | null;
+  // ハーブ蒸し(null = 機能導入前の予約)。中身は予約時点のスナップショット(src/utils/herbs.ts)
+  herb_choice?: string | null;
+  herb_selection?: unknown;
+  herb_updated_at?: string | null;
+  herb_updated_by?: string | null;
+  // get-reservation-by-code のみが返す(管理画面の一覧には含まれない)
+  options?: ReservationOptionLine[];
 }
 
 export interface ReservationFormData {

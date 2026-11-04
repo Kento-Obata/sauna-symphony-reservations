@@ -9,6 +9,7 @@ import { Reservation } from "@/types/reservation";
 import { formatReservationTime } from "@/utils/reservationTime";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+import { HerbSelectionBadge } from "./herbs/HerbSelectionAdminView";
 
 interface AdminUpcomingReservationsProps {
   reservations?: Reservation[];
@@ -89,6 +90,9 @@ export const AdminUpcomingReservations = ({
                       </div>
                       <div className="text-sm text-gray-500">
                         {reservation.phone}
+                      </div>
+                      <div className="mt-1">
+                        <HerbSelectionBadge choice={reservation.herb_choice} selection={reservation.herb_selection} />
                       </div>
                     </div>
                     <div className="text-right">

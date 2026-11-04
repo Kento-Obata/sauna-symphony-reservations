@@ -34,6 +34,8 @@ interface ReservationConfirmDialogProps {
   isSubmitting: boolean;
   reservationCode?: string;
   paymentMethod?: "onsite" | "square_online";
+  /** ハーブ蒸しの選び方・内容の一行表示 */
+  herbSummary?: string;
 }
 
 export const ReservationConfirmDialog = ({
@@ -44,6 +46,7 @@ export const ReservationConfirmDialog = ({
   reservation,
   isSubmitting,
   paymentMethod = "onsite",
+  herbSummary,
 }: ReservationConfirmDialogProps) => {
   const isPrepaid = paymentMethod === "square_online";
   const [totalPrice, setTotalPrice] = useState<number>(0);
@@ -103,6 +106,7 @@ export const ReservationConfirmDialog = ({
     { label: "人数", value: `${reservation.guest_count}名様` },
     { label: "電話番号", value: reservation.phone },
     ...(reservation.email ? [{ label: "メール", value: reservation.email }] : []),
+    ...(herbSummary ? [{ label: "ハーブ蒸し", value: herbSummary }] : []),
     { label: "お支払い", value: isPrepaid ? "オンライン事前決済" : "現地払い（カード・現金）" },
   ];
 

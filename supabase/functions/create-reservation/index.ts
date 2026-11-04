@@ -6,6 +6,7 @@ import { acquireSlotLock, TIME_SLOT_LABELS } from "../_shared/reservation-paymen
 import { formatJstDateLabel } from "../_shared/event-format.ts";
 import { getClientIp, isRateLimited, recordAttempt } from "../_shared/rate-limit.ts";
 import { getJstTodayYmd } from "../_shared/date-jst.ts";
+import { herbErrorMessage, isHerbChoice, normalizeHerbTiers } from "../_shared/herb.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -34,6 +35,10 @@ interface CreateReservationRequest {
     option_id: string;
     quantity: number;
   }>;
+  // ハーブ蒸し: 'select'(事前に選ぶ) / 'recommended'(おすすめ) / 'consult'(当日スタッフと一緒に選ぶ)。
+  // 旧フロントは送ってこないので、未指定は当日相談として扱う
+  herbChoice?: string;
+  herbTiers?: unknown;
 }
 
 type OptionRow = {
@@ -93,6 +98,15 @@ const handler = async (req: Request): Promise<Response> => {
     }
     const isPrepaid = paymentMethod === 'square_online';
 
+    const herbChoice = body.herbChoice ?? 'consult';
+    const herbTiers = normalizeHerbTiers(body.herbTiers);
+    if (!isHerbChoice(herbChoice) || herbTiers === null) {
+      return new Response(
+        JSON.stringify({ error: "ハーブの選び方の指定が正しくありません" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+      );
+    }
+
     console.log("Creating reservation for:", { date, timeSlot, guestName, guestCount, paymentMethod });
 
     const phoneStr = String(phone || '');
@@ -113,6 +127,14 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const result = await sql.begin(async (tx: typeof sql) => {
+      // ハーブの中身を検証し、予約時点のスナップショットを作る(選べないブレンド等は例外 → 400)
+      const herbRows = await tx`
+        select public.build_herb_selection(${herbChoice}, ${sql.json(herbTiers)}::jsonb) as selection
+      `;
+      // jsonb の引数は sql.json で渡す(postgres.js は jsonb 引数を JSON.stringify するため、
+      // 文字列にしてから渡すと JSON の文字列値として二重に保存される)
+      const herbSelection = herbRows[0]?.selection ?? null;
+
       // 枠単位の advisory lock で同一枠への並行作成・確定を直列化
       // (ロック順序は常に advisory → 行ロック)
       await acquireSlotLock(tx, date, timeSlot);
@@ -219,7 +241,11 @@ const handler = async (req: Request): Promise<Response> => {
               confirmation_token,
               access_token,
               expires_at,
-              payment_method
+              payment_method,
+              herb_choice,
+              herb_selection,
+              herb_updated_at,
+              herb_updated_by
             ) values (
               ${date}::date,
               ${timeSlot}::public.time_slot,
@@ -235,7 +261,11 @@ const handler = async (req: Request): Promise<Response> => {
               ${confirmationToken},
               ${accessToken},
               ${isPrepaid ? tx`now() + interval '20 minutes'` : tx`now() + interval '2 hours'`},
-              ${paymentMethod}
+              ${paymentMethod},
+              ${herbChoice},
+              ${herbSelection === null ? null : sql.json(herbSelection)}::jsonb,
+              now(),
+              'customer'
             )
             returning id::text, date::text, time_slot::text, guest_name, guest_count, email, phone, water_temperature, reservation_code, confirmation_token, access_token, total_price
           `;
@@ -380,6 +410,13 @@ const handler = async (req: Request): Promise<Response> => {
     );
   } catch (error) {
     console.error("Function error:", error);
+    const herbMessage = herbErrorMessage(error);
+    if (herbMessage) {
+      return new Response(
+        JSON.stringify({ error: herbMessage }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+      );
+    }
     const err = error instanceof Error ? error : new Error("予約の作成に失敗しました");
     return new Response(
       JSON.stringify({ error: err.message || "予約の作成に失敗しました" }),
