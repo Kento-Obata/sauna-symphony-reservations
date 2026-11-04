@@ -2,7 +2,7 @@
 // グループでは、ボットに @ でメンションした文章だけを受ける(_shared/line-mention.ts)。
 //  - 写真: スタッフの作業写真の保存先(work-photos/<トークン>/<id>.jpg)にしまい、次の文章のときに AI に伝える
 //  - 文章: その人の権限(管理者/スタッフ)の道具を使って Claude が返事をする。会話は agent_line_conversations に保存
-//  - グループの会話は全員が見るので、管理者でもスタッフの道具だけを使う。会話はグループ×人ごとに分ける
+//  - グループの会話は全員が見るので、個人情報は書かないよう指示する。会話はグループ×人ごとに分ける
 // 会話の履歴は追記だけ。しばらく間が空いた・長くなった・道具の定義が変わったときは新しい会話にする。
 
 import Anthropic from "npm:@anthropic-ai/sdk@1.4.0";
@@ -58,8 +58,8 @@ export const LINE_GROUP_SYSTEM_PROMPT = [
   LINE_SYSTEM_PROMPT,
   "",
   "# グループでの会話",
-  "- このやりとりはスタッフの LINE グループで、メンバー全員が見ています。お客様の連絡先やほかの人の給与など、個人的な情報は書かないでください。",
-  "- 管理者向けの操作(返金・料金の変更・ほかの人のシフトの変更など)を頼まれたら、ボットとの1対1のトークで頼むよう伝えてください。",
+  "- このやりとりはスタッフの LINE グループで、メンバー全員が見ています。お客様の電話番号・メールアドレスや、ほかの人の給与など、個人的な情報は書かないでください(道具の結果に含まれていても書かない)。",
+  "- キャンセルなど確認が要る操作は、頼んだ本人に内容を見せて了承を取ってから実行してください。",
 ].join("\n");
 
 export interface LineAiMessage {
@@ -74,8 +74,8 @@ const callerOf = (staff: LineStaff, groupId?: string): AgentCaller | null => {
   if (!staff.staff_id || (staff.role !== "admin" && staff.role !== "staff")) return null;
   return {
     userId: staff.staff_id,
-    // グループでは全員が見るので、管理者でもスタッフの道具だけにする
-    role: groupId ? "staff" : staff.role,
+    // グループでも本人の権限のまま(確認待ちの操作は頼んだ本人しか実行できない)
+    role: staff.role,
     name: staff.username ?? staff.display_name ?? "",
     channel: "line",
     client: groupId ? "line-group" : "line",
