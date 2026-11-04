@@ -6,11 +6,13 @@ import { pushLineMessage, replyLineMessage, verifyLineSignature } from "../_shar
 import { parseShiftCommand, SHIFT_HELP_TEXT } from "../_shared/shift-bot.ts";
 import { executeShiftCommand, type LineStaff, resolveLineStaff } from "../_shared/shift-service.ts";
 import { handleLineAiMessage, type LineAiMessage } from "../_shared/agent/line-agent.ts";
+import { mentionsBot, stripBotMention } from "../_shared/line-mention.ts";
 
 // スタッフ用 LINE bot の webhook。
 //  - 予約照会（日付 / 予約コード / 電話番号）
 //  - シフト確認・追加・変更・削除（_shared/shift-bot.ts, shift-service.ts）
-//  - 1:1 のトークでコマンドではない文章・写真は AI が受ける（_shared/agent/line-agent.ts）。
+//  - 1:1 のトークでコマンドではない文章・写真、グループでボットに @ でメンションした文章は AI が受ける
+//    （_shared/agent/line-agent.ts）。グループのそれ以外の雑談には返事をしない。
 //    AI の返事には数秒〜数十秒かかるため、webhook にはすぐ 200 を返し、裏で処理して reply / push する
 // 仕様: docs/line-shift-bot.md
 //
@@ -392,7 +394,11 @@ const handler = async (req: Request): Promise<Response> => {
       if (messageType !== "text" && !(isDirect && messageType === "image")) continue;
       const replyToken: string | undefined = ev.replyToken;
       const userId: string | undefined = ev.source?.userId;
-      const text: string = messageType === "text" ? ev.message.text ?? "" : "";
+      const groupChatId: string | null = ev.source?.groupId ?? ev.source?.roomId ?? null;
+      const rawText: string = messageType === "text" ? ev.message.text ?? "" : "";
+      // グループでボットに @ でメンションされたら、メンション部分を外した本文を扱う
+      const botMentioned = !isDirect && messageType === "text" && mentionsBot(ev.message.mention?.mentionees);
+      const text: string = botMentioned ? stripBotMention(rawText, ev.message.mention?.mentionees) : rawText;
       if (!replyToken || !userId) continue;
 
       const today = getJstTodayYmd();
@@ -432,11 +438,23 @@ const handler = async (req: Request): Promise<Response> => {
 
       const shiftCmd = parseShiftCommand(text, today);
 
-      // 認識できないメッセージ: 1:1 のトークは AI が受ける。グループでは雑談に毎回返信させないため silent
+      // 認識できないメッセージ: 1:1 のトークと、グループでボットにメンションしたものは AI が受ける。
+      // グループのそれ以外は、雑談に毎回返信させないため silent
       if (!shiftCmd && !isRecognizedReservationCommand(text, today)) {
-        if (isDirect) {
+        if (isDirect || (botMentioned && groupChatId)) {
           const staff = await resolveLineStaff(sql, userId);
-          if (staff) runAiInBackground({ replyToken, lineUserId: userId, message: { id: ev.message.id, type: "text", text } }, staff, accessToken);
+          if (staff) {
+            runAiInBackground(
+              {
+                replyToken,
+                lineUserId: userId,
+                groupId: isDirect ? undefined : groupChatId ?? undefined,
+                message: { id: ev.message.id, type: "text", text },
+              },
+              staff,
+              accessToken,
+            );
+          }
         }
         continue;
       }

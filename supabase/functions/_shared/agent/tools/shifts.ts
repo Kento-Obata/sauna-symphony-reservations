@@ -34,7 +34,9 @@ const runShiftCommand = async (ctx: AgentContext, cmd: ShiftCommand) => {
   if (result.reply.startsWith("⚠")) throw new ToolError(result.reply.replace(/^⚠\s*/, ""));
   const groupId = Deno.env.get("STAFF_PUSH_GROUP_ID");
   const token = Deno.env.get("LINE_CHANNEL_ACCESS_TOKEN");
-  if (result.notify && groupId && token) {
+  // スタッフグループの中で AI に頼んだときは、返事自体がグループに届くので二重に流さない
+  const askedInPushGroup = !!groupId && ctx.caller.lineGroupId === groupId;
+  if (result.notify && groupId && token && !askedInPushGroup) {
     try {
       const pushed = await pushLineMessage(groupId, result.notify, token);
       if (!pushed.ok) console.error("shift notify push failed:", pushed.status, pushed.body);

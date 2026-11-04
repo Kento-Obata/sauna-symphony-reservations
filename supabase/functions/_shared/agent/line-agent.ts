@@ -1,6 +1,8 @@
-// スタッフ用 LINE bot の AI 部分。1:1 のトークで、コマンドとして認識できない文章と写真を受ける。
+// スタッフ用 LINE bot の AI 部分。1:1 のトークでは、コマンドとして認識できない文章と写真を受ける。
+// グループでは、ボットに @ でメンションした文章だけを受ける(_shared/line-mention.ts)。
 //  - 写真: スタッフの作業写真の保存先(work-photos/<トークン>/<id>.jpg)にしまい、次の文章のときに AI に伝える
 //  - 文章: その人の権限(管理者/スタッフ)の道具を使って Claude が返事をする。会話は agent_line_conversations に保存
+//  - グループの会話は全員が見るので、管理者でもスタッフの道具だけを使う。会話はグループ×人ごとに分ける
 // 会話の履歴は追記だけ。しばらく間が空いた・長くなった・道具の定義が変わったときは新しい会話にする。
 
 import Anthropic from "npm:@anthropic-ai/sdk@1.4.0";
@@ -51,28 +53,41 @@ export const LINE_SYSTEM_PROMPT = [
   "- 道具でできないことを頼まれたら、管理画面で操作するよう伝えてください。",
 ].join("\n");
 
+/** グループの会話用。全員が見ているので書いてよい内容を絞る */
+export const LINE_GROUP_SYSTEM_PROMPT = [
+  LINE_SYSTEM_PROMPT,
+  "",
+  "# グループでの会話",
+  "- このやりとりはスタッフの LINE グループで、メンバー全員が見ています。お客様の連絡先やほかの人の給与など、個人的な情報は書かないでください。",
+  "- 管理者向けの操作(返金・料金の変更・ほかの人のシフトの変更など)を頼まれたら、ボットとの1対1のトークで頼むよう伝えてください。",
+].join("\n");
+
 export interface LineAiMessage {
   replyToken: string;
   lineUserId: string;
+  /** グループ(・複数人トーク)で受けたときのグループ ID。1:1 のトークなら無し */
+  groupId?: string;
   message: { id: string; type: "text" | "image"; text?: string };
 }
 
-const callerOf = (staff: LineStaff): AgentCaller | null => {
+const callerOf = (staff: LineStaff, groupId?: string): AgentCaller | null => {
   if (!staff.staff_id || (staff.role !== "admin" && staff.role !== "staff")) return null;
   return {
     userId: staff.staff_id,
-    role: staff.role,
+    // グループでは全員が見るので、管理者でもスタッフの道具だけにする
+    role: groupId ? "staff" : staff.role,
     name: staff.username ?? staff.display_name ?? "",
     channel: "line",
-    client: "line",
+    client: groupId ? "line-group" : "line",
+    lineGroupId: groupId ?? null,
   };
 };
 
-/** 返事。reply トークンの期限が切れていたら push で送る */
+/** 返事。reply トークンの期限が切れていたら push で送る(グループならグループへ) */
 const sendLine = async (ev: LineAiMessage, text: string, accessToken: string) => {
   const replied = await replyLineMessage(ev.replyToken, text, accessToken);
   if (!replied.ok) {
-    const pushed = await pushLineMessage(ev.lineUserId, text, accessToken);
+    const pushed = await pushLineMessage(ev.groupId ?? ev.lineUserId, text, accessToken);
     if (!pushed.ok) console.error("LINE push failed", pushed.status, pushed.body);
   }
 };
@@ -131,7 +146,7 @@ const stamp = () => {
 };
 
 export async function handleLineAiMessage(sql: Sql, ev: LineAiMessage, staff: LineStaff, accessToken: string): Promise<void> {
-  const caller = callerOf(staff);
+  const caller = callerOf(staff, ev.groupId);
   if (!caller) {
     await sendLine(ev, "このLINEはスタッフに紐付いていません\n管理者に登録を頼んでください", accessToken);
     return;
@@ -153,23 +168,27 @@ export async function handleLineAiMessage(sql: Sql, ev: LineAiMessage, staff: Li
     await sendLine(ev, "AI はまだ準備中です\n今は「ヘルプ」で出るコマンドが使えます", accessToken);
     return;
   }
-  startLoading(ev.lineUserId, accessToken);
+  // 「入力中」の表示は 1:1 のトークだけ
+  if (!ev.groupId) startLoading(ev.lineUserId, accessToken);
 
   const ctx = createAgentContext(sql, caller);
-  const fingerprint = await sha256Hex(JSON.stringify({ system: LINE_SYSTEM_PROMPT, tools: claudeToolsFor(registry, ctx) }));
+  const system = ev.groupId ? LINE_GROUP_SYSTEM_PROMPT : LINE_SYSTEM_PROMPT;
+  // 会話は 1:1 なら人ごと、グループならグループ×人ごと
+  const conversationKey = ev.groupId ? `group:${ev.groupId}:${ev.lineUserId}` : ev.lineUserId;
+  const fingerprint = await sha256Hex(JSON.stringify({ system, tools: claudeToolsFor(registry, ctx) }));
   const rows: ConversationRow[] = await sql`
     select user_id::text, messages, fingerprint, version,
            (extract(epoch from now() - updated_at) / 60)::float8 as idle_minutes
     from public.agent_line_conversations
-    where line_user_id = ${ev.lineUserId}
+    where line_user_id = ${conversationKey}
   `;
   const conv = rows[0];
   const fresh = !conv || conv.user_id !== caller.userId || conv.fingerprint !== fingerprint ||
     conv.idle_minutes > CONVERSATION_IDLE_MINUTES || conv.messages.length > MAX_HISTORY_MESSAGES;
   const history: ChatMessage[] = fresh ? [] : conv.messages;
 
-  // まだ伝えていない写真(30分以内)を、このメッセージに添える
-  const photos = await sql`
+  // まだ伝えていない写真(30分以内・1:1 で受けたもの)を、このメッセージに添える
+  const photos = ev.groupId ? [] : await sql`
     update public.agent_line_photos set announced_at = now()
     where line_user_id = ${ev.lineUserId} and announced_at is null and created_at > now() - interval '30 minutes'
     returning id::text
@@ -181,7 +200,7 @@ export async function handleLineAiMessage(sql: Sql, ev: LineAiMessage, staff: Li
   let turn: ChatMessage[];
   try {
     const client = new Anthropic({ apiKey, timeout: 50_000, maxRetries: 1 });
-    const result = await runChatTurn({ client, registry, ctx, system: LINE_SYSTEM_PROMPT, history: [...history, userMessage] });
+    const result = await runChatTurn({ client, registry, ctx, system, history: [...history, userMessage] });
     reply = result.reply;
     turn = [userMessage, ...result.appended];
   } catch (error) {
@@ -194,7 +213,7 @@ export async function handleLineAiMessage(sql: Sql, ev: LineAiMessage, staff: Li
   const saved = fresh
     ? await sql`
       insert into public.agent_line_conversations (line_user_id, user_id, messages, fingerprint, version, started_at, updated_at)
-      values (${ev.lineUserId}, ${caller.userId}::uuid, ${sql.json(turn)}::jsonb, ${fingerprint}, 1, now(), now())
+      values (${conversationKey}, ${caller.userId}::uuid, ${sql.json(turn)}::jsonb, ${fingerprint}, 1, now(), now())
       on conflict (line_user_id) do update
         set user_id = excluded.user_id, messages = excluded.messages, fingerprint = excluded.fingerprint,
             version = agent_line_conversations.version + 1, started_at = now(), updated_at = now()
@@ -203,14 +222,14 @@ export async function handleLineAiMessage(sql: Sql, ev: LineAiMessage, staff: Li
     : await sql`
       update public.agent_line_conversations
       set messages = ${sql.json([...history, ...turn])}::jsonb, version = version + 1, updated_at = now()
-      where line_user_id = ${ev.lineUserId} and version = ${conv.version}
+      where line_user_id = ${conversationKey} and version = ${conv.version}
       returning 1
     `;
   if (!saved.length) {
     await sql`
       update public.agent_line_conversations
       set messages = ${sql.json(turn)}::jsonb, fingerprint = ${fingerprint}, version = version + 1, started_at = now(), updated_at = now()
-      where line_user_id = ${ev.lineUserId}
+      where line_user_id = ${conversationKey}
     `;
   }
 

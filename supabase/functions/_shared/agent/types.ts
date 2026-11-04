@@ -14,6 +14,8 @@ export interface AgentCaller {
   channel: AgentChannel;
   /** OAuth の client_id / API キーの名前 / "line" */
   client: string | null;
+  /** LINE のグループ(・複数人トーク)で話しているときのグループ ID */
+  lineGroupId?: string | null;
 }
 
 export interface AgentContext {
