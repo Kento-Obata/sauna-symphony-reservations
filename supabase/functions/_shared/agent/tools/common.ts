@@ -7,6 +7,9 @@ import { type JsonSchema, type Sql, ToolError } from "../types.ts";
 /** 枠を押さえている予約(確定・メール確認待ち・決済待ち) */
 export const ACTIVE_STATUSES = ["confirmed", "pending", "pending_payment"];
 
+/** 管理カレンダーで枠を止めるための仮の予約の名前(お客様の予約ではない) */
+export const BLOCK_NAME = "休枠";
+
 export const STATUS_LABELS: Record<string, string> = {
   confirmed: "確定",
   pending: "仮予約（お客様の確認待ち）",

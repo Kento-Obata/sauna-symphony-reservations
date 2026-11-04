@@ -5,7 +5,7 @@ import { formatMdWithWeekday } from "../../date-jst.ts";
 import { formatHerbStaffLine, HERB_CHOICE_LABELS, type HerbChoice, herbErrorMessage } from "../../herb.ts";
 import { toHHMM } from "../../reservation-time.ts";
 import { type AgentTool, type Sql, ToolError } from "../types.ts";
-import { ACTIVE_STATUSES, dateSchema, findReservationByCode, reservationCodeSchema, reservationLabel } from "./common.ts";
+import { ACTIVE_STATUSES, BLOCK_NAME, dateSchema, findReservationByCode, reservationCodeSchema, reservationLabel } from "./common.ts";
 
 interface HerbRow {
   id: string;
@@ -147,7 +147,7 @@ const getHerbPrepList: AgentTool<{ date: string }> = {
              r.status, r.herb_choice, r.herb_selection,
              exists (select 1 from public.herb_affected_reservations a where a.id = r.id) as out_of_stock
       from public.reservations r
-      where r.date = ${date}::date and r.status = any(${ACTIVE_STATUSES})
+      where r.date = ${date}::date and r.status = any(${ACTIVE_STATUSES}) and r.guest_name <> ${BLOCK_NAME}
       order by r.start_time nulls last, r.created_at
     `);
     const counts = new Map<string, number>();
