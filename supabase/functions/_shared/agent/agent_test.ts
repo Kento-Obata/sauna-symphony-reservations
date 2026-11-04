@@ -3,6 +3,7 @@ import { validateInput } from "./validate.ts";
 import { type AgentStore, CONFIRM_TOOL, ToolRegistry } from "./registry.ts";
 import { handleMcpPayload, SUPPORTED_PROTOCOL_VERSIONS } from "./mcp.ts";
 import { decodeJwtPayload } from "./auth.ts";
+import { authorizeRedirect, rewriteMetadata, stripDroppedParams } from "./oauth-proxy.ts";
 import { type AgentContext, type AgentRole, type AgentTool, ToolError } from "./types.ts";
 
 // --- テスト用の道具と保存先 ---
@@ -249,4 +250,52 @@ Deno.test("auth: JWT の中身(client_id)を読める", () => {
   const payload = btoa(JSON.stringify({ sub: "abc", client_id: "cli_1" })).replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
   assertEquals(decodeJwtPayload(`h.${payload}.s`)?.client_id, "cli_1");
   assertEquals(decodeJwtPayload("garbage"), null);
+});
+
+// --- OAuth の中継 ---
+
+
+const proxyCfg = {
+  resourceUrl: "https://x.supabase.co/functions/v1/agent-mcp",
+  authUrl: "https://x.supabase.co/auth/v1",
+  upstreamMetadataUrl: "https://x.supabase.co/.well-known/oauth-authorization-server/auth/v1",
+  anonKey: "anon-key",
+};
+
+Deno.test("oauth-proxy: メタデータの入口を中継先に差し替え、OpenID Connect の項目と openid を外す", () => {
+  const out = rewriteMetadata({
+    issuer: "https://x.supabase.co/auth/v1",
+    authorization_endpoint: "https://x.supabase.co/auth/v1/oauth/authorize",
+    token_endpoint: "https://x.supabase.co/auth/v1/oauth/token",
+    registration_endpoint: "https://x.supabase.co/auth/v1/oauth/clients/register",
+    userinfo_endpoint: "https://x.supabase.co/auth/v1/oauth/userinfo",
+    id_token_signing_alg_values_supported: ["ES256"],
+    scopes_supported: ["openid", "email", "offline_access"],
+    code_challenge_methods_supported: ["S256"],
+  }, proxyCfg.resourceUrl);
+  assertEquals(out.issuer, proxyCfg.resourceUrl);
+  assertEquals(out.authorization_endpoint, `${proxyCfg.resourceUrl}/oauth/authorize`);
+  assertEquals(out.token_endpoint, `${proxyCfg.resourceUrl}/oauth/token`);
+  assertEquals(out.registration_endpoint, `${proxyCfg.resourceUrl}/oauth/register`);
+  assertEquals(out.scopes_supported, ["email", "offline_access"]);
+  assertEquals(out.code_challenge_methods_supported, ["S256"]);
+  assert(!("userinfo_endpoint" in out) && !("id_token_signing_alg_values_supported" in out));
+});
+
+Deno.test("oauth-proxy: authorize は resource を外し公開キーを付けて Supabase Auth へ転送する", () => {
+  const url = new URL(`${proxyCfg.resourceUrl}/oauth/authorize?client_id=c1&response_type=code&code_challenge=abc&resource=${encodeURIComponent(proxyCfg.resourceUrl)}&state=s`);
+  const location = new URL(authorizeRedirect(url, proxyCfg));
+  assertEquals(location.origin + location.pathname, "https://x.supabase.co/auth/v1/oauth/authorize");
+  assertEquals(location.searchParams.get("client_id"), "c1");
+  assertEquals(location.searchParams.get("state"), "s");
+  assertEquals(location.searchParams.get("apikey"), "anon-key");
+  assertEquals(location.searchParams.has("resource"), false);
+});
+
+Deno.test("oauth-proxy: token のフォームから resource を外す(JSON はそのまま)", () => {
+  assertEquals(
+    stripDroppedParams("grant_type=authorization_code&code=x&resource=https%3A%2F%2Fa", "application/x-www-form-urlencoded"),
+    "grant_type=authorization_code&code=x",
+  );
+  assertEquals(stripDroppedParams('{"a":1}', "application/json"), '{"a":1}');
 });

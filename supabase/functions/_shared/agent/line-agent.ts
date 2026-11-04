@@ -7,6 +7,7 @@ import Anthropic from "npm:@anthropic-ai/sdk@1.4.0";
 import { formatYmdWithWeekday, getJstTodayYmd } from "../date-jst.ts";
 import { pushLineMessage, replyLineMessage } from "../line.ts";
 import type { LineStaff } from "../shift-service.ts";
+import { publicApiKey } from "../supabase-keys.ts";
 import { sha256Hex } from "./auth.ts";
 import { type ChatMessage, claudeToolsFor, runChatTurn } from "./claude-chat.ts";
 import { createAgentContext } from "./context.ts";
@@ -96,13 +97,12 @@ const storePhoto = async (sql: Sql, ev: LineAiMessage, caller: AgentCaller, acce
   const photoId = crypto.randomUUID();
   const path = `${token}/${photoId}.jpg`;
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
-  if (!supabaseUrl || !anonKey) throw new Error("Missing SUPABASE_URL / SUPABASE_ANON_KEY");
+  if (!supabaseUrl) throw new Error("Missing SUPABASE_URL");
+  // 公開キー(anon の権限)で入れる。スタッフ用リンクと同じストレージのポリシー(トークンのフォルダ)が効く
   const uploaded = await fetch(`${supabaseUrl}/storage/v1/object/${PHOTO_BUCKET}/${path}`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${anonKey}`,
-      apikey: anonKey,
+      apikey: publicApiKey(),
       "Content-Type": content.headers.get("content-type") ?? "image/jpeg",
       "x-upsert": "false",
     },

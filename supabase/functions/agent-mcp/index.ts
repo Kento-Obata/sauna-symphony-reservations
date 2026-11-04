@@ -2,13 +2,15 @@ import postgres from "https://deno.land/x/postgresjs@v3.4.5/mod.js";
 import { authenticateBearer } from "../_shared/agent/auth.ts";
 import { createAgentContext } from "../_shared/agent/context.ts";
 import { handleMcpPayload, RPC_PARSE_ERROR, rpcError } from "../_shared/agent/mcp.ts";
+import { handleOAuthProxy, type OAuthProxyConfig } from "../_shared/agent/oauth-proxy.ts";
 import { ToolRegistry } from "../_shared/agent/registry.ts";
 import { agentTools } from "../_shared/agent/tools/index.ts";
+import { publicApiKey } from "../_shared/supabase-keys.ts";
 
 // AIエージェント(Claudeアプリ・Claude Code 等)から店舗管理を操作する MCP サーバー。
 // セッションを持たない Streamable HTTP(JSON 応答)。認証は OAuth のアクセストークンか API キー。
-// 未認証には 401 と保護リソースのメタデータ(RFC 9728)の場所を返し、クライアントは
-// そこから Supabase Auth の OAuth 2.1 サーバーを見つけてログインする。
+// 未認証には 401 と保護リソースのメタデータ(RFC 9728)の場所を返す。認可サーバーはこの関数自身として見せ、
+// OAuth の各入口は Supabase Auth の OAuth 2.1 サーバーへ公開キーを付けて中継する(_shared/agent/oauth-proxy.ts)。
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,6 +28,13 @@ const supabaseUrl = () => {
 };
 const resourceUrl = () => `${supabaseUrl()}/functions/v1/agent-mcp`;
 const metadataUrl = () => `${resourceUrl()}/.well-known/oauth-protected-resource`;
+
+const oauthConfig = (): OAuthProxyConfig => ({
+  resourceUrl: resourceUrl(),
+  authUrl: `${supabaseUrl()}/auth/v1`,
+  upstreamMetadataUrl: `${supabaseUrl()}/.well-known/oauth-authorization-server/auth/v1`,
+  anonKey: publicApiKey(),
+});
 
 const getDb = () => {
   const databaseUrl = Deno.env.get("POSTGRES_URL") ?? Deno.env.get("SUPABASE_DB_URL");
@@ -46,11 +55,14 @@ const handler = async (req: Request): Promise<Response> => {
   if (path.endsWith("/.well-known/oauth-protected-resource")) {
     return json({
       resource: resourceUrl(),
-      authorization_servers: [`${supabaseUrl()}/auth/v1`],
+      authorization_servers: [resourceUrl()],
       bearer_methods_supported: ["header"],
       resource_name: "U sauna 店舗管理",
     });
   }
+
+  const proxied = await handleOAuthProxy(req, path, oauthConfig(), corsHeaders);
+  if (proxied) return proxied;
 
   if (req.method !== "POST") {
     return new Response("Method Not Allowed", { status: 405, headers: { ...corsHeaders, Allow: "POST, OPTIONS" } });
