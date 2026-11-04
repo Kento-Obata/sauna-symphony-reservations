@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
+import { requireAdminOrServiceRole } from "../_shared/admin-auth.ts";
 
 interface CustomerRow {
   name: string;
@@ -64,6 +65,15 @@ serve(async (req) => {
   }
 
   try {
+    // 顧客データを扱うため、管理者か service role キー(運用スクリプト)に限る
+    const auth = await requireAdminOrServiceRole(req);
+    if (!auth.ok) {
+      return new Response(
+        JSON.stringify({ error: auth.error }),
+        { status: auth.status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -153,7 +163,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Error in import-customers:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }

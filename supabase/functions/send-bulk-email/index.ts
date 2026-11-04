@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { requireAdminOrServiceRole } from "../_shared/admin-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -31,6 +32,15 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // 顧客データを扱うため、管理者か service role キー(運用スクリプト)に限る
+    const auth = await requireAdminOrServiceRole(req);
+    if (!auth.ok) {
+      return new Response(
+        JSON.stringify({ error: auth.error }),
+        { status: auth.status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     const EMAIL_FROM = Deno.env.get("EMAIL_FROM") || "noreply@u-sync.jp";
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
