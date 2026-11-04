@@ -42,6 +42,7 @@ const EventList = lazy(() => import("./pages/EventList"));
 const EventPage = lazy(() => import("./pages/EventPage"));
 const EventReservationComplete = lazy(() => import("./pages/EventReservationComplete"));
 const EventReservationDetail = lazy(() => import("./pages/EventReservationDetail"));
+const MyWork = lazy(() => import("./pages/MyWork"));
 
 const PageFallback = () => (
   <div className="flex min-h-screen items-center justify-center bg-u-mist" aria-busy="true">
@@ -103,6 +104,11 @@ export const router = createBrowserRouter([
         <Shift2Dashboard />
       </ShiftGuard>
     )),
+  },
+  {
+    // スタッフ用の作業記録(ログイン不要、トークンで本人を判別)
+    path: "/my/:token",
+    element: withSuspense(<MyWork />),
   },
   {
     path: "/reservation/confirm/:token",

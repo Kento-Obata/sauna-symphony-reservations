@@ -781,6 +781,32 @@ export type Database = {
           },
         ]
       }
+      staff_access_tokens: {
+        Row: {
+          created_at: string
+          staff_id: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          staff_id: string
+          token?: string
+        }
+        Update: {
+          created_at?: string
+          staff_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_access_tokens_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       staff_auth: {
         Row: {
           created_at: string
@@ -937,6 +963,302 @@ export type Database = {
         }
         Relationships: []
       }
+      work_areas: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      work_items: {
+        Row: {
+          active: boolean
+          area_id: string
+          category: string
+          created_at: string
+          description: string | null
+          frequency_days: number | null
+          id: string
+          name: string
+          photo_required: boolean
+          points: number
+          quantity_label: string | null
+          quantity_unit: string | null
+          repeatable: boolean
+          sort_order: number
+        }
+        Insert: {
+          active?: boolean
+          area_id: string
+          category?: string
+          created_at?: string
+          description?: string | null
+          frequency_days?: number | null
+          id?: string
+          name: string
+          photo_required?: boolean
+          points?: number
+          quantity_label?: string | null
+          quantity_unit?: string | null
+          repeatable?: boolean
+          sort_order?: number
+        }
+        Update: {
+          active?: boolean
+          area_id?: string
+          category?: string
+          created_at?: string
+          description?: string | null
+          frequency_days?: number | null
+          id?: string
+          name?: string
+          photo_required?: boolean
+          points?: number
+          quantity_label?: string | null
+          quantity_unit?: string | null
+          repeatable?: boolean
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_items_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "work_areas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_log_photos: {
+        Row: {
+          created_at: string
+          id: string
+          log_id: string
+          storage_path: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          log_id: string
+          storage_path: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          log_id?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_log_photos_log_id_fkey"
+            columns: ["log_id"]
+            isOneToOne: false
+            referencedRelation: "work_logs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_logs: {
+        Row: {
+          area_id: string
+          category: string
+          created_at: string
+          id: string
+          item_id: string | null
+          note: string | null
+          points: number
+          quantity: number | null
+          quantity_unit: string | null
+          rejected: boolean
+          staff_id: string
+          task_id: string | null
+          title: string
+          work_date: string
+          worked_at: string
+        }
+        Insert: {
+          area_id: string
+          category: string
+          created_at?: string
+          id?: string
+          item_id?: string | null
+          note?: string | null
+          points?: number
+          quantity?: number | null
+          quantity_unit?: string | null
+          rejected?: boolean
+          staff_id: string
+          task_id?: string | null
+          title: string
+          work_date?: string
+          worked_at?: string
+        }
+        Update: {
+          area_id?: string
+          category?: string
+          created_at?: string
+          id?: string
+          item_id?: string | null
+          note?: string | null
+          points?: number
+          quantity?: number | null
+          quantity_unit?: string | null
+          rejected?: boolean
+          staff_id?: string
+          task_id?: string | null
+          title?: string
+          work_date?: string
+          worked_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_logs_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "work_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_logs_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "work_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_logs_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_logs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "work_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_point_settings: {
+        Row: {
+          id: boolean
+          monthly_bonus_cap: number
+          target_points_per_hour: number
+          updated_at: string
+          yen_per_point: number
+        }
+        Insert: {
+          id?: boolean
+          monthly_bonus_cap?: number
+          target_points_per_hour?: number
+          updated_at?: string
+          yen_per_point?: number
+        }
+        Update: {
+          id?: boolean
+          monthly_bonus_cap?: number
+          target_points_per_hour?: number
+          updated_at?: string
+          yen_per_point?: number
+        }
+        Relationships: []
+      }
+      work_tasks: {
+        Row: {
+          area_id: string
+          assignee_id: string | null
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          done_at: string | null
+          due_date: string | null
+          id: string
+          item_id: string | null
+          points: number
+          status: string
+          title: string
+        }
+        Insert: {
+          area_id: string
+          assignee_id?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          done_at?: string | null
+          due_date?: string | null
+          id?: string
+          item_id?: string | null
+          points?: number
+          status?: string
+          title: string
+        }
+        Update: {
+          area_id?: string
+          assignee_id?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          done_at?: string | null
+          due_date?: string | null
+          id?: string
+          item_id?: string | null
+          points?: number
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_tasks_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "work_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_tasks_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_tasks_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_tasks_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "work_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       customer_search: {
@@ -1014,11 +1336,69 @@ export type Database = {
         }
         Relationships: []
       }
+      work_item_last_logs: {
+        Row: {
+          item_id: string | null
+          staff_name: string | null
+          worked_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_logs_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "work_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       cleanup_expired_reservations: { Args: never; Returns: undefined }
       ensure_admin_role: { Args: never; Returns: undefined }
       generate_reservation_code: { Args: never; Returns: string }
+      staff_id_for_token: { Args: { p_token: string }; Returns: string }
+      staff_work_get: { Args: { p_token: string }; Returns: Json }
+      staff_work_log_create: {
+        Args: {
+          p_area_id: string
+          p_item_id: string | null
+          p_note: string | null
+          p_photo_paths: string[] | null
+          p_quantity: number | null
+          p_task_id: string | null
+          p_title: string | null
+          p_token: string
+        }
+        Returns: Json
+      }
+      staff_work_log_delete: {
+        Args: { p_log_id: string; p_token: string }
+        Returns: undefined
+      }
+      staff_work_task_create: {
+        Args: {
+          p_area_id: string
+          p_category: string
+          p_description: string | null
+          p_item_id: string | null
+          p_title: string
+          p_token: string
+        }
+        Returns: string
+      }
+      work_bonus_summary: {
+        Args: { p_month: number; p_year: number }
+        Returns: {
+          bonus_yen: number
+          log_count: number
+          points: number
+          staff_id: string
+          staff_name: string
+          target_points: number
+          work_hours: number
+        }[]
+      }
     }
     Enums: {
       event_type: "event" | "schedule" | "note"

@@ -19,6 +19,7 @@ import { CustomerManagement } from "@/components/admin/CustomerManagement";
 import { DailyTimeSlotManager } from "@/components/admin/DailyTimeSlotManager";
 import { TimeSlotPatternManager } from "@/components/admin/TimeSlotPatternManager";
 import { EventManager } from "@/components/admin/EventManager";
+import { WorkManagement } from "@/components/work/admin/WorkManagement";
 import { useAdminReservations } from "@/hooks/useAdminReservations";
 import { ADMIN_SEARCH_LIMIT, useAdminReservationSearch } from "@/hooks/useAdminReservationSearch";
 
@@ -152,12 +153,13 @@ const Admin = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="reservations">予約管理</TabsTrigger>
           <TabsTrigger value="customers">顧客管理</TabsTrigger>
           <TabsTrigger value="events">イベント</TabsTrigger>
           <TabsTrigger value="availability">空き状況</TabsTrigger>
           <TabsTrigger value="closures">休業管理</TabsTrigger>
+          <TabsTrigger value="work">作業管理</TabsTrigger>
           <TabsTrigger value="settings">設定</TabsTrigger>
         </TabsList>
 
@@ -218,6 +220,10 @@ const Admin = () => {
 
         <TabsContent value="closures" className="space-y-6">
           <ShopClosureManager />
+        </TabsContent>
+
+        <TabsContent value="work" className="space-y-6">
+          <WorkManagement />
         </TabsContent>
 
         <TabsContent value="settings" className="space-y-6">
