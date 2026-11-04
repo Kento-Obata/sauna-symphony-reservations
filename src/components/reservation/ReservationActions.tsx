@@ -1,4 +1,4 @@
-import { XCircle, Pencil } from "lucide-react";
+import { XCircle, Leaf } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
@@ -21,7 +21,8 @@ interface ReservationActionsProps {
   status: string;
   date: string;
   paymentStatus?: string;
-  setShowEditDialog: (show: boolean) => void;
+  /** ハーブ蒸しの変更(前日24時まで)。変更できないときは undefined */
+  onChangeHerbs?: () => void;
   cancelReservation: UseMutationResult<void, Error, string, unknown>;
 }
 
@@ -29,7 +30,7 @@ export const ReservationActions = ({
   status,
   date,
   paymentStatus,
-  setShowEditDialog,
+  onChangeHerbs,
   cancelReservation,
 }: ReservationActionsProps) => {
   const [phoneInput, setPhoneInput] = useState("");
@@ -56,10 +57,10 @@ export const ReservationActions = ({
 
   return (
     <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:items-center sm:justify-end">
-      {!isPendingPayment && (
-        <button type="button" className="u-btn u-btn-ghost" onClick={() => setShowEditDialog(true)}>
-          <Pencil className="h-4 w-4" strokeWidth={1.5} />
-          予約を変更
+      {onChangeHerbs && (
+        <button type="button" className="u-btn u-btn-ghost" onClick={onChangeHerbs}>
+          <Leaf className="h-4 w-4" strokeWidth={1.5} />
+          ハーブ蒸しを変更
         </button>
       )}
 

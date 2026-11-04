@@ -9,6 +9,7 @@ const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
 const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER");
 
 import { formatReservationTime } from "../_shared/reservation-time.ts";
+import { formatHerbEmailBlock } from "../_shared/herb.ts";
 
 // DB アクセスは直接 Postgres(POSTGRES_URL)を使う。本番では自動注入の
 // SUPABASE_SERVICE_ROLE_KEY(legacy キー)が PostgREST に拒否され、
@@ -44,7 +45,23 @@ interface ReminderReservation {
   date: string;
   start_time: string;
   end_time: string;
+  access_token: string | null;
+  herb_choice: string | null;
+  herb_selection: unknown;
 }
+
+// ハーブ蒸しの内容と、変更の締切(前日24時)の案内。メールだけに載せる(SMS は通数が増えるため載せない)
+const buildHerbSection = (reservation: ReminderReservation): string => {
+  const block = formatHerbEmailBlock(reservation.herb_choice, reservation.herb_selection);
+  if (!block) return "";
+  const baseUrl = Deno.env.get("APP_BASE_URL") ?? "https://www.u-sauna-private.com";
+  const token = reservation.access_token ? `?t=${reservation.access_token}` : "";
+  return `
+${block}
+ハーブの変更は本日24時まで、こちらから承ります。
+${baseUrl}/reservation/${reservation.reservation_code}${token}
+`;
+};
 
 const sendEmail = async (to: string, reservation: ReminderReservation, timeSlotLabel: string) => {
   try {
@@ -59,7 +76,7 @@ const sendEmail = async (to: string, reservation: ReminderReservation, timeSlotL
 時間: ${timeSlotLabel}
 人数: ${reservation.guest_count}名
 水風呂温度: ${reservation.water_temperature}°C
-
+${buildHerbSection(reservation)}
 【所在地】
 〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4
 Plus Code: 8Q5GHG7V+J5
@@ -141,7 +158,8 @@ const handler = async (req: Request): Promise<Response> => {
     const reservations = await sql`
       select id::text, reservation_code, guest_name, guest_count, water_temperature,
              email, phone, status, date::text, time_slot::text,
-             start_time::text, end_time::text
+             start_time::text, end_time::text,
+             access_token, herb_choice, herb_selection
       from public.reservations
       where date = ${tomorrowStr}::date
         and status = 'confirmed'

@@ -5,10 +5,12 @@ import { Link } from "react-router-dom";
 import { Lock } from "lucide-react";
 import { SiteShell } from "@/components/site/SiteShell";
 import { toast } from "sonner";
-import { AdminReservationDetailsDialog } from "@/components/admin/AdminReservationDetailsDialog";
 import { useRef, useState } from "react";
 import { ReservationInfo } from "@/components/reservation/ReservationInfo";
 import { ReservationActions } from "@/components/reservation/ReservationActions";
+import { HerbChangeDialog } from "@/components/reservation/HerbChangeDialog";
+import { canCustomerChangeHerbs } from "@/utils/herbs";
+import { getJstTodayYmd } from "@/utils/jstDate";
 
 // Square 決済から戻った直後(from=checkout)のポーリング設定。
 // Webhook は通常数秒で届く。verifyPayment: true でサーバ経由の Square 照会も併用
@@ -22,7 +24,10 @@ export const ReservationDetail = () => {
   const fromCheckout = searchParams.get("from") === "checkout";
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [showEditDialog, setShowEditDialog] = useState(false);
+  // 以前は管理画面の編集ダイアログをそのまま開いていたが、予約テーブルの更新は RLS で
+  // 管理者・スタッフに限られるため、お客様の保存は本番で何も変わらず「更新しました」の通知だけが
+  // 送られていた。お客様が変更できるのはハーブ蒸しだけにし、専用の Edge Function を通す
+  const [showHerbDialog, setShowHerbDialog] = useState(false);
   const pollStartedAt = useRef<number>(Date.now());
 
   // Auth state: URL token grants automatic access; phone-verification stores
@@ -248,6 +253,8 @@ export const ReservationDetail = () => {
             <p>・2日前までのキャンセルは無料</p>
             <p>・24時間前までは料金の30%、24時間以内・無断キャンセルは料金の100%を申し受けます</p>
             <p>・このページからのキャンセルは2日前まで、前日・当日はお電話かDMにてご連絡ください</p>
+            <p>・日時・人数の変更はお電話かDMにてご連絡ください</p>
+            <p>・ハーブ蒸しの変更は、利用日の前日24時までこのページから承ります</p>
             {reservation.payment_status === "paid" && (
               <p>・事前決済分は、2日前までのキャンセルで全額返金いたします(反映まで数日かかる場合があります)</p>
             )}
@@ -256,19 +263,31 @@ export const ReservationDetail = () => {
             status={reservation.status}
             date={reservation.date}
             paymentStatus={reservation.payment_status}
-            setShowEditDialog={setShowEditDialog}
+            onChangeHerbs={
+              canCustomerChangeHerbs(reservation.date, getJstTodayYmd(), reservation.status)
+                ? () => setShowHerbDialog(true)
+                : undefined
+            }
             cancelReservation={cancelReservation}
           />
         </div>
       </div>
 
-      {reservation && (
-        <AdminReservationDetailsDialog
-          open={showEditDialog}
-          onOpenChange={setShowEditDialog}
-          reservation={reservation}
-        />
-      )}
+      <HerbChangeDialog
+        open={showHerbDialog}
+        onOpenChange={setShowHerbDialog}
+        reservation={reservation}
+        accessToken={phoneVerifiedReservation ? undefined : accessToken}
+        phoneLastFourDigits={phoneVerifiedReservation ? phoneInput : undefined}
+        onSaved={(herb) => {
+          // 表示中の予約に変更後の内容を反映する(どちらの本人確認で開いたかで保持場所が違う)
+          if (phoneVerifiedReservation) {
+            setPhoneVerifiedReservation({ ...phoneVerifiedReservation, ...herb });
+          } else {
+            queryClient.invalidateQueries({ queryKey: ["reservation", reservationCode] });
+          }
+        }}
+      />
     </SiteShell>
   );
 };

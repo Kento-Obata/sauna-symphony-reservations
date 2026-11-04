@@ -10,6 +10,7 @@ import { Reservation } from "@/types/reservation";
 import { formatReservationTime } from "@/utils/reservationTime";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+import { HerbSelectionBadge } from "./herbs/HerbSelectionAdminView";
 
 interface AdminSearchResultsProps {
   reservations: Reservation[];
@@ -70,6 +71,7 @@ export const AdminSearchResults = ({
                 <TableHead>名前</TableHead>
                 <TableHead>電話番号</TableHead>
                 <TableHead>人数</TableHead>
+                <TableHead>ハーブ</TableHead>
                 <TableHead>ステータス</TableHead>
                 <TableHead>料金</TableHead>
                 <TableHead>操作</TableHead>
@@ -91,6 +93,9 @@ export const AdminSearchResults = ({
                   <TableCell>{reservation.guest_name}</TableCell>
                   <TableCell>{reservation.phone}</TableCell>
                   <TableCell>{reservation.guest_count}名</TableCell>
+                  <TableCell>
+                    <HerbSelectionBadge choice={reservation.herb_choice} selection={reservation.herb_selection} />
+                  </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
                       <Select

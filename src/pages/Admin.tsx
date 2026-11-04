@@ -20,6 +20,7 @@ import { DailyTimeSlotManager } from "@/components/admin/DailyTimeSlotManager";
 import { TimeSlotPatternManager } from "@/components/admin/TimeSlotPatternManager";
 import { EventManager } from "@/components/admin/EventManager";
 import { WorkManagement } from "@/components/work/admin/WorkManagement";
+import { HerbManagement } from "@/components/admin/herbs/HerbManagement";
 import { useAdminReservations } from "@/hooks/useAdminReservations";
 import { ADMIN_SEARCH_LIMIT, useAdminReservationSearch } from "@/hooks/useAdminReservationSearch";
 
@@ -153,8 +154,9 @@ const Admin = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid h-auto w-full grid-cols-4 md:grid-cols-8">
           <TabsTrigger value="reservations">予約管理</TabsTrigger>
+          <TabsTrigger value="herbs">ハーブ</TabsTrigger>
           <TabsTrigger value="customers">顧客管理</TabsTrigger>
           <TabsTrigger value="events">イベント</TabsTrigger>
           <TabsTrigger value="availability">空き状況</TabsTrigger>
@@ -201,6 +203,10 @@ const Admin = () => {
               />
             </div>
           </div>
+        </TabsContent>
+
+        <TabsContent value="herbs" className="space-y-6">
+          <HerbManagement />
         </TabsContent>
 
         <TabsContent value="customers" className="space-y-6">

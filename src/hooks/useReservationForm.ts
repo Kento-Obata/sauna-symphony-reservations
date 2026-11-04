@@ -9,6 +9,7 @@ import { useShopClosures } from "@/hooks/useShopClosures";
 import { isShopClosed } from "@/utils/dateUtils";
 import { getJstTodayYmd } from "@/utils/jstDate";
 import { ReservationOption } from "@/types/option";
+import { createHerbInput, herbTiersPayload, type HerbInput } from "@/utils/herbs";
 
 export const useReservationForm = () => {
   const [date, setDate] = useState<Date | undefined>(undefined);
@@ -21,6 +22,8 @@ export const useReservationForm = () => {
   // 既定は事前決済(オーナー要望 2026-07-11)
   const [paymentMethod, setPaymentMethod] = useState<"onsite" | "square_online">("square_online");
   const [selectedOptions, setSelectedOptions] = useState<ReservationOption[]>([]);
+  // ハーブ蒸しの選び方。既定は「おすすめ」(オーナー決定 2026-10-30)
+  const [herb, setHerb] = useState<HerbInput>(() => createHerbInput("recommended"));
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reservationCode, setReservationCode] = useState<string>();
@@ -37,6 +40,7 @@ export const useReservationForm = () => {
     setPeople("");
     setPaymentMethod("square_online");
     setSelectedOptions([]);
+    setHerb(createHerbInput("recommended"));
     setShowConfirmDialog(false);
     setIsSubmitting(false);
     setReservationCode(undefined);
@@ -129,7 +133,9 @@ export const useReservationForm = () => {
           // 水温機能は廃止(DB の water_temperature は 15 固定で維持)
           waterTemperature: 15,
           paymentMethod,
-          selectedOptions: selectedOptions
+          selectedOptions: selectedOptions,
+          herbChoice: herb.choice,
+          herbTiers: herbTiersPayload(herb),
         }
       });
 
@@ -200,6 +206,8 @@ export const useReservationForm = () => {
     setPaymentMethod,
     selectedOptions,
     setSelectedOptions,
+    herb,
+    setHerb,
     showConfirmDialog,
     setShowConfirmDialog,
     handleSubmit,

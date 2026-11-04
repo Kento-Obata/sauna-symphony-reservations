@@ -7,6 +7,8 @@ import { StatusTicket, TicketNote, TicketRow } from "@/components/site/StatusTic
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Option } from "@/types/option";
+import { HerbSelectionView } from "@/components/reservation/HerbSelectionView";
+import { describeSavedHerbChoice } from "@/utils/herbs";
 import { formatPrice } from "@/utils/priceCalculations";
 
 interface ReservationDetails {
@@ -15,6 +17,8 @@ interface ReservationDetails {
     option: Option;
     quantity: number;
   }[];
+  herb_choice: string | null;
+  herb_selection: unknown;
 }
 
 export default function ReservationComplete() {
@@ -56,40 +60,16 @@ export default function ReservationComplete() {
           return;
         }
 
-        // 予約オプション情報を取得
-        const { data: reservationOptions, error: optionsError } = await supabase
-          .from("reservation_options")
-          .select(`
-            quantity,
-            option_id,
-            options:option_id (
-              id, name, description, price_per_person, pricing_type, flat_price, is_active
-            )
-          `)
-          .eq("reservation_id", reservation.id);
-
-        if (optionsError) {
-          console.error("オプション取得エラー:", optionsError);
-          // オプション取得エラーの場合はオプションなしで続行
-        }
-
-        console.log("取得したオプション情報:", reservationOptions);
-
-        // オプション情報を整形
-        const formattedOptions = reservationOptions?.map((item: any) => {
-          if (!item.options) {
-            console.log("オプションが見つかりません:", item);
-            return null;
-          }
-          return {
-            option: item.options as Option,
-            quantity: item.quantity
-          };
-        }).filter(Boolean) || [];
+        // オプションは get-reservation-by-code が返す(reservation_options は RLS でお客様の画面から読めない)
+        const formattedOptions: NonNullable<ReservationDetails["options"]> = (reservation.options ?? [])
+          .filter((item: { option?: Option | null }) => !!item.option)
+          .map((item: { option: Option; quantity: number }) => ({ option: item.option, quantity: item.quantity }));
 
         setDetails({
           total_price: reservation.total_price,
-          options: formattedOptions.length > 0 ? formattedOptions : undefined
+          options: formattedOptions.length > 0 ? formattedOptions : undefined,
+          herb_choice: reservation.herb_choice ?? null,
+          herb_selection: reservation.herb_selection ?? null,
         });
       } catch (err) {
         console.error("詳細情報取得エラー:", err);
@@ -142,6 +122,11 @@ export default function ReservationComplete() {
                   </span>
                 </TicketRow>
               ))}
+              {describeSavedHerbChoice(details.herb_choice, details.herb_selection) && (
+                <TicketRow label="ハーブ蒸し">
+                  <HerbSelectionView choice={details.herb_choice} selection={details.herb_selection} />
+                </TicketRow>
+              )}
               <TicketRow label="料金">
                 <span className="u-num text-2xl font-light">{formatPrice(details.total_price)}</span>
               </TicketRow>

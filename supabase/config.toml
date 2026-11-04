@@ -10,6 +10,10 @@ verify_jwt = false
 [functions.get-reservation-by-code]
 verify_jwt = false
 
+# お客様のハーブ変更（マイページ）。本人確認は関数内（予約リンクのトークン or 電話番号下4桁）
+[functions.update-reservation-herbs]
+verify_jwt = false
+
 [functions.get-availability]
 verify_jwt = false
 

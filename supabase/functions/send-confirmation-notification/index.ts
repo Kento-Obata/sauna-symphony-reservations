@@ -4,6 +4,7 @@ import postgres from "https://deno.land/x/postgresjs@v3.4.5/mod.js";
 import { sendSMS } from "../_shared/twilio.ts";
 import { sendLineGroupMessage } from "../_shared/line.ts";
 import { buildSimpleEmailHtml, sendAppEmail } from "../_shared/lovable-email.ts";
+import { formatHerbEmailBlock, formatHerbStaffLine } from "../_shared/herb.ts";
 
 // DB アクセスは直接 Postgres(POSTGRES_URL)を使う。本番では自動注入の
 // SUPABASE_SERVICE_ROLE_KEY(legacy キー)が PostgREST に拒否され、
@@ -84,15 +85,20 @@ const handler = async (req: Request): Promise<Response> => {
     const timeSlotLabel = await fetchReservationTimeLabel(sql, reservation.reservationCode);
 
     // Fetch access_token to build a signed detail URL (so the link auto-authenticates)
+    // ハーブ蒸しの選択も同じ行から読む(呼び出し元のペイロードには含まれない)
     let tokenQuery = "";
+    let herbEmailBlock: string | null = null;
+    let herbStaffLine: string | null = null;
     try {
       const tokenRows = await sql`
-        select access_token
+        select access_token, herb_choice, herb_selection
         from public.reservations
         where reservation_code = ${reservation.reservationCode}
         limit 1
       `;
       if (tokenRows[0]?.access_token) tokenQuery = `?t=${tokenRows[0].access_token}`;
+      herbEmailBlock = formatHerbEmailBlock(tokenRows[0]?.herb_choice, tokenRows[0]?.herb_selection);
+      herbStaffLine = formatHerbStaffLine(tokenRows[0]?.herb_choice, tokenRows[0]?.herb_selection);
     } catch (error) {
       console.error("access_token lookup error:", error);
     }
@@ -122,7 +128,7 @@ Plus Code: 8Q5GHG7V+J5
 Google Maps: ${GOOGLE_MAPS_URL}
 
 【予約の確認・変更・キャンセル】
-以下のURLから予約内容の確認、変更、キャンセルが可能です：
+以下のURLから予約内容の確認、ハーブの変更、キャンセルが可能です：
 ${reservationDetailUrl}
 
 【遅刻の際の事前連絡について】
@@ -134,6 +140,11 @@ ${reservationDetailUrl}
 `;
 
     // オーナーへの通知メッセージを作成
+    // ハーブ蒸しの内容はメールだけに載せる(SMS は通数が増えるため載せない)
+    const emailContent = herbEmailBlock
+      ? messageContent.replace("\n【受付時間】", `\n${herbEmailBlock}\n\n【受付時間】`)
+      : messageContent;
+
     const ownerMessageContent = `
 【新規予約確定のお知らせ】
 予約コード: ${reservation.reservationCode}
@@ -153,8 +164,8 @@ ${reservationDetailUrl}
         const emailRes = await sendAppEmail({
           to: reservation.email,
           subject: "サウナのご予約確定のお知らせ",
-          html: buildSimpleEmailHtml("ご予約ありがとうございます", `${reservation.guestName}様\n${messageContent}`),
-          text: `${reservation.guestName}様\n${messageContent}`,
+          html: buildSimpleEmailHtml("ご予約ありがとうございます", `${reservation.guestName}様\n${emailContent}`),
+          text: `${reservation.guestName}様\n${emailContent}`,
           idempotencyKey: `reservation-confirmed-${reservation.reservationCode}`,
           label: "reservation-confirmed",
         });
@@ -212,7 +223,10 @@ ${reservationDetailUrl}
 
     // LINEグループへの通知を送信
     try {
-      await sendLineGroupMessage(ownerMessageContent.trim());
+      // スタッフ LINE にはハーブ蒸しの内容も載せる(オーナー SMS には載せない)
+      await sendLineGroupMessage(
+        herbStaffLine ? `${ownerMessageContent.trim()}\n${herbStaffLine}` : ownerMessageContent.trim()
+      );
       console.log("LINE group notification sent successfully");
       notifications.push("line_group");
     } catch (error) {

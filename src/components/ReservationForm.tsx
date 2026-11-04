@@ -12,6 +12,8 @@ import { useShopClosures } from "@/hooks/useShopClosures";
 import { useDailyTimeSlots } from "@/hooks/useDailyTimeSlots";
 import { useOptions } from "@/hooks/useOptions";
 import { usePriceSettings } from "@/hooks/usePriceSettings";
+import { useHerbCatalog } from "@/hooks/useHerbCatalog";
+import { describeHerbInput, isHerbInputComplete } from "@/utils/herbs";
 import { calculateOptionTotalPrice, getPrepayDiscount, getPricePerPersonRegular } from "@/utils/priceCalculations";
 import { SLOT_LABELS } from "@/utils/timeSlotRules";
 import { BookingCalendar } from "./site/booking/BookingCalendar";
@@ -19,6 +21,7 @@ import { SlotPicker, getSlotTimes } from "./site/booking/SlotPicker";
 import { GuestPicker } from "./site/booking/GuestPicker";
 import { OptionPicker } from "./site/booking/OptionPicker";
 import { PaymentPicker } from "./site/booking/PaymentPicker";
+import { HerbPicker } from "./site/booking/HerbPicker";
 import { BookingSummary, type SummaryLine } from "./site/booking/BookingSummary";
 import { Step } from "./site/booking/Step";
 import { INSTAGRAM_URL } from "./site/SiteNav";
@@ -46,6 +49,8 @@ const ReservationForm = () => {
     setPaymentMethod,
     selectedOptions,
     setSelectedOptions,
+    herb,
+    setHerb,
     showConfirmDialog,
     setShowConfirmDialog,
     handleSubmit,
@@ -64,6 +69,15 @@ const ReservationForm = () => {
   const { data: dailyTimeSlots } = useDailyTimeSlots();
   const { data: options } = useOptions();
   const { data: prices } = usePriceSettings();
+  const { data: herbCatalog, isLoading: herbLoading, isError: herbError } = useHerbCatalog();
+
+  // おすすめのブレンドが在庫切れなどで選べないときは、既定を「当日スタッフと一緒に選ぶ」にする
+  useEffect(() => {
+    if (herbCatalog && herb.choice === "recommended" && !herbCatalog.recommended?.available) {
+      setHerb({ ...herb, choice: "consult" });
+    }
+  }, [herbCatalog, herb, setHerb]);
+  const herbComplete = isHerbInputComplete(herb, herbCatalog);
 
   const closedDates = useMemo(() => new Set((closures ?? []).map((c) => c.date)), [closures]);
   // 休業日のうち、公開中のイベントが紐づく日はカレンダーでイベントへの導線を出す
@@ -125,6 +139,8 @@ const ReservationForm = () => {
     !date && { id: "step-date", label: "日付" },
     !timeSlot && { id: "step-time", label: "時間帯" },
     !people && { id: "step-guests", label: "人数" },
+    // 画面の並び順（人数 → オプション → ハーブ → お客様情報）に合わせる
+    !herbComplete && { id: "step-herb", label: "ハーブ" },
     !name.trim() && { id: "step-contact", label: "お名前" },
     !phone.trim() && { id: "step-contact", label: "電話番号" },
     !!email.trim() && !EMAIL_RE.test(email.trim()) && { id: "step-contact", label: "メールアドレスの形式" },
@@ -141,6 +157,8 @@ const ReservationForm = () => {
           ? "利用規約をお読みのうえ、同意してください"
           : first.label === "メールアドレスの形式"
           ? "メールアドレスの形式をご確認ください"
+          : first.label === "ハーブ"
+          ? "ハーブのブレンドを1段目・2段目とも選んでください"
           : `${first.label}を入力してください`
       );
       return;
@@ -163,6 +181,7 @@ const ReservationForm = () => {
     },
     { label: "人数", value: guestCount ? `${guestCount}名様` : undefined },
     ...(options && options.length > 0 ? [{ label: "オプション", value: optionNames || "なし" }] : []),
+    { label: "ハーブ蒸し", value: describeHerbInput(herb, herbCatalog) },
     { label: "お支払い", value: paymentMethod === "square_online" ? "オンライン事前決済" : "現地払い" },
   ];
 
@@ -259,6 +278,16 @@ const ReservationForm = () => {
             )}
           </Step>
         )}
+
+        <Step id="step-herb" index={idx()} title="ハーブ蒸し" done={herbComplete} hint="コースに含まれます">
+          <HerbPicker
+            catalog={herbCatalog}
+            isLoading={herbLoading}
+            isError={herbError}
+            value={herb}
+            onChange={setHerb}
+          />
+        </Step>
 
         <Step id="step-contact" index={idx()} title="お客様情報" done={!!name.trim() && !!phone.trim()}>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -404,6 +433,7 @@ const ReservationForm = () => {
           isSubmitting={isSubmitting}
           reservationCode={reservationCode}
           paymentMethod={paymentMethod}
+          herbSummary={describeHerbInput(herb, herbCatalog)}
         />
       )}
     </div>
