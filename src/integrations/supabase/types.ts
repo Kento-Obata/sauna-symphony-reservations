@@ -14,6 +14,97 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_action_logs: {
+        Row: {
+          channel: string
+          client: string | null
+          created_at: string
+          error: string | null
+          id: string
+          input: Json | null
+          result_summary: string | null
+          status: string
+          tool: string
+          tool_title: string | null
+          user_id: string | null
+        }
+        Insert: {
+          channel: string
+          client?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          input?: Json | null
+          result_summary?: string | null
+          status: string
+          tool: string
+          tool_title?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          channel?: string
+          client?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          input?: Json | null
+          result_summary?: string | null
+          status?: string
+          tool?: string
+          tool_title?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_action_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_api_keys: {
+        Row: {
+          created_at: string
+          id: string
+          key_hash: string
+          key_prefix: string
+          last_used_at: string | null
+          name: string
+          revoked_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key_hash: string
+          key_prefix: string
+          last_used_at?: string | null
+          name: string
+          revoked_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key_hash?: string
+          key_prefix?: string
+          last_used_at?: string | null
+          name?: string
+          revoked_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_api_keys_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bulk_email_campaigns: {
         Row: {
           body_html: string
@@ -1531,6 +1622,10 @@ export type Database = {
         Returns: Json
       }
       cleanup_expired_reservations: { Args: never; Returns: undefined }
+      create_agent_api_key: {
+        Args: { p_name: string; p_user_id: string }
+        Returns: string
+      }
       ensure_admin_role: { Args: never; Returns: undefined }
       generate_reservation_code: { Args: never; Returns: string }
       get_herb_catalog: { Args: never; Returns: Json }

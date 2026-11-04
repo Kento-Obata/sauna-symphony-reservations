@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
+// ログイン後の戻り先。外部サイトへ飛ばされないよう、管理画面と AI 接続の同意画面だけ許す
+const safeRedirect = (value: string | null) =>
+  value && /^\/(admin|oauth\/consent)(\/|\?|$)/.test(value) ? value : "/admin";
+
 const AdminLogin = () => {
+  const [searchParams] = useSearchParams();
+  const redirectTo = safeRedirect(searchParams.get("redirect"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -76,7 +82,7 @@ const AdminLogin = () => {
 
       // Only navigate after successful role verification
       toast.success("ログインしました");
-      navigate("/admin", { replace: true });
+      navigate(redirectTo, { replace: true });
     } catch (error) {
       console.error("Error during login process:", error);
       toast.error("ログイン処理中にエラーが発生しました");

@@ -4,11 +4,14 @@ import { addJstDays, formatYmdWithWeekday, getJstTodayYmd } from "../_shared/dat
 import { formatReservationTime } from "../_shared/reservation-time.ts";
 import { pushLineMessage, replyLineMessage, verifyLineSignature } from "../_shared/line.ts";
 import { parseShiftCommand, SHIFT_HELP_TEXT } from "../_shared/shift-bot.ts";
-import { executeShiftCommand, resolveLineStaff } from "../_shared/shift-service.ts";
+import { executeShiftCommand, type LineStaff, resolveLineStaff } from "../_shared/shift-service.ts";
+import { handleLineAiMessage, type LineAiMessage } from "../_shared/agent/line-agent.ts";
 
 // スタッフ用 LINE bot の webhook。
 //  - 予約照会（日付 / 予約コード / 電話番号）
 //  - シフト確認・追加・変更・削除（_shared/shift-bot.ts, shift-service.ts）
+//  - 1:1 のトークでコマンドではない文章・写真は AI が受ける（_shared/agent/line-agent.ts）。
+//    AI の返事には数秒〜数十秒かかるため、webhook にはすぐ 200 を返し、裏で処理して reply / push する
 // 仕様: docs/line-shift-bot.md
 //
 // LINE Developers コンソールの Webhook URL にこの関数を設定し、
@@ -328,6 +331,24 @@ async function handleReservationCommand(
 // deno-lint-ignore no-explicit-any
 type LineEvent = any;
 
+// Supabase Edge Runtime のバックグラウンド処理(応答を返した後も処理を続ける)
+declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void } | undefined;
+
+/** AI の処理は webhook の応答と切り離し、専用の DB 接続で動かす */
+const runAiInBackground = (message: LineAiMessage, staff: LineStaff, accessToken: string) => {
+  const task = (async () => {
+    const aiSql = getDb();
+    try {
+      await handleLineAiMessage(aiSql, message, staff, accessToken);
+    } catch (error) {
+      console.error("LINE AI task failed", error);
+    } finally {
+      await aiSql.end({ timeout: 1 });
+    }
+  })();
+  if (typeof EdgeRuntime !== "undefined") EdgeRuntime.waitUntil(task);
+};
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -364,13 +385,23 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     for (const ev of events) {
-      if (ev?.type !== "message" || ev?.message?.type !== "text") continue;
+      if (ev?.type !== "message") continue;
+      const messageType = ev?.message?.type;
+      const isDirect = ev.source?.type === "user";
+      // 写真は 1:1 のトークだけ受ける(AI が作業の記録に使う)
+      if (messageType !== "text" && !(isDirect && messageType === "image")) continue;
       const replyToken: string | undefined = ev.replyToken;
       const userId: string | undefined = ev.source?.userId;
-      const text: string = ev.message.text ?? "";
+      const text: string = messageType === "text" ? ev.message.text ?? "" : "";
       if (!replyToken || !userId) continue;
 
       const today = getJstTodayYmd();
+
+      if (messageType === "image") {
+        const staff = await resolveLineStaff(sql, userId);
+        if (staff) runAiInBackground({ replyToken, lineUserId: userId, message: { id: ev.message.id, type: "image" } }, staff, accessToken);
+        continue;
+      }
 
       // ID コマンドは未登録ユーザーでも応答（初期登録のため）
       const idCmd = text.trim().toLowerCase();
@@ -401,8 +432,14 @@ const handler = async (req: Request): Promise<Response> => {
 
       const shiftCmd = parseShiftCommand(text, today);
 
-      // 認識できないメッセージは silent。グループでの雑談に毎回返信させないため。
-      if (!shiftCmd && !isRecognizedReservationCommand(text, today)) continue;
+      // 認識できないメッセージ: 1:1 のトークは AI が受ける。グループでは雑談に毎回返信させないため silent
+      if (!shiftCmd && !isRecognizedReservationCommand(text, today)) {
+        if (isDirect) {
+          const staff = await resolveLineStaff(sql, userId);
+          if (staff) runAiInBackground({ replyToken, lineUserId: userId, message: { id: ev.message.id, type: "text", text } }, staff, accessToken);
+        }
+        continue;
+      }
 
       const staff = await resolveLineStaff(sql, userId);
       if (!staff) {

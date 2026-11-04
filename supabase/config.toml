@@ -14,6 +14,10 @@ verify_jwt = false
 [functions.update-reservation-herbs]
 verify_jwt = false
 
+# AIエージェントの MCP サーバー。OAuth のアクセストークン / API キーを関数内で検証する
+[functions.agent-mcp]
+verify_jwt = false
+
 [functions.get-availability]
 verify_jwt = false
 
