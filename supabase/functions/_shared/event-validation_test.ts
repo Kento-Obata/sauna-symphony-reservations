@@ -7,6 +7,7 @@ import {
   calcRemaining,
   canAcceptReservation,
   generateEventReservationCode,
+  isGroupLimitReached,
   isValidSlug,
   isValidUuid,
   validateEventReservationInput,
@@ -109,4 +110,15 @@ Deno.test("予約コードは [A-Z0-9]{8}", () => {
   for (let i = 0; i < 100; i++) {
     assertMatch(generateEventReservationCode(), /^[A-Z0-9]{8}$/);
   }
+});
+
+Deno.test("isGroupLimitReached: 上限なし(null/undefined)は常に受付可", () => {
+  assertEquals(isGroupLimitReached(null, 0), false);
+  assertEquals(isGroupLimitReached(undefined, 100), false);
+});
+
+Deno.test("isGroupLimitReached: 上限組数に達したら受付不可", () => {
+  assertEquals(isGroupLimitReached(6, 5), false);
+  assertEquals(isGroupLimitReached(6, 6), true);
+  assertEquals(isGroupLimitReached(6, 7), true);
 });

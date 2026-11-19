@@ -18,6 +18,7 @@ import {
   AdminEvent,
   AdminEventSlot,
   reservedCount,
+  reservedGroupCount,
   useCreateEventSlot,
   useDeleteEventSlot,
   useUpdateEventSlot,
@@ -148,7 +149,10 @@ export const EventSlotEditor = ({ event }: EventSlotEditorProps) => {
               <TableBody>
                 {event.event_slots.map((slot) => {
                   const reserved = reservedCount(slot);
+                  const groups = reservedGroupCount(slot);
                   const overbooked = reserved > slot.capacity;
+                  const groupsFull =
+                    event.max_groups_per_slot != null && groups >= event.max_groups_per_slot;
                   return (
                     <TableRow key={slot.id}>
                       <TableCell>{formatEventDateLabel(slot.date)}</TableCell>
@@ -173,6 +177,13 @@ export const EventSlotEditor = ({ event }: EventSlotEditorProps) => {
                       >
                         {reserved} / {slot.capacity}名
                         {overbooked && "（定員超過）"}
+                        <div
+                          className={`text-xs ${groupsFull ? "text-red-600 font-medium" : "text-muted-foreground"}`}
+                        >
+                          {groups}組
+                          {event.max_groups_per_slot != null && ` / 上限${event.max_groups_per_slot}組`}
+                          {groupsFull && "（受付終了）"}
+                        </div>
                       </TableCell>
                       <TableCell className="text-center">
                         <Switch
