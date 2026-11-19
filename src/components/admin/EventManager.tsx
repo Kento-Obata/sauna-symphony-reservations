@@ -58,6 +58,8 @@ interface EventFormValues {
   price_per_person: number;
   price_note: string;
   max_guests_per_reservation: number;
+  /** 空文字 = 上限なし */
+  max_groups_per_slot: string;
   status: string;
   payment_type: string;
 }
@@ -82,6 +84,7 @@ const emptyFormValues: EventFormValues = {
   price_per_person: 0,
   price_note: "",
   max_guests_per_reservation: 4,
+  max_groups_per_slot: "",
   status: "draft",
   payment_type: "onsite",
 };
@@ -118,6 +121,8 @@ export const EventManager = () => {
       price_per_person: event.price_per_person,
       price_note: event.price_note ?? "",
       max_guests_per_reservation: event.max_guests_per_reservation,
+      max_groups_per_slot:
+        event.max_groups_per_slot == null ? "" : String(event.max_groups_per_slot),
       status: event.status,
       payment_type: event.payment_type,
     });
@@ -138,6 +143,12 @@ export const EventManager = () => {
       toast.error("事前決済にする場合は料金（お一人様）を1円以上に設定してください");
       return;
     }
+    const maxGroupsRaw = String(values.max_groups_per_slot ?? "").trim();
+    const maxGroups = maxGroupsRaw === "" ? null : Number(maxGroupsRaw);
+    if (maxGroups !== null && (!Number.isInteger(maxGroups) || maxGroups < 1)) {
+      toast.error("1枠あたりの上限組数は1以上の整数で入力してください（上限なしは空欄）");
+      return;
+    }
     const payload = {
       title: values.title.trim(),
       slug,
@@ -146,6 +157,7 @@ export const EventManager = () => {
       price_per_person: Number(values.price_per_person) || 0,
       price_note: values.price_note.trim() || null,
       max_guests_per_reservation: Number(values.max_guests_per_reservation) || 4,
+      max_groups_per_slot: maxGroups,
       status: values.status,
       payment_type: values.payment_type,
     };
@@ -322,6 +334,19 @@ export const EventManager = () => {
                   {...form.register("max_guests_per_reservation", { valueAsNumber: true })}
                 />
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="event-max-groups">1枠あたりの上限組数</Label>
+              <Input
+                id="event-max-groups"
+                type="number"
+                min={1}
+                placeholder="空欄で上限なし"
+                {...form.register("max_groups_per_slot")}
+              />
+              <p className="text-xs text-muted-foreground">
+                駐車場などの都合で組数を絞る場合に設定します。この組数に達した枠は、残席があっても満席になります。
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="event-price-note">料金備考</Label>

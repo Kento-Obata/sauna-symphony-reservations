@@ -93,6 +93,15 @@ export const canAcceptReservation = (
   guestCount: number,
 ): boolean => taken + guestCount <= capacity;
 
+/**
+ * 組数の上限に達しているか（新しい1組を受け付けられないか）。
+ * maxGroups が null / undefined なら上限なし。
+ */
+export const isGroupLimitReached = (
+  maxGroups: number | null | undefined,
+  groups: number,
+): boolean => maxGroups != null && groups >= maxGroups;
+
 const CODE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 /**

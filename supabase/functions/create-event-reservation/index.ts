@@ -19,6 +19,7 @@ import {
   canAcceptReservation,
   generateEventReservationCode,
   validateEventReservationInput,
+  isGroupLimitReached,
 } from "../_shared/event-validation.ts";
 import { formatJstDateLabel, formatTimeRange } from "../_shared/event-format.ts";
 import { getJstTodayYmd } from "../_shared/date-jst.ts";
@@ -122,7 +123,7 @@ const handler = async (req: Request): Promise<Response> => {
                s.capacity, s.is_active,
                e.title as event_title, e.slug as event_slug, e.venue as event_venue,
                e.status as event_status, e.price_per_person, e.price_note,
-               e.max_guests_per_reservation, e.payment_type
+               e.max_guests_per_reservation, e.payment_type, e.max_groups_per_slot
         from public.event_slots s
         join public.events e on e.id = s.event_id
         where s.id = ${slotId}::uuid
@@ -145,14 +146,18 @@ const handler = async (req: Request): Promise<Response> => {
 
       // 占有人数 = confirmed + 期限内の pending_payment（支払い手続き中も席を確保）
       const sumRows = await tx`
-        select coalesce(sum(guest_count), 0)::int as taken
+        select coalesce(sum(guest_count), 0)::int as taken, count(*)::int as groups
         from public.event_reservations
         where slot_id = ${slotId}::uuid
           and (status = 'confirmed'
                or (status = 'pending_payment' and expires_at > now()))
       `;
       const taken = sumRows[0]?.taken ?? 0;
+      const groups = sumRows[0]?.groups ?? 0;
 
+      if (isGroupLimitReached(slot.max_groups_per_slot, groups)) {
+        throw errorWithStatus("満席のためご予約いただけません", 'CapacityError');
+      }
       if (!canAcceptReservation(slot.capacity, taken, guestCount)) {
         const remaining = calcRemaining(slot.capacity, taken);
         throw errorWithStatus(

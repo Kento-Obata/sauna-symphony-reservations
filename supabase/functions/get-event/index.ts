@@ -42,7 +42,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     const eventRows = await sql`
       select id::text, slug, title, description, venue,
-             price_per_person, price_note, max_guests_per_reservation, payment_type
+             price_per_person, price_note, max_guests_per_reservation, payment_type,
+             max_groups_per_slot
       from public.events
       where slug = ${slug}
         and status = 'published'
@@ -60,10 +61,15 @@ const handler = async (req: Request): Promise<Response> => {
     const today = getJstTodayYmd();
     const slots = await sql`
       select s.id::text, s.date::text, s.start_time::text, s.end_time::text, s.capacity,
-             greatest(s.capacity - coalesce(r.taken, 0), 0)::int as remaining
+             -- 上限組数に達した枠は残席があっても満席（remaining=0）として返す
+             case
+               when ${event.max_groups_per_slot}::int is not null
+                    and coalesce(r.groups, 0) >= ${event.max_groups_per_slot}::int then 0
+               else greatest(s.capacity - coalesce(r.taken, 0), 0)
+             end::int as remaining
       from public.event_slots s
       left join (
-        select slot_id, sum(guest_count)::int as taken
+        select slot_id, sum(guest_count)::int as taken, count(*)::int as groups
         from public.event_reservations
         where status = 'confirmed'
            or (status = 'pending_payment' and expires_at > now())

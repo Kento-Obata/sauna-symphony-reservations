@@ -14,6 +14,7 @@
 import { buildSimpleEmailHtml } from "./lovable-email.ts";
 import { formatJstDateLabel, formatTimeRange } from "./event-format.ts";
 import { deletePaymentLink, refundPayment } from "./square.ts";
+import { isGroupLimitReached } from "./event-validation.ts";
 
 // postgresjs のトランザクション/接続(型パッケージ非導入のため構造的に定義)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -61,7 +62,7 @@ export const confirmEventPaymentByOrderId = async (
       select r.id::text, r.status, r.payment_status, r.guest_name, r.guest_count, r.email,
              r.reservation_code, r.access_token, r.total_price,
              s.id::text as slot_id, s.capacity, s.date::text, s.start_time::text, s.end_time::text,
-             e.title as event_title, e.venue as event_venue, e.price_note
+             e.title as event_title, e.venue as event_venue, e.price_note, e.max_groups_per_slot
       from public.event_reservations r
       join public.event_slots s on s.id = r.slot_id
       join public.events e on e.id = s.event_id
@@ -69,7 +70,7 @@ export const confirmEventPaymentByOrderId = async (
       limit 1
       for update of s, r
     `;
-    const row = rows[0] as (EventReservationNoticeRow & { slot_id: string; capacity: number }) | undefined;
+    const row = rows[0] as (EventReservationNoticeRow & { slot_id: string; capacity: number; max_groups_per_slot: number | null }) | undefined;
 
     if (!row) {
       console.log("confirmEventPayment: unknown order", orderId);
@@ -94,7 +95,7 @@ export const confirmEventPaymentByOrderId = async (
 
     // pending_payment: 自分を除いた現在の占有数で再判定
     const sumRows = await tx`
-      select coalesce(sum(guest_count), 0)::int as taken
+      select coalesce(sum(guest_count), 0)::int as taken, count(*)::int as groups
       from public.event_reservations
       where slot_id = ${row.slot_id}::uuid
         and id <> ${row.id}::uuid
@@ -102,8 +103,12 @@ export const confirmEventPaymentByOrderId = async (
              or (status = 'pending_payment' and expires_at > now()))
     `;
     const taken = sumRows[0]?.taken ?? 0;
+    const groups = sumRows[0]?.groups ?? 0;
 
-    if (taken + row.guest_count <= row.capacity) {
+    if (
+      taken + row.guest_count <= row.capacity &&
+      !isGroupLimitReached(row.max_groups_per_slot, groups)
+    ) {
       await tx`
         update public.event_reservations
         set status = 'confirmed',

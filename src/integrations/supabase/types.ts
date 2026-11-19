@@ -441,6 +441,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          max_groups_per_slot: number | null
           max_guests_per_reservation: number
           payment_type: string
           price_note: string | null
@@ -455,6 +456,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          max_groups_per_slot?: number | null
           max_guests_per_reservation?: number
           payment_type?: string
           price_note?: string | null
@@ -469,6 +471,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          max_groups_per_slot?: number | null
           max_guests_per_reservation?: number
           payment_type?: string
           price_note?: string | null

@@ -78,17 +78,22 @@ export const useAdminEvents = () => {
   });
 };
 
+const activeReservations = (slot: AdminEventSlot) =>
+  slot.event_reservations.filter(
+    (reservation) =>
+      reservation.status === "confirmed" ||
+      (reservation.status === "pending_payment" &&
+        !!reservation.expires_at &&
+        new Date(reservation.expires_at).getTime() > Date.now()),
+  );
+
 /** 枠の占有人数（confirmed + 期限内の決済待ち）。公開側の残席計算と同じ定義。 */
 export const reservedCount = (slot: AdminEventSlot): number =>
-  slot.event_reservations
-    .filter(
-      (reservation) =>
-        reservation.status === "confirmed" ||
-        (reservation.status === "pending_payment" &&
-          !!reservation.expires_at &&
-          new Date(reservation.expires_at).getTime() > Date.now()),
-    )
-    .reduce((sum, reservation) => sum + reservation.guest_count, 0);
+  activeReservations(slot).reduce((sum, reservation) => sum + reservation.guest_count, 0);
+
+/** 枠の占有組数。数え方は reservedCount と同じ。 */
+export const reservedGroupCount = (slot: AdminEventSlot): number =>
+  activeReservations(slot).length;
 
 const useEventMutation = <TVariables,>(
   mutationFn: (variables: TVariables) => Promise<unknown>,
