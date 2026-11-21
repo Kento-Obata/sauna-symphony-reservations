@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, Camera, Check, Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -86,7 +86,15 @@ const MyWork = () => {
 
   return (
     <div className="mx-auto min-h-screen max-w-lg bg-zinc-50 px-4 pb-20 pt-6 text-zinc-900">
-      <p className="mb-3 text-sm text-zinc-500">{data.staff.name}さん、おつかれさまです</p>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <p className="text-sm text-zinc-500">{data.staff.name}さん、おつかれさまです</p>
+        <Link
+          to={`/my/${token}/event`}
+          className="shrink-0 rounded-full border border-zinc-300 bg-white px-3 py-1 text-xs text-zinc-700"
+        >
+          イベントのオプション記録
+        </Link>
+      </div>
       <ScoreCard score={data.score} />
 
       {/* 作業場の切り替え */}

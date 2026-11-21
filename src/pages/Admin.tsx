@@ -19,6 +19,7 @@ import { CustomerManagement } from "@/components/admin/CustomerManagement";
 import { DailyTimeSlotManager } from "@/components/admin/DailyTimeSlotManager";
 import { TimeSlotPatternManager } from "@/components/admin/TimeSlotPatternManager";
 import { EventManager } from "@/components/admin/EventManager";
+import { EventTabBoard } from "@/components/eventTabs/EventTabBoard";
 import { WorkManagement } from "@/components/work/admin/WorkManagement";
 import { HerbManagement } from "@/components/admin/herbs/HerbManagement";
 import { AgentAccessManager } from "@/components/admin/agent/AgentAccessManager";
@@ -218,6 +219,12 @@ const Admin = () => {
         </TabsContent>
 
         <TabsContent value="events" className="space-y-6">
+          <details className="rounded-lg border bg-card p-4">
+            <summary className="cursor-pointer font-semibold">当日のオプション記録・会計</summary>
+            <div className="mx-auto mt-4 max-w-lg">
+              <EventTabBoard token={null} />
+            </div>
+          </details>
           <EventManager />
         </TabsContent>
 

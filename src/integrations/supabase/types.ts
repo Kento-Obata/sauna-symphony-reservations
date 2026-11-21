@@ -1630,6 +1630,38 @@ export type Database = {
         Returns: string
       }
       ensure_admin_role: { Args: never; Returns: undefined }
+      event_tab_add_item: {
+        Args: {
+          p_delta: number
+          p_item_id: string
+          p_reservation_id: string | null
+          p_tab_id: string | null
+          p_token: string | null
+        }
+        Returns: string
+      }
+      event_tab_board: {
+        Args: { p_event_id?: string | null; p_token: string | null }
+        Returns: Json
+      }
+      event_tab_create_walkin: {
+        Args: {
+          p_event_id: string
+          p_guest_count: number | null
+          p_guest_name: string
+          p_slot_id: string | null
+          p_token: string | null
+        }
+        Returns: string
+      }
+      event_tab_delete_walkin: {
+        Args: { p_tab_id: string; p_token: string | null }
+        Returns: undefined
+      }
+      event_tab_settle: {
+        Args: { p_settled: boolean; p_tab_id: string; p_token: string | null }
+        Returns: number
+      }
       generate_reservation_code: { Args: never; Returns: string }
       get_herb_catalog: { Args: never; Returns: Json }
       staff_id_for_token: { Args: { p_token: string }; Returns: string }

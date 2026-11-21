@@ -29,6 +29,7 @@ const lazy = <T extends ComponentType<unknown>>(factory: () => Promise<{ default
 
 // トップと予約直後の画面以外(管理画面・シフト・各種詳細)は遅延読み込みにして、予約ページの初回表示を軽くする
 const Admin = lazy(() => import("./pages/Admin"));
+const MyEventTabs = lazy(() => import("./pages/MyEventTabs"));
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));
 const Shift = lazy(() => import("./pages/Shift"));
 const ShiftLogin = lazy(() => import("./pages/ShiftLogin"));
@@ -114,6 +115,11 @@ export const router = createBrowserRouter([
     // スタッフ用の作業記録(ログイン不要、トークンで本人を判別)
     path: "/my/:token",
     element: withSuspense(<MyWork />),
+  },
+  {
+    // スタッフ用: イベント当日のオプション記録・会計
+    path: "/my/:token/event",
+    element: withSuspense(<MyEventTabs />),
   },
   {
     path: "/reservation/confirm/:token",
