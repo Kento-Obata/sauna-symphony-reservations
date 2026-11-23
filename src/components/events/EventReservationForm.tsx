@@ -180,7 +180,7 @@ export const EventReservationForm = ({ event, form }: EventReservationFormProps)
                     </div>
                   ))}
                 </dl>
-                <div className="mt-5 rounded-2xl border border-u-amber/40 bg-u-amber/[0.08] p-4 text-xs leading-[1.9] text-u-ink/80">
+                <div className="mt-5 whitespace-pre-line rounded-2xl border border-u-amber/40 bg-u-amber/[0.08] p-4 text-xs leading-[1.9] text-u-ink/80">
                   {isPrepaid
                     ? `このあと決済ページ（Square）へ移動します\nお席は20分間確保され、時間内にお支払いが完了しない場合は予約が無効になります\nお支払い完了後、確認メールが ${email} に送信されます`
                     : `この内容で予約を確定します\n確認メールが ${email} に送信されます`}
