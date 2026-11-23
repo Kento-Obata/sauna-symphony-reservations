@@ -3,8 +3,8 @@ import { buildEventBringItemsNotice } from "./event-notice.ts";
 
 Deno.test("buildEventBringItemsNotice: 金額一覧なしでも持参の案内は出る", () => {
   const text = buildEventBringItemsNotice([]);
-  assertStringIncludes(text, "無料貸出はございません");
-  assertStringIncludes(text, "水着とタオルはご持参ください");
+  assertStringIncludes(text, "水着・サウナハット・ポンチョは有料レンタル");
+  assertStringIncludes(text, "足巻きタオルは無料");
   assertEquals(text.includes("当日ご利用いただけるオプション"), false);
 });
 
