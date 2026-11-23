@@ -88,3 +88,25 @@ verify_jwt = false
 # LINE Messaging API の webhook。関数内で X-Line-Signature を検証する
 [functions.line-staff-webhook]
 verify_jwt = false
+
+# ---- GitHub 連携の自動デプロイ対策(2026-11-23) ----
+# GitHub 連携は supabase/ 配下の変更で全関数を再デプロイし、ここに記載の無い関数は
+# verify_jwt=false で配備される。通知送信(SMS/メール)は外部から叩かれると SMS 爆撃に
+# なるため、従来どおり JWT 必須(呼び出し側は service role の Bearer)を明記する。
+[functions.send-confirmation-notification]
+verify_jwt = true
+
+[functions.send-pending-notification]
+verify_jwt = true
+
+[functions.send-update-notification]
+verify_jwt = true
+
+# 旧来の画像生成。従来から JWT なしで公開されていたので現状維持
+[functions.generate-sauna-image]
+verify_jwt = false
+
+# サンドボックス検証用(関数内で本番 Square を拒否するガード付き)。自動デプロイで本番にも
+# 配備されるため、少なくとも JWT 必須にしておく
+[functions.test-square-pay]
+verify_jwt = true
