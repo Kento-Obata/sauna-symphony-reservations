@@ -18,6 +18,7 @@ import { EventReservationDetails } from "@/types/event";
 import { extractFunctionErrorMessage } from "@/hooks/useEvent";
 import { formatEventDateLabel, formatEventTimeRange } from "@/utils/eventFormat";
 import { getJstTodayYmd } from "@/utils/jstDate";
+import { EVENT_BRING_ITEMS_LINES, EVENT_BRING_ITEMS_TITLE } from "@/utils/eventNotice";
 
 // 決済ページから戻った直後(from=checkout)のポーリング設定。
 // Webhook は通常数秒で届く。verifyPayment: true で Square への直接照会も併用する
@@ -222,6 +223,15 @@ export default function EventReservationDetail() {
                 </div>
               ))}
             </dl>
+
+            {(reservation.status === "confirmed" || reservation.status === "pending_payment") && (
+              <div className="rounded-2xl border border-u-amber/40 bg-u-amber/[0.08] p-4 text-sm leading-[1.9]">
+                <p className="text-xs tracking-[0.14em] text-u-ink/80">{EVENT_BRING_ITEMS_TITLE}</p>
+                {EVENT_BRING_ITEMS_LINES.map((line) => (
+                  <p key={line} className="mt-1">{line}</p>
+                ))}
+              </div>
+            )}
 
             {(reservation.status === "confirmed" || reservation.status === "pending_payment") && (
               <div className="space-y-3 pt-2 sm:text-right">

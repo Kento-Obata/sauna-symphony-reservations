@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { SiteShell } from "@/components/site/SiteShell";
 import { StatusTicket, TicketRow } from "@/components/site/StatusTicket";
+import { EVENT_BRING_ITEMS_SHORT } from "@/utils/eventNotice";
 
 /**
  * イベント予約完了ページ。即時確定のため、遷移元 state の情報をそのまま表示する。
@@ -66,6 +67,9 @@ export default function EventReservationComplete() {
             {totalPrice > 0 && <span className="block text-xs text-u-ink/65">{priceNote || "当日現地払い"}</span>}
           </TicketRow>
         )}
+        <TicketRow label="持ち物">
+          <span className="text-sm">{EVENT_BRING_ITEMS_SHORT}</span>
+        </TicketRow>
       </StatusTicket>
     </SiteShell>
   );

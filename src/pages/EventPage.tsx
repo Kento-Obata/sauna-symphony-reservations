@@ -5,6 +5,7 @@ import { EventSlotPicker } from "@/components/events/EventSlotPicker";
 import { EventReservationForm } from "@/components/events/EventReservationForm";
 import { SiteShell } from "@/components/site/SiteShell";
 import { Step } from "@/components/site/booking/Step";
+import { EVENT_BRING_ITEMS_SHORT } from "@/utils/eventNotice";
 
 /** イベント予約特設ページ（/events/:slug） */
 const EventPage = () => {
@@ -80,6 +81,10 @@ const EventPage = () => {
                 <div className="grid grid-cols-[5rem_1fr] gap-4 border-b border-u-ink/10 py-4 text-sm">
                   <dt className="text-xs tracking-[0.14em] text-u-ink/65">人数</dt>
                   <dd>1回のご予約につき{data.event.max_guests_per_reservation}名まで</dd>
+                </div>
+                <div className="grid grid-cols-[5rem_1fr] gap-4 border-b border-u-ink/10 py-4 text-sm">
+                  <dt className="text-xs tracking-[0.14em] text-u-ink/65">持ち物</dt>
+                  <dd>{EVENT_BRING_ITEMS_SHORT}</dd>
                 </div>
               </dl>
             </div>

@@ -31,6 +31,7 @@ import {
   buildEventConfirmationEmail,
   EventReservationNoticeRow,
 } from "../_shared/event-payment.ts";
+import { fetchActiveEventOptionItems } from "../_shared/event-notice.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -310,7 +311,12 @@ const handler = async (req: Request): Promise<Response> => {
         event_venue: slot.event_venue,
         price_note: slot.price_note,
       };
-      const mail = buildEventConfirmationEmail({ reservation: noticeRow, detailUrl, paid: false });
+      const mail = buildEventConfirmationEmail({
+        reservation: noticeRow,
+        detailUrl,
+        paid: false,
+        optionItems: await fetchActiveEventOptionItems(sql),
+      });
       await sendAppEmail({
         to: email,
         subject: mail.subject,

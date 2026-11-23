@@ -15,6 +15,7 @@ import { buildSimpleEmailHtml } from "./lovable-email.ts";
 import { formatJstDateLabel, formatTimeRange } from "./event-format.ts";
 import { deletePaymentLink, refundPayment } from "./square.ts";
 import { isGroupLimitReached } from "./event-validation.ts";
+import { buildEventBringItemsNotice, EventOptionItem } from "./event-notice.ts";
 
 // postgresjs のトランザクション/接続(型パッケージ非導入のため構造的に定義)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -203,8 +204,10 @@ export const buildEventConfirmationEmail = (params: {
   reservation: EventReservationNoticeRow;
   detailUrl: string;
   paid: boolean;
+  /** 当日オプションの料金一覧(event_option_items)。省略時は金額なしの案内になる */
+  optionItems?: EventOptionItem[];
 }) => {
-  const { reservation: r, detailUrl, paid } = params;
+  const { reservation: r, detailUrl, paid, optionItems } = params;
   const dateLabel = formatJstDateLabel(r.date);
   const timeLabel = formatTimeRange(r.start_time, r.end_time);
   const priceLine = r.total_price > 0
@@ -221,6 +224,8 @@ export const buildEventConfirmationEmail = (params: {
 日時: ${dateLabel} ${timeLabel}${r.event_venue ? `\n会場: ${r.event_venue}` : ""}
 人数: ${r.guest_count}名
 ${priceLine}
+
+${buildEventBringItemsNotice(optionItems)}
 
 ご予約内容の確認・キャンセルは下記リンクからお手続きいただけます。
 ${detailUrl}
@@ -285,5 +290,59 @@ export const buildLatePaymentRefundEmail = (params: {
     subject: `【${r.event_title}】ご予約を確定できませんでした（全額返金いたします）`,
     text,
     html: buildSimpleEmailHtml("ご予約を確定できませんでした", text),
+  };
+};
+
+export interface EventReminderRow {
+  reservation_code: string;
+  access_token: string;
+  guest_name: string;
+  guest_count: number;
+  email: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+  event_title: string;
+  event_venue: string | null;
+}
+
+/** 前日リマインド(イベント)。会場未設定のイベントは店舗開催として所在地を載せる。 */
+export const buildEventReminderEmail = (params: {
+  reservation: EventReminderRow;
+  detailUrl: string;
+  optionItems?: EventOptionItem[];
+}) => {
+  const { reservation: r, detailUrl, optionItems } = params;
+  const dateLabel = formatJstDateLabel(r.date);
+  const timeLabel = formatTimeRange(r.start_time, r.end_time);
+  const placeBlock = r.event_venue
+    ? `【会場】\n${r.event_venue}`
+    : `【所在地】
+〒811-2127 福岡県糟屋郡宇美町障子岳6-8-4
+Plus Code: 8Q5GHG7V+J5
+Google Maps: https://maps.google.com/maps?q=8Q5GHG7V%2BJ5`;
+
+  const text = `${r.guest_name} 様
+
+明日の「${r.event_title}」のご予約についてお知らせいたします。
+
+【ご予約内容】
+予約コード: ${r.reservation_code}
+日時: ${dateLabel} ${timeLabel}
+人数: ${r.guest_count}名
+
+${buildEventBringItemsNotice(optionItems)}
+
+${placeBlock}
+
+ご予約内容の確認はこちら
+${detailUrl}
+
+ご来店を心よりお待ちしております。`;
+
+  return {
+    subject: `【明日】${r.event_title} ご予約のリマインダー`,
+    text,
+    html: buildSimpleEmailHtml("明日のご予約のお知らせ", text),
   };
 };

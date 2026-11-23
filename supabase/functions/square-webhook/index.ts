@@ -17,6 +17,7 @@ import {
   buildLatePaymentRefundEmail,
   confirmEventPaymentByOrderId,
 } from "../_shared/event-payment.ts";
+import { fetchActiveEventOptionItems } from "../_shared/event-notice.ts";
 import {
   buildReservationLateRefundNotice,
   confirmReservationPaymentByOrderId,
@@ -163,7 +164,12 @@ const handler = async (req: Request): Promise<Response> => {
       const baseUrl = Deno.env.get('APP_BASE_URL') ?? "https://www.u-sauna-private.com";
       const detailUrl = `${baseUrl}/events/reservation/${r.reservation_code}?t=${r.access_token}`;
       try {
-        const mail = buildEventConfirmationEmail({ reservation: r, detailUrl, paid: true });
+        const mail = buildEventConfirmationEmail({
+          reservation: r,
+          detailUrl,
+          paid: true,
+          optionItems: await fetchActiveEventOptionItems(sql),
+        });
         await sendAppEmail({
           to: r.email,
           subject: mail.subject,

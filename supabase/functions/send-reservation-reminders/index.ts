@@ -9,6 +9,8 @@ const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
 const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER");
 
 import { formatReservationTime } from "../_shared/reservation-time.ts";
+import { buildEventReminderEmail, EventReminderRow } from "../_shared/event-payment.ts";
+import { fetchActiveEventOptionItems } from "../_shared/event-notice.ts";
 import { formatHerbEmailBlock } from "../_shared/herb.ts";
 import { toE164 } from "../_shared/phone.ts";
 
@@ -176,10 +178,48 @@ const handler = async (req: Request): Promise<Response> => {
       await sendSMS(reservation.phone, reservation, timeSlotLabel);
     }
 
+    // ---- イベント予約(event_reservations)の前日リマインド ----
+    // イベントは email が必須のためメールのみ送る(SMS は送らない)。
+    // 貸切プランと違い水着・タオル等が無料貸出ではないため、お持ち物案内を必ず載せる。
+    const eventReservations: EventReminderRow[] = await sql`
+      select r.reservation_code, r.access_token, r.guest_name, r.guest_count, r.email,
+             s.date::text, s.start_time::text, s.end_time::text,
+             e.title as event_title, e.venue as event_venue
+      from public.event_reservations r
+      join public.event_slots s on s.id = r.slot_id
+      join public.events e on e.id = s.event_id
+      where s.date = ${tomorrowStr}::date
+        and r.status = 'confirmed'
+    `;
+    console.log(`明日のイベント予約数: ${eventReservations.length}`);
+
+    if (eventReservations.length > 0) {
+      const optionItems = await fetchActiveEventOptionItems(sql);
+      const baseUrl = Deno.env.get('APP_BASE_URL') ?? "https://www.u-sauna-private.com";
+      for (const r of eventReservations) {
+        if (!r.email) continue;
+        try {
+          const detailUrl = `${baseUrl}/events/reservation/${r.reservation_code}?t=${r.access_token}`;
+          const mail = buildEventReminderEmail({ reservation: r, detailUrl, optionItems });
+          await sendAppEmail({
+            to: r.email,
+            subject: mail.subject,
+            html: mail.html,
+            text: mail.text,
+            idempotencyKey: `event-reservation-reminder-${r.reservation_code}-${r.date}`,
+            label: "event-reservation-reminder",
+          });
+          console.log(`イベント予約のリマインドを送信しました: ${r.reservation_code}`);
+        } catch (error) {
+          console.error(`イベント予約のリマインド送信エラー (${r.reservation_code}):`, error);
+        }
+      }
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
-        message: `${reservations.length}件の予約通知を送信しました`,
+        message: `${reservations.length}件の予約通知と${eventReservations.length}件のイベント予約通知を送信しました`,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
