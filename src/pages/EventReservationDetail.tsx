@@ -18,6 +18,7 @@ import { EventReservationDetails } from "@/types/event";
 import { extractFunctionErrorMessage } from "@/hooks/useEvent";
 import { formatEventDateLabel, formatEventTimeRange } from "@/utils/eventFormat";
 import { getJstTodayYmd } from "@/utils/jstDate";
+import { calcEventCancelFee } from "@/utils/eventCancelFee";
 import { EVENT_BRING_ITEMS_LINES, EVENT_BRING_ITEMS_TITLE } from "@/utils/eventNotice";
 
 // 決済ページから戻った直後(from=checkout)のポーリング設定。
@@ -90,7 +91,7 @@ export default function EventReservationDetail() {
       if (data?.error) throw new Error(data.error);
       toast.success(
         data?.refunded
-          ? "予約をキャンセルしました　返金手続きを行いました"
+          ? `予約をキャンセルしました\u3000¥${Number(data.refundAmount ?? 0).toLocaleString()}の返金手続きを行いました`
           : "予約をキャンセルしました",
       );
       queryClient.invalidateQueries({ queryKey: ["event-reservation", code] });
@@ -105,6 +106,13 @@ export default function EventReservationDetail() {
 
   const missingToken = !accessToken;
   const isPaid = reservation?.payment_status === "paid";
+  // 案内表示用。実際の返金額はサーバー側(cancel-event-reservation)で同じ計算をして決まる
+  const cancelFee = reservation
+    ? calcEventCancelFee(reservation.date, getJstTodayYmd(), reservation.total_price)
+    : null;
+  const refundNotice = cancelFee && cancelFee.fee > 0
+    ? `前日のキャンセルのため、キャンセル料（料金の${cancelFee.rate}%）¥${cancelFee.fee.toLocaleString()}を差し引き、¥${cancelFee.refundAmount.toLocaleString()}を返金いたします`
+    : "お支払いいただいた料金は全額返金いたします";
 
   const priceLabel = () => {
     if (!reservation) return "";
@@ -245,11 +253,11 @@ export default function EventReservationDetail() {
                       予約をキャンセル
                     </button>
                     {isPaid && (
-                      <p className="text-xs text-u-ink/80">キャンセルの場合、お支払いいただいた料金は全額返金されます</p>
+                      <p className="text-xs text-u-ink/80">{refundNotice}</p>
                     )}
                   </>
                 ) : (
-                  <p className="text-xs text-u-ink/80">当日以降のキャンセルはお電話にてご連絡ください</p>
+                  <p className="text-xs leading-[1.8] text-u-ink/80">当日のキャンセルは料金の100%となり、返金いたしかねます<br />ご来店が難しくなった場合は、お電話にてご連絡ください</p>
                 )}
               </div>
             )}
@@ -269,7 +277,7 @@ export default function EventReservationDetail() {
             <AlertDialogTitle className="u-display font-medium tracking-[0.08em]">予約をキャンセルしますか?</AlertDialogTitle>
             <AlertDialogDescription>
               {isPaid
-                ? "お支払いいただいた料金は全額返金いたします（カード会社により反映まで数日かかる場合があります）\nこの操作は取り消せません"
+                ? `${refundNotice}（カード会社により反映まで数日かかる場合があります）\nこの操作は取り消せません`
                 : "この操作は取り消せません\n再度ご参加いただく場合は、あらためてご予約ください"}
             </AlertDialogDescription>
           </AlertDialogHeader>

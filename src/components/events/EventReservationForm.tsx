@@ -13,6 +13,7 @@ import { PublicEvent } from "@/types/event";
 import { useEventReservationForm } from "@/hooks/useEventReservationForm";
 import { formatEventDateLabel, formatEventTimeRange } from "@/utils/eventFormat";
 import { cn } from "@/lib/utils";
+import { EVENT_CANCEL_POLICY_ROWS, EVENT_CANCEL_POLICY_TITLE } from "@/utils/eventNotice";
 
 interface EventReservationFormProps {
   event: PublicEvent;
@@ -146,6 +147,22 @@ export const EventReservationForm = ({ event, form }: EventReservationFormProps)
           )}
         </div>
 
+        <div className="rounded-2xl border border-u-ink/10 bg-white/40 p-5">
+          <p className="text-[0.6875rem] tracking-[0.2em] text-u-ink/65">{EVENT_CANCEL_POLICY_TITLE}</p>
+          <ul className="mt-3 grid gap-y-1.5 text-sm">
+            {EVENT_CANCEL_POLICY_ROWS.map(([k, v]) => (
+              <li key={k} className="flex justify-between gap-4 border-b border-u-ink/10 py-1.5">
+                <span className="text-u-ink/70">{k}</span>
+                <span>{v}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3 text-xs leading-[1.8] text-u-ink/65">
+            前日までのキャンセルは、確認メールのリンクからお手続きいただけます（キャンセル料を差し引いて返金）<br />
+            当日のキャンセルは返金いたしかねます
+          </p>
+        </div>
+
         <button type="submit" className="u-btn u-btn-primary w-full" disabled={isSubmitting}>
           {isPrepaid ? "決済へ進む" : "予約する"}
           <ArrowRight className="u-btn-arrow h-4 w-4" strokeWidth={1.5} />
@@ -182,8 +199,8 @@ export const EventReservationForm = ({ event, form }: EventReservationFormProps)
                 </dl>
                 <div className="mt-5 whitespace-pre-line rounded-2xl border border-u-amber/40 bg-u-amber/[0.08] p-4 text-xs leading-[1.9] text-u-ink/80">
                   {isPrepaid
-                    ? `このあと決済ページ（Square）へ移動します\nお席は20分間確保され、時間内にお支払いが完了しない場合は予約が無効になります\nお支払い完了後、確認メールが ${email} に送信されます`
-                    : `この内容で予約を確定します\n確認メールが ${email} に送信されます`}
+                    ? `このあと決済ページ（Square）へ移動します\nお席は20分間確保され、時間内にお支払いが完了しない場合は予約が無効になります\nお支払い完了後、確認メールが ${email} に送信されます\n\n※キャンセルポリシー（2日前まで無料・前日30%・当日100%）に同意のうえお進みください`
+                    : `この内容で予約を確定します\n確認メールが ${email} に送信されます\n\n※キャンセルポリシー（2日前まで無料・前日30%・当日100%）に同意のうえお進みください`}
                 </div>
               </div>
             </AlertDialogDescription>

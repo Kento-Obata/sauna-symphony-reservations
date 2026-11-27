@@ -15,7 +15,7 @@ import { buildSimpleEmailHtml } from "./lovable-email.ts";
 import { formatJstDateLabel, formatTimeRange } from "./event-format.ts";
 import { deletePaymentLink, refundPayment } from "./square.ts";
 import { isGroupLimitReached } from "./event-validation.ts";
-import { buildEventBringItemsNotice, EventOptionItem } from "./event-notice.ts";
+import { buildEventBringItemsNotice, buildEventCancelPolicyNotice, EventOptionItem } from "./event-notice.ts";
 
 // postgresjs のトランザクション/接続(型パッケージ非導入のため構造的に定義)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -147,12 +147,17 @@ export interface CancelTargetRow {
  * キャンセルの共通コア。日付等の可否判定は呼び出し側で済ませてから呼ぶこと。
  * 支払い済み(square_online)の場合は返金成功後にのみ cancelled へ更新する
  * (返金失敗時は例外を投げ、予約は confirmed のまま残る = リトライ可能)。
+ * refundAmount を省略すると全額返金(管理者キャンセル)。キャンセル料を差し引く場合は
+ * 呼び出し側で event-cancel-fee.ts の返金額を渡す。0 なら返金せずキャンセルのみ。
+ * idempotency key は金額によらず event-cancel-<code> 固定: 一部返金の後に別金額で
+ * 再実行すると Square がエラーを返すので、二重返金にはならない。
  */
 export const cancelEventReservationRow = async (
   sql: Sql,
   row: CancelTargetRow,
   reason: string,
-): Promise<{ refunded: boolean }> => {
+  refundAmount?: number,
+): Promise<{ refunded: boolean; refundAmount: number }> => {
   if (row.status === "pending_payment") {
     if (row.square_payment_link_id) {
       // リンク削除で裏の注文もキャンセルされ、以後の支払いを防ぐ。
@@ -168,17 +173,19 @@ export const cancelEventReservationRow = async (
       set status = 'cancelled', cancelled_at = now()
       where id = ${row.id}::uuid
     `;
-    return { refunded: false };
+    return { refunded: false, refundAmount: 0 };
   }
 
+  const amount = Math.min(Math.max(refundAmount ?? row.total_price, 0), row.total_price);
   const needsRefund = row.payment_status === "paid" &&
     row.payment_method === "square_online" &&
-    !!row.square_payment_id;
+    !!row.square_payment_id &&
+    amount > 0;
 
   if (needsRefund) {
     await refundPayment({
       paymentId: row.square_payment_id!,
-      amount: row.total_price,
+      amount,
       idempotencyKey: `event-cancel-${row.reservation_code}`,
       reason,
     });
@@ -187,7 +194,7 @@ export const cancelEventReservationRow = async (
       set status = 'cancelled', cancelled_at = now(), payment_status = 'refunded'
       where id = ${row.id}::uuid
     `;
-    return { refunded: true };
+    return { refunded: true, refundAmount: amount };
   }
 
   await sql`
@@ -195,7 +202,7 @@ export const cancelEventReservationRow = async (
     set status = 'cancelled', cancelled_at = now()
     where id = ${row.id}::uuid
   `;
-  return { refunded: false };
+  return { refunded: false, refundAmount: 0 };
 };
 
 // ============ メール文面 ============
@@ -227,10 +234,10 @@ ${priceLine}
 
 ${buildEventBringItemsNotice(optionItems)}
 
-ご予約内容の確認・キャンセルは下記リンクからお手続きいただけます。
-${detailUrl}
+${buildEventCancelPolicyNotice()}
 
-※当日のキャンセルはリンクからは行えません。直接お電話にてご連絡ください。${paid ? "\n※キャンセルの場合、お支払いいただいた料金は全額返金いたします。" : ""}
+ご予約内容の確認・キャンセルはこちら
+${detailUrl}
 
 当日お会いできることを楽しみにしております。`;
 
@@ -250,8 +257,17 @@ export const buildEventCancellationEmail = (params: {
   endTime: string;
   reservationCode: string;
   refunded: boolean;
+  /** 返金額。省略時は全額返金の文面 */
+  refundAmount?: number;
+  /** キャンセル料。0/省略ならキャンセル料の行を出さない */
+  cancelFee?: number;
 }) => {
   const dateLabel = formatJstDateLabel(params.date);
+  const refundLine = !params.refunded
+    ? ""
+    : params.cancelFee && params.cancelFee > 0 && params.refundAmount != null
+      ? `\n\nキャンセル料（前日のため料金の30%）${params.cancelFee.toLocaleString("ja-JP")}円を差し引き、${params.refundAmount.toLocaleString("ja-JP")}円を返金いたします。カード会社により反映まで数日かかる場合があります。`
+      : "\n\nお支払いいただいた料金は全額返金いたします。カード会社により反映まで数日かかる場合があります。";
   const timeLabel = formatTimeRange(params.startTime, params.endTime);
   const text = `${params.guestName} 様
 
@@ -259,7 +275,7 @@ export const buildEventCancellationEmail = (params: {
 
 予約コード: ${params.reservationCode}
 日時: ${dateLabel} ${timeLabel}
-人数: ${params.guestCount}名${params.refunded ? "\n\nお支払いいただいた料金は全額返金いたします。カード会社により反映まで数日かかる場合があります。" : ""}
+人数: ${params.guestCount}名${refundLine}
 
 またのご利用をお待ちしております。`;
 
@@ -335,7 +351,9 @@ ${buildEventBringItemsNotice(optionItems)}
 
 ${placeBlock}
 
-ご予約内容の確認はこちら
+${buildEventCancelPolicyNotice()}
+
+ご予約内容の確認・キャンセルはこちら
 ${detailUrl}
 
 ご来店を心よりお待ちしております。`;

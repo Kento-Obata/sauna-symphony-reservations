@@ -13,3 +13,21 @@ export const EVENT_BRING_ITEMS_LINES = [
 
 /** 一覧表示向けの短い一行 */
 export const EVENT_BRING_ITEMS_SHORT = "水着はご持参ください（水着・サウナハット・ポンチョのレンタルは有料　足巻きタオルは無料）";
+
+/**
+ * イベントのキャンセルポリシー(画面用)。
+ * イベントは全件事前決済のため、2日前まで全額返金・前日は30%・当日以降は返金なし。
+ * 計算は src/utils/eventCancelFee.ts(サーバー側 event-cancel-fee.ts)と揃えること。
+ * 確定メール・前日リマインド(supabase/functions/_shared/event-notice.ts)と同じ文面。
+ */
+export const EVENT_CANCEL_POLICY_TITLE = "キャンセルポリシー";
+
+export const EVENT_CANCEL_POLICY_ROWS = [
+  ["開催日の2日前まで", "無料（全額返金）"],
+  ["開催日の前日", "料金の30%"],
+  ["開催日の当日", "料金の100%"],
+  ["無断キャンセル", "料金の100%"],
+] as const;
+
+/** 一覧表示向けの短い一行 */
+export const EVENT_CANCEL_POLICY_SHORT = "2日前まで無料　前日は料金の30%　当日・無断キャンセルは料金の100%";

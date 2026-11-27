@@ -33,6 +33,24 @@ export const fetchActiveEventOptionItems = async (sql: Sql): Promise<EventOption
   }
 };
 
+/**
+ * キャンセルポリシーの本文(純関数・テスト対象)。
+ * イベントは全件事前決済。2日前まで全額返金・前日は30%・当日以降は返金なし。
+ * キャンセル料の計算は event-cancel-fee.ts。
+ * 自己キャンセルの可否判定(cancel-event-reservation: 開催日 > JST今日)と揃えること。
+ * 画面側(src/utils/eventNotice.ts)と同じ文面。
+ */
+export const buildEventCancelPolicyNotice = (): string =>
+  [
+    "【キャンセルポリシー】",
+    "・開催日の2日前まで：無料（全額返金）",
+    "・開催日の前日：料金の30%",
+    "・開催日の当日：料金の100%",
+    "・無断キャンセル：料金の100%",
+    "前日までのキャンセルは、下記リンクからお手続きいただけます（キャンセル料を差し引いた金額を返金いたします）。",
+    "当日のキャンセルは返金いたしかねます。ご来店が難しくなった場合は、お電話にてご連絡ください。",
+  ].join("\n");
+
 /** お持ち物案内の本文(純関数・テスト対象)。items が空なら金額一覧を省く。 */
 export const buildEventBringItemsNotice = (items: EventOptionItem[] = []): string => {
   const lines = [

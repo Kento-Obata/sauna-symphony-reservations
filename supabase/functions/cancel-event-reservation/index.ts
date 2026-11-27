@@ -10,6 +10,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import postgres from "https://deno.land/x/postgresjs@v3.4.5/mod.js";
 import { getJstTodayYmd } from "../_shared/date-jst.ts";
+import { calcEventCancelFee } from "../_shared/event-cancel-fee.ts";
 import { getClientIp, isRateLimited, recordAttempt } from "../_shared/rate-limit.ts";
 import { sendAppEmail } from "../_shared/lovable-email.ts";
 import {
@@ -125,8 +126,10 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // 決済待ちは金銭の授受が無いため日付によらずキャンセル可。確定済みは前日まで。
+    // キャンセル料: 2日前まで無料 / 前日30%(差額を返金) / 当日以降は自己キャンセル不可
+    const today = getJstTodayYmd();
+    const cancelFee = calcEventCancelFee(reservation.date, today, reservation.total_price);
     if (reservation.status === 'confirmed') {
-      const today = getJstTodayYmd();
       if (reservation.date === today) {
         return new Response(
           JSON.stringify({ error: "当日のキャンセルはできません。直接お電話にてご連絡ください。" }),
@@ -142,11 +145,15 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     let refunded = false;
+    let refundAmount = 0;
     try {
-      ({ refunded } = await cancelEventReservationRow(
+      ({ refunded, refundAmount } = await cancelEventReservationRow(
         sql,
         reservation,
-        "お客様都合によるキャンセル",
+        cancelFee.fee > 0
+          ? `お客様都合によるキャンセル（前日・キャンセル料${cancelFee.rate}%）`
+          : "お客様都合によるキャンセル",
+        cancelFee.refundAmount,
       ));
     } catch (error) {
       console.error("Refund error:", error);
@@ -167,6 +174,8 @@ const handler = async (req: Request): Promise<Response> => {
         endTime: reservation.end_time,
         reservationCode,
         refunded,
+        refundAmount,
+        cancelFee: refunded ? cancelFee.fee : 0,
       });
       await sendAppEmail({
         to: reservation.email,
@@ -181,7 +190,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, refunded, message: "予約をキャンセルしました" }),
+      JSON.stringify({ success: true, refunded, refundAmount, cancelFee: refunded ? cancelFee.fee : 0, message: "予約をキャンセルしました" }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   } catch (error) {
