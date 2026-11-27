@@ -91,7 +91,9 @@ export default function EventReservationDetail() {
       if (data?.error) throw new Error(data.error);
       toast.success(
         data?.refunded
-          ? `予約をキャンセルしました\u3000¥${Number(data.refundAmount ?? 0).toLocaleString()}の返金手続きを行いました`
+          ? (typeof data.refundAmount === "number" && data.refundAmount > 0
+            ? `予約をキャンセルしました\u3000¥${data.refundAmount.toLocaleString()}の返金手続きを行いました`
+            : "予約をキャンセルしました\u3000返金手続きを行いました")
           : "予約をキャンセルしました",
       );
       queryClient.invalidateQueries({ queryKey: ["event-reservation", code] });
